@@ -1,0 +1,9 @@
+{% if checked %}
+    {% if is_taken %}
+        <span class="text-danger">This username is already taken.</span>
+    {% else %}
+        <span class="text-success">This username is available.</span>
+    {% endif %}
+{% endif %}
+
+
