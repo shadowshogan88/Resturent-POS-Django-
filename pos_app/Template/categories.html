@@ -850,7 +850,7 @@
 							<div class="tab-pane fade show active" id="menu-management">
 								<ul>
 									<li class="menu-title"><span>MENU MANAGEMENT</span></li>
-									<li><a href="{% url 'page' 'categories' %}" class="active"><i class="icon-layers"></i><span>Categories</span></a></li>
+									<li><a href="{% url 'categories' %}" class="active"><i class="icon-layers"></i><span>Categories</span></a></li>
 									<li><a href="{% url 'page' 'items' %}"><i class="icon-layout-list"></i><span>Items</span></a></li>
 									<li><a href="{% url 'page' 'addons' %}"><i class="icon-text-select"></i><span>Addons</span></a></li>
 									<li><a href="{% url 'page' 'coupons' %}"><i class="icon-badge-percent"></i><span>Coupons</span></a></li>
@@ -915,7 +915,7 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Categories <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0"><a href="{% url 'categories' %}" class="text-dark">Categories</a> <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle ms-2" hx-get="{{ request.get_full_path }}" hx-target="#categories-table-container" hx-swap="innerHTML"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="dropdown">
@@ -924,10 +924,10 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end p-3">
                                 <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded">Export as PDF</a>
+                                    <a href="{% url 'categories_export_pdf' %}?{{ request.GET.urlencode }}" class="dropdown-item rounded">Export as PDF</a>
                                 </li>
                                 <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded">Export as Excel</a>
+                                    <a href="{% url 'categories_export_excel' %}?{{ request.GET.urlencode }}" class="dropdown-item rounded">Export as Excel</a>
                                 </li>
                             </ul>
                         </div>
@@ -935,6 +935,16 @@
                     </div>
 				</div>
 				<!-- End Page Header -->
+
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
                 <!-- card start -->
                 <div class="card mb-0">
@@ -964,28 +974,28 @@
                                             <div class="mb-3 drag-item" draggable="true">
                                                 <label class="d-flex align-items-center">
                                                     <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
+                                                    <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="0" checked>
                                                     Category
                                                 </label>
                                             </div>
                                             <div class="mb-3 drag-item" draggable="true">
                                                 <label class="d-flex align-items-center">
                                                     <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
+                                                    <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="1" checked>
                                                     No of Items
                                                 </label>
                                             </div>
                                             <div class="mb-3 drag-item" draggable="true">
                                                 <label class="d-flex align-items-center">
                                                     <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
+                                                    <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="2" checked>
                                                     Created On
                                                 </label>
                                             </div>
                                             <div class="mb-3 drag-item" draggable="true">
                                                 <label class="d-flex align-items-center">
                                                     <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
+                                                    <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="3" checked>
                                                     Status
                                                 </label>
                                             </div>
@@ -995,21 +1005,21 @@
 
                                 <!-- sort by -->
                                 <div class="dropdown">
-                                    <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                                        Sort by : Newest
+                                    <a href="javascript:void(0);" id="sort-dropdown-label" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                        Sort by : {{ sort_label|default:"Newest" }}
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end p-3">
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Newest</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="newest">Newest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Oldest</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="oldest">Oldest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Ascending</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="ascending">Ascending</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Descending</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="descending">Descending</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -1017,210 +1027,8 @@
                         </div>
 
                        <!-- table start -->
-                        <div class="table-responsive table-nowrap">
-                            <table class="table mb-0 border datatable">
-                                <thead>
-                                    <tr>
-                                        <th>Category</th>
-                                        <th>No of Items</th>
-                                        <th>Created On</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-01.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Sea Food</h6>
-                                            </div>
-                                        </td>
-                                        <td>28</td>
-                                        <td>February 15, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-02.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Pizza</h6>
-                                            </div>
-                                        </td>
-                                        <td>42</td>
-                                        <td>March 10, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-03.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Salads</h6>
-                                            </div>
-                                        </td>
-                                        <td>66</td>
-                                        <td>April 5, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-04.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Tacos</h6>
-                                            </div>
-                                        </td>
-                                        <td>48</td>
-                                        <td>May 20, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-danger">Expired</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-05.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Burgers</h6>
-                                            </div>
-                                        </td>
-                                        <td>24</td>
-                                        <td>June 30, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-06.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Ice Cream</h6>
-                                            </div>
-                                        </td>
-                                        <td>36</td>
-                                        <td>July 18, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-07.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Pasta</h6>
-                                            </div>
-                                        </td>
-                                        <td>48</td>
-                                        <td>August 12, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-08.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Beverages</h6>
-                                            </div>
-                                        </td>
-                                        <td>32</td>
-                                        <td>September 19, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-09.png' %}" alt="category" class="img-fluid">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Steaks</h6>
-                                            </div>
-                                        </td>
-                                        <td>22</td>
-                                        <td>October 7, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-danger">Expired</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/category/category-10.png' %}" alt="category" class="img-fluid rounded-circle">
-                                                </div>
-                                                <h6 class="fs-14 fw-normal mb-0">Soups</h6>
-                                            </div>
-                                        </td>
-                                        <td>18</td>
-                                        <td>November 25, 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="categories-table-container">
+                            {% include "partials/categories_table.html" %}
                         </div>
                         <!-- table end -->
                     </div>
@@ -1245,28 +1053,32 @@
                         <h4 class="modal-title">Add Category</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/categories.html">                             
+                    <form action="{% url 'category_add' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
                         <div class="modal-body p-4 pt-1">             
                             <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
-                                <div class="avatar avatar-3xl border bg-light">
-                                    <i class="icon-images fs-28 text-dark"></i>
+                                <div class="avatar avatar-3xl border bg-light overflow-hidden" id="add-category-preview-wrap">
+                                    <i class="icon-images fs-28 text-dark" id="add-category-preview-icon"></i>
+                                    <img id="add-category-preview-img" src="" alt="category preview" class="img-fluid d-none w-100 h-100 object-fit-cover">
                                 </div>
                                 <div>
                                     <label class="form-label">Category Image<span class="text-danger"> *</span></label>
                                     <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                     <div class="d-flex align-items-center">
                                         <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                            <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                            <input type="file" name="category_image" id="add-category-image-input" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                             <i class="icon-upload"></i>
                                         </div>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
+                                        <a href="#" id="add-category-image-clear" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
                                     </div>
                                 </div>                                        
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Category Name<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control">
+                                <input type="text" name="name" class="form-control" required>
                             </div>
+                            <input type="hidden" name="items_count" value="0">
+                            <input type="hidden" name="status" value="Active">
                             <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
                                 <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-primary w-100">Save</button>
@@ -1286,18 +1098,19 @@
                         <h4 class="modal-title">Edit Category</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/categories.html">                             
+                    <form action="{% url 'category_update' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
                         <div class="modal-body p-4 pt-1">             
                             <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
                                 <div class="avatar avatar-3xl avatar-rounded border">
-                                    <img src="{% static 'assets/img/category/category-01.png' %}" alt="category" class="img-fluid">
+                                    <img id="edit-category-preview" src="{% static 'assets/img/category/category-01.png' %}" alt="category" class="img-fluid">
                                 </div>
                                 <div>
                                     <label class="form-label">Category Image<span class="text-danger"> *</span></label>
                                     <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                     <div class="d-flex align-items-center">
                                         <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                            <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                            <input type="file" name="category_image" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                             <i class="icon-pencil-line"></i>
                                         </div>
                                         <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
@@ -1306,8 +1119,11 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Category Name<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control" value="Sea Food">
+                                <input type="text" id="edit-category-name" name="name" class="form-control" value="Sea Food" required>
                             </div>
+                            <input type="hidden" id="edit-category-id" name="category_id">
+                            <input type="hidden" id="edit-category-items" name="items_count" value="0">
+                            <input type="hidden" id="edit-category-status" name="status" value="Active">
                             <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
                                 <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-primary w-100">Save</button>
@@ -1331,10 +1147,14 @@
                         </div>
                         <h4 class="mb-1">Delete Confirmation</h4>
                         <p class="mb-4">Are you sure you want to delete?</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="javascript:void(0);" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
-                            <a href="{% url 'page' 'categories' %}" class="btn btn-danger w-100">Delete</a>
-                        </div>
+                        <form action="{% url 'category_delete' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" id="delete-category-id" name="category_id">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="javascript:void(0);" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1349,7 +1169,9 @@
                     <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="offcanvas" aria-label="Close"><i class="icon-x"></i></button>
                 </div>
             </div>
-            <div class="offcanvas-body d-flex flex-column pt-3">
+            <form id="category-filter-form" action="{% url 'categories_apply' %}" method="post" class="offcanvas-body d-flex flex-column pt-3">
+                {% csrf_token %}
+                <input type="hidden" name="sort_by" value="{{ sort_by|default:'newest' }}">
                 <div>
                     <div class="mb-3">
                         <label class="form-label">Category<span class="text-danger"> *</span></label>
@@ -1363,52 +1185,35 @@
                                     <span class="input-icon-addon">
                                         <i class="icon-search text-dark"></i>
                                     </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
+                                    <input type="text" id="category-filter-search" class="form-control form-control-md" placeholder="Search">
                                 </div>  
-                                <div class="vstack gap-2">
-                                    <div>
+                                <div class="vstack gap-2" id="category-filter-list">
+                                    {% for filter_category in all_categories %}
+                                    <div class="category-filter-item" data-name="{{ filter_category.name|lower }}">
                                         <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Sea Food
+                                            <input class="form-check-input m-0 me-2" type="checkbox" name="category" value="{{ filter_category.id }}" {% if filter_category.id|stringformat:"s" in selected_category_ids %}checked{% endif %}>{{ filter_category.name }}
                                         </label>
                                     </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Pizza
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Salads
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Tacos
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Burgers
-                                        </label>
-                                    </div>
-                                </div>  
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Status<span class="text-danger"> *</span></label>
-                        <select class="select">
-                            <option>Select</option>
-                            <option>Active</option>
-                            <option>Expired</option>
+                        <select class="select" name="status">
+                            <option value="">Select</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2 mt-auto">
-                    <a href="#" class="btn btn-light w-100">Reset</a>
-                    <a href="#" class="btn btn-primary w-100">Apply</a>
+                    <a href="{% url 'categories' %}" class="btn btn-light w-100">Reset</a>
+                    <button type="submit" class="btn btn-primary w-100">Apply</button>
                 </div>
-            </div>
+            </form>
         </div>
         <!-- End Filter -->
 
@@ -1431,13 +1236,197 @@
     <!-- Select2 Js -->	
     <script src="{% static 'assets/plugins/select2/js/select2.min.js' %}" type="text/javascript"></script>
 
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
     <!-- Main JS -->
     <script src="{% static 'assets/js/script.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            function getCurrentCategoriesDataTable() {
+                if (!window.jQuery || !jQuery.fn.DataTable) return null;
+                const table = jQuery("#categories-table-container .datatable");
+                if (!table.length) return null;
+                if (!jQuery.fn.DataTable.isDataTable(table[0])) return null;
+                return table.DataTable();
+            }
+
+            function applyColumnToggles(dataTable) {
+                if (!dataTable) return;
+                jQuery(".column-toggle-checkbox").each(function () {
+                    const idx = parseInt(this.getAttribute("data-column-index"), 10);
+                    if (Number.isNaN(idx)) return;
+                    dataTable.column(idx).visible(this.checked, false);
+                });
+                dataTable.columns.adjust().draw(false);
+            }
+
+            function initCategoriesDatatable() {
+                if (!window.jQuery || !jQuery.fn.DataTable) return;
+                const table = jQuery("#categories-table-container .datatable");
+                if (!table.length) return;
+                if (jQuery.fn.DataTable.isDataTable(table[0])) {
+                    return;
+                }
+                // Remove stale DataTables search box from previous table instance.
+                jQuery(".search-input .dt-search").remove();
+
+                table.DataTable({
+                    bFilter: true,
+                    sDom: "fBtlp",
+                    ordering: false,
+                    language: {
+                        search: " ",
+                        sLengthMenu: "_MENU_",
+                        searchPlaceholder: "Search",
+                        sLengthMenu: " _MENU_ Entries",
+                        info: "_START_ - _END_ of _TOTAL_ items",
+                        paginate: {
+                            next: " Next <i class=\"icon-chevron-right\"></i>",
+                            previous: "<i class=\"icon-chevron-left\"></i> Prev"
+                        }
+                    },
+                    initComplete: function (settings) {
+                        const currentSearch = jQuery(settings.nTableWrapper).find(".dt-search");
+                        if (currentSearch.length) {
+                            currentSearch.appendTo(".search-input");
+                        }
+                    }
+                });
+                applyColumnToggles(getCurrentCategoriesDataTable());
+            }
+
+            // Initial page load table comes from global script.js init.
+            applyColumnToggles(getCurrentCategoriesDataTable());
+
+            jQuery(document).off("change.columnToggles").on("change.columnToggles", ".column-toggle-checkbox", function () {
+                const dataTable = getCurrentCategoriesDataTable();
+                if (!dataTable) return;
+                const idx = parseInt(this.getAttribute("data-column-index"), 10);
+                if (Number.isNaN(idx)) return;
+                dataTable.column(idx).visible(this.checked);
+                dataTable.columns.adjust().draw(false);
+            });
+
+            document.body.addEventListener("htmx:afterSwap", function (event) {
+                if (event.target && event.target.id === "categories-table-container") {
+                    initCategoriesDatatable();
+                }
+            });
+
+            document.querySelectorAll(".sort-option").forEach(function (el) {
+                el.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    const sortValue = this.getAttribute("data-sort") || "newest";
+                    const params = new URLSearchParams(window.location.search);
+                    params.set("sort_by", sortValue);
+
+                    const url = `{% url 'categories' %}?${params.toString()}`;
+                    const label = document.getElementById("sort-dropdown-label");
+                    if (label) {
+                        label.textContent = `Sort by : ${this.textContent.trim()}`;
+                    }
+                    const sortHiddenInput = document.querySelector('#category-filter-form input[name="sort_by"]');
+                    if (sortHiddenInput) {
+                        sortHiddenInput.value = sortValue;
+                    }
+
+                    if (window.htmx) {
+                        htmx.ajax("GET", url, {
+                            target: "#categories-table-container",
+                            swap: "innerHTML"
+                        });
+                    }
+                    window.history.replaceState({}, "", url);
+                });
+            });
+
+            const categorySearchInput = document.getElementById("category-filter-search");
+            const categoryFilterItems = document.querySelectorAll("#category-filter-list .category-filter-item");
+
+            if (categorySearchInput && categoryFilterItems.length) {
+                categorySearchInput.addEventListener("input", function () {
+                    const q = this.value.trim().toLowerCase();
+                    categoryFilterItems.forEach(function (item) {
+                        const name = item.getAttribute("data-name") || "";
+                        item.style.display = name.includes(q) ? "" : "none";
+                    });
+                });
+            }
+
+            const addImageInput = document.getElementById("add-category-image-input");
+            const addPreviewImg = document.getElementById("add-category-preview-img");
+            const addPreviewIcon = document.getElementById("add-category-preview-icon");
+            const addImageClear = document.getElementById("add-category-image-clear");
+
+            function resetAddImagePreview() {
+                if (addImageInput) addImageInput.value = "";
+                if (addPreviewImg) {
+                    addPreviewImg.src = "";
+                    addPreviewImg.classList.add("d-none");
+                }
+                if (addPreviewIcon) addPreviewIcon.classList.remove("d-none");
+            }
+
+            if (addImageInput && addPreviewImg && addPreviewIcon) {
+                addImageInput.addEventListener("change", function () {
+                    const file = this.files && this.files[0];
+                    if (!file) {
+                        resetAddImagePreview();
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        addPreviewImg.src = e.target.result;
+                        addPreviewImg.classList.remove("d-none");
+                        addPreviewIcon.classList.add("d-none");
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (addImageClear) {
+                addImageClear.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    resetAddImagePreview();
+                });
+            }
+
+            const editModal = document.getElementById("edit_category");
+            if (editModal) {
+                editModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+                    document.getElementById("edit-category-id").value = trigger.getAttribute("data-category-id") || "";
+                    document.getElementById("edit-category-name").value = trigger.getAttribute("data-category-name") || "";
+                    document.getElementById("edit-category-items").value = trigger.getAttribute("data-category-items") || "0";
+                    document.getElementById("edit-category-status").value = trigger.getAttribute("data-category-status") || "Active";
+                    const preview = document.getElementById("edit-category-preview");
+                    if (preview) {
+                        preview.src = trigger.getAttribute("data-category-image") || preview.src;
+                    }
+                });
+            }
+
+            const deleteModal = document.getElementById("delete_modal");
+            if (deleteModal) {
+                deleteModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+                    const idInput = document.getElementById("delete-category-id");
+                    if (idInput) {
+                        idInput.value = trigger.getAttribute("data-category-id") || "";
+                    }
+                });
+            }
+        });
+    </script>
 
 </body>
 
 
 <!-- Mirrored from dreamspos.dreamstechnologies.com/food-pos/html/categories.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 04 Mar 2026 11:21:35 GMT -->
 </html>
+
 
 
