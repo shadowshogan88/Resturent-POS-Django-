@@ -915,12 +915,12 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Items<a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Items<a href="{% url 'items' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="input-group input-group-flat w-auto">
-                            <input type="text" class="form-control" placeholder="Search">
-                            <span class="input-group-text">
+                            <input type="text" id="items-search-input" class="form-control" placeholder="Search" value="{{ query }}">
+                            <span class="input-group-text" id="items-search-trigger">
                                 <i class="icon-search text-dark"></i>
                             </span>
                         </div>
@@ -929,459 +929,23 @@
 				</div>
 				<!-- End Page Header -->
 
-                <!-- Row start -->
-                <div class="row">
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-01.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Grilled Salmon Steak</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$80</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-danger me-1"></i>Non Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
+                        {{ message }}
                     </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-02.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Cheese Burst Pizza</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$66</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-03.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Garlic Butter Shrimp</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$25</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-danger me-1"></i>Non Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-04.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Chicken Taco</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$38</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-danger me-1"></i>Non Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-05.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Grilled Chicken</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$49</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-danger me-1"></i>Non Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-06.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Grilled Veggie Taco</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$69</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-danger me-1"></i>Non Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-07.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Chicken Noodle Soup</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$45</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-danger me-1"></i>Non Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-08.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Corn Pizza</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$96</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-09.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Shrimp Tom Yum</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$25</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-danger me-1"></i>Non Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-10.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Tomato Basil Soup</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$44</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-11.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Hot Chocolate</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$94</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-12.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Pumpkin Soup</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$78</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-13.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Al Pastor Taco</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$48</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-14.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Caesar Salad</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$69</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-15.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Quinoa Salad</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$110</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="food-items">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
-                                        <img src="{% static 'assets/img/items/food-16.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
-                                    </a>
-                                    <a class="food-items-menu" href="#" data-bs-toggle="dropdown">
-                                        <i class="icon-ellipsis-vertical" ></i>
-                                    </a>
-                                     <ul class="dropdown-menu dropdown-menu-split">
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"><i class="icon-pencil-line me-2"></i>Edit Item</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item"><i class="icon-trash-2 me-2"></i>Delete</a></li>
-                                        <li><a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item"><i class="icon-eye-off me-2"></i>Hide Item</a></li>
-                                    </ul>
-                                </div>
-                                <h6 class="fs-14 fw-semibold"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">Lemon Mint Juice</a></h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <p class="mb-0">$96</p>
-                                    <div>
-                                        <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Veg</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
-                <!-- Row end -->
+                {% endif %}
 
-                <!-- Pagination start -->
-                <nav class="pagination-nav">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item">
-                            <a class="page-link d-flex align-items-center" href="javascript:void(0);" aria-label="Previous">
-                                <span aria-hidden="true" class="me-1"><i class="icon-chevron-left"></i></span>
-                                Pre
-                            </a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="javascript:void(0);">1</a></li>
-                        <li class="page-item"><a class="page-link" href="javascript:void(0);">2</a></li>
-                        <li class="page-item"><a class="page-link" href="javascript:void(0);">3</a></li>
-                        <li class="page-item">
-                            <a class="page-link d-flex align-items-center" href="javascript:void(0);" aria-label="Previous">
-                                Next
-                                <span aria-hidden="true" class="ms-1"><i class="icon-chevron-right"></i></span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-                <!-- Pagination end -->
-                                
-            </div>
-            <!-- End Content -->  
+                <!-- Row start -->
+                <div class="row" id="items-grid-container">
+                    {% include "partials/items_grid.html" %}
+                </div>
+                <!-- Row End -->
 
-        </div>
-
-        <!-- ========================
-			End Page Content
-		========================= -->
-
-       	<!-- Items Details -->
+        <!-- Items Details -->
         <div class="modal fade" id="items_details">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
@@ -1391,7 +955,7 @@
                             <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                         </div>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/items.html">                             
+                    <form action="javascript:void(0);">
                         <div class="modal-body p-4 pt-1">             
                             <div class="row row-gap-3">
                                 <div class="col-lg-6 col-sm-12">
@@ -1467,23 +1031,25 @@
                             <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                         </div>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/items.html">                             
+                    <form action="{% url 'item_add' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
                         <div class="modal-body p-4 pt-1">   
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
-                                        <div class="avatar avatar-3xl border bg-light">
-                                            <i class="icon-images fs-28 text-dark"></i>
+                                        <div class="avatar avatar-3xl border bg-light overflow-hidden" id="add-item-preview-wrap">
+                                            <i class="icon-images fs-28 text-dark" id="add-item-preview-icon"></i>
+                                            <img id="add-item-preview-img" src="" alt="item preview" class="img-fluid d-none w-100 h-100 object-fit-cover">
                                         </div>
                                         <div>
                                             <label class="form-label">Item Image<span class="text-danger"> *</span></label>
                                             <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                             <div class="d-flex align-items-center">
                                                 <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                                    <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                                    <input type="file" name="image" id="add-item-image-input" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                                     <i class="icon-upload"></i>
                                                 </div>
-                                                <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
+                                                <a href="#" id="add-item-image-clear" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
                                             </div>
                                         </div>                                        
                                     </div>
@@ -1491,51 +1057,47 @@
                                 <div class="col-lg-12">
                                     <div class="mb-3">
                                         <label class="form-label">Item Name<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control">
+                                        <input type="text" name="name" class="form-control" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-12">
                                     <div class="mb-3">
                                         <label class="form-label">Description<span class="text-danger"> *</span></label>
-                                        <textarea  rows="4" class="form-control mb-2"></textarea>
+                                        <textarea  rows="4" name="description" class="form-control mb-2"></textarea>
                                         <span>Add Minimum 200 Characters</span>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                         <label class="form-label">Price<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control">
+                                        <input type="text" name="price" class="form-control" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                         <label class="form-label">Net Price<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control">
+                                        <input type="text" name="net_price" class="form-control" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                         <label class="form-label">Category<span class="text-danger"> *</span></label>
-                                        <select class="select">
-                                            <option>Select</option>
-                                            <option>Sea Food</option>
-                                            <option>Pizza</option>
-                                            <option>Salads</option>
-                                            <option>Tacos</option>
-                                            <option>Burgers</option>
+                                        <select class="select" name="category_id" required>
+                                            <option value="">Select</option>
+                                            {% for category in all_categories %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                            {% endfor %}
                                         </select>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                         <label class="form-label">Tax<span class="text-danger"> *</span></label>
-                                        <select class="select">
-                                            <option>Select</option>
-                                            <option>CGST(9%)</option>
-                                            <option>SGST(9%)</option>
-                                            <option>IGST(18%)</option>
-                                            <option>VAT(10%)</option>
-                                            <option>Service Tax(15%)</option>
+                                        <select class="select" name="tax_id" required>
+                                            <option value="">Select</option>
+                                            {% for tax in all_taxes %}
+                                            <option value="{{ tax.id }}">{{ tax.title }}({{ tax.rate }}%)</option>
+                                            {% endfor %}
                                         </select>
                                     </div>
                                 </div>
@@ -1559,13 +1121,13 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Size<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control">
+                                                    <input type="text" name="variation_size" class="form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Price<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control">
+                                                    <input type="text" name="variation_price" class="form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-2 d-flex align-items-center gap-2 mt-3">
@@ -1600,13 +1162,13 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Name<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control">
+                                                    <input type="text" name="addon_name" class="form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Price($)<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control">
+                                                    <input type="text" name="addon_price" class="form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-2 d-flex align-items-center gap-2 mt-3">
@@ -1644,7 +1206,8 @@
                             <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                         </div>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/items.html">                             
+                    <form action="{% url 'item_update' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
                         <div class="modal-body p-4 pt-1">   
                             <div class="row">
                                 <div class="col-lg-12">
@@ -1657,7 +1220,7 @@
                                             <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                             <div class="d-flex align-items-center">
                                                 <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                                    <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                                    <input type="file" name="image" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                                     <i class="icon-pencil-line"></i>
                                                 </div>
                                                 <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
@@ -1668,13 +1231,13 @@
                                 <div class="col-lg-12">
                                     <div class="mb-3">
                                          <label class="form-label">Item Name<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control" value="Pasta">
+                                        <input type="text" id="edit-item-name" name="name" class="form-control" value="Pasta" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-12">
                                     <div class="mb-3">
                                          <label class="form-label">Description<span class="text-danger"> *</span></label>
-                                        <textarea  rows="4" class="form-control mb-2">Pasta is a traditional Italian dish made from wheat flour, water, or eggs, shaped into a variety of forms.
+                                        <textarea  rows="4" id="edit-item-description" name="description" class="form-control mb-2">Pasta is a traditional Italian dish made from wheat flour, water, or eggs, shaped into a variety of forms.
                                         </textarea>
                                         <span>Add Minimum 200 Characters</span>
                                     </div>
@@ -1682,42 +1245,39 @@
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                          <label class="form-label">Price<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control" value="$96">
+                                        <input type="text" id="edit-item-price" name="price" class="form-control" value="$96" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                          <label class="form-label">Net Price<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control" value="$96">
+                                        <input type="text" id="edit-item-net-price" name="net_price" class="form-control" value="$96" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                          <label class="form-label">Category<span class="text-danger"> *</span></label>
-                                         <select class="select">
-                                            <option>Select</option>
-                                            <option>Sea Food</option>
-                                            <option>Pizza</option>
-                                            <option selected>Salads</option>
-                                            <option>Tacos</option>
-                                            <option>Burgers</option>
+                                         <select class="select" id="edit-item-category" name="category_id" required>
+                                            <option value="">Select</option>
+                                            {% for category in all_categories %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                            {% endfor %}
                                         </select>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                          <label class="form-label">Tax<span class="text-danger"> *</span></label>
-                                         <select class="select">
-                                            <option>Select</option>
-                                            <option selected>CGST(9%)</option>
-                                            <option>SGST(9%)</option>
-                                            <option>IGST(18%)</option>
-                                            <option>VAT(10%)</option>
-                                            <option>Service Tax(15%)</option>
+                                         <select class="select" id="edit-item-tax" name="tax_id" required>
+                                            <option value="">Select</option>
+                                            {% for tax in all_taxes %}
+                                            <option value="{{ tax.id }}">{{ tax.title }}({{ tax.rate }}%)</option>
+                                            {% endfor %}
                                         </select>
                                     </div>
                                 </div>
                             </div>
+                            <input type="hidden" id="edit-item-id" name="item_id">
                             <div class="accordion-card-one accordion mb-3" id="accordionExample3">
                                 <div class="accordion-item pb-3">
                                     <div class="accordion-header" id="heading3">
@@ -1737,13 +1297,13 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Size<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control" value="M">
+                                                    <input type="text" name="variation_size" class="form-control" value="M">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Price<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control" value="22.25">
+                                                    <input type="text" name="variation_price" class="form-control" value="22.25">
                                                 </div>
                                             </div>
                                             <div class="col-lg-2 d-flex align-items-center gap-2 mt-3">
@@ -1756,13 +1316,13 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Size<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control">
+                                                    <input type="text" name="variation_size" class="form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Price($)<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control">
+                                                    <input type="text" name="variation_price" class="form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-2 d-flex align-items-center gap-2 mt-3">
@@ -1797,13 +1357,13 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Name<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control" value="Extra Cheese">
+                                                    <input type="text" name="addon_name" class="form-control" value="Extra Cheese">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Price($)<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control" value="2.50">
+                                                    <input type="text" name="addon_price" class="form-control" value="2.50">
                                                 </div>
                                             </div>
                                             <div class="col-lg-2 d-flex align-items-center gap-2 mt-3">
@@ -1816,13 +1376,13 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Name<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control">
+                                                    <input type="text" name="addon_name" class="form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Price($)<span class="text-danger"> *</span></label>
-                                                    <input type="text" class="form-control">
+                                                    <input type="text" name="addon_price" class="form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-2 d-flex align-items-center gap-2 mt-3">
@@ -1862,10 +1422,14 @@
                         </div>
                         <h4 class="mb-1">Delete Confirmation</h4>
                         <p class="mb-4">Are you sure you want to delete?</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
-                            <a href="{% url 'page' 'items' %}" class="btn btn-danger w-100">Delete</a>
-                        </div>
+                        <form action="{% url 'item_delete' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" id="delete-item-id" name="item_id">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1914,11 +1478,158 @@
 
     <!-- Main JS -->
     <script src="{% static 'assets/js/script.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            function buildItemsParams(targetPage) {
+                const input = document.getElementById("items-search-input");
+                if (!input) return null;
+                const params = new URLSearchParams(window.location.search);
+                const q = (input.value || "").trim();
+                if (q) {
+                    params.set("q", q);
+                } else {
+                    params.delete("q");
+                }
+                if (targetPage) {
+                    params.set("page", String(targetPage));
+                } else {
+                    params.delete("page");
+                }
+                return params;
+            }
+
+            function runItemsSearch(liveMode, targetPage) {
+                const params = buildItemsParams(targetPage);
+                if (!params) return;
+                const query = params.toString();
+
+                if (!liveMode) {
+                    window.location.href = query ? `{% url 'items' %}?${query}` : `{% url 'items' %}`;
+                    return;
+                }
+
+                const liveParams = new URLSearchParams(params);
+                liveParams.set("partial", "1");
+                fetch(`{% url 'items' %}?${liveParams.toString()}`, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                })
+                    .then(function (response) { return response.text(); })
+                    .then(function (html) {
+                        const container = document.getElementById("items-grid-container");
+                        if (container) container.innerHTML = html;
+                        const cleanUrl = query ? `{% url 'items' %}?${query}` : `{% url 'items' %}`;
+                        window.history.replaceState({}, "", cleanUrl);
+                    })
+                    .catch(function () {});
+            }
+
+            const searchInput = document.getElementById("items-search-input");
+            const searchTrigger = document.getElementById("items-search-trigger");
+            let searchDebounceTimer = null;
+            if (searchInput) {
+                searchInput.addEventListener("keydown", function (event) {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        runItemsSearch(true, 1);
+                    }
+                });
+                searchInput.addEventListener("input", function () {
+                    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+                    searchDebounceTimer = setTimeout(function () {
+                        runItemsSearch(true, 1);
+                    }, 300);
+                });
+            }
+            if (searchTrigger) {
+                searchTrigger.addEventListener("click", function () {
+                    runItemsSearch(true, 1);
+                });
+            }
+
+            document.addEventListener("click", function (event) {
+                const link = event.target.closest(".items-page-link");
+                if (!link) return;
+                event.preventDefault();
+                const pageValue = parseInt(link.getAttribute("data-page"), 10);
+                if (Number.isNaN(pageValue)) return;
+                const parent = link.closest(".page-item");
+                if (parent && parent.classList.contains("disabled")) return;
+                runItemsSearch(true, pageValue);
+            });
+
+            const addImageInput = document.getElementById("add-item-image-input");
+            const addPreviewImg = document.getElementById("add-item-preview-img");
+            const addPreviewIcon = document.getElementById("add-item-preview-icon");
+            const addImageClear = document.getElementById("add-item-image-clear");
+
+            function resetAddItemImagePreview() {
+                if (addImageInput) addImageInput.value = "";
+                if (addPreviewImg) {
+                    addPreviewImg.src = "";
+                    addPreviewImg.classList.add("d-none");
+                }
+                if (addPreviewIcon) addPreviewIcon.classList.remove("d-none");
+            }
+
+            if (addImageInput && addPreviewImg && addPreviewIcon) {
+                addImageInput.addEventListener("change", function () {
+                    const file = this.files && this.files[0];
+                    if (!file) {
+                        resetAddItemImagePreview();
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        addPreviewImg.src = e.target.result;
+                        addPreviewImg.classList.remove("d-none");
+                        addPreviewIcon.classList.add("d-none");
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (addImageClear) {
+                addImageClear.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    resetAddItemImagePreview();
+                });
+            }
+
+            const editModal = document.getElementById("edit_item");
+            if (editModal) {
+                editModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+                    const byId = function (id) { return document.getElementById(id); };
+                    if (byId("edit-item-id")) byId("edit-item-id").value = trigger.getAttribute("data-item-id") || "";
+                    if (byId("edit-item-name")) byId("edit-item-name").value = trigger.getAttribute("data-item-name") || "";
+                    if (byId("edit-item-description")) byId("edit-item-description").value = trigger.getAttribute("data-item-description") || "";
+                    if (byId("edit-item-price")) byId("edit-item-price").value = trigger.getAttribute("data-item-price") || "";
+                    if (byId("edit-item-net-price")) byId("edit-item-net-price").value = trigger.getAttribute("data-item-net-price") || "";
+                    if (byId("edit-item-category")) byId("edit-item-category").value = trigger.getAttribute("data-item-category-id") || "";
+                    if (byId("edit-item-tax")) byId("edit-item-tax").value = trigger.getAttribute("data-item-tax-id") || "";
+                });
+            }
+
+            const deleteModal = document.getElementById("delete_item");
+            if (deleteModal) {
+                deleteModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+                    const input = document.getElementById("delete-item-id");
+                    if (input) input.value = trigger.getAttribute("data-item-id") || "";
+                });
+            }
+        });
+    </script>
 </body>
 
 
 <!-- Mirrored from dreamspos.dreamstechnologies.com/food-pos/html/items.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 04 Mar 2026 11:21:38 GMT -->
 </html>
+
 
 
 

@@ -3,7 +3,6 @@
 <html lang="en">
 
 
-<!-- Mirrored from dreamspos.dreamstechnologies.com/food-pos/html/addons.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 04 Mar 2026 11:21:38 GMT -->
 <head>
 
 	<!-- Meta Tags -->
@@ -918,19 +917,19 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Addons<a href="#" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0"><a href="{% url 'addons' %}" class="text-dark">Addons</a> <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle ms-2" hx-get="{{ request.get_full_path }}" hx-target="#addons-table-container" hx-swap="innerHTML"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                 <i class="icon-upload me-1"></i>Export
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end p-3">
                                 <li>
-                                    <a href="#" class="dropdown-item rounded">Export as PDF</a>
+                                    <a href="{% url 'addons_export_pdf' %}?{{ request.GET.urlencode }}" class="dropdown-item rounded">Export as PDF</a>
                                 </li>
                                 <li>
-                                    <a href="#" class="dropdown-item rounded">Export as Excel</a>
+                                    <a href="{% url 'addons_export_excel' %}?{{ request.GET.urlencode }}" class="dropdown-item rounded">Export as Excel</a>
                                 </li>
                             </ul>
                         </div>
@@ -938,6 +937,13 @@
                     </div>
 				</div>
 				<!-- End Page Header -->
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
                 <!-- card start -->
                 <div class="card mb-0">
@@ -951,13 +957,13 @@
                             <div class="d-flex align-items-center gap-2 flex-wrap">      
                                 
                                 <!-- filter -->
-                                <a href="#" class="btn btn-white d-inline-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#filter-offcanvas" aria-controls="filter-offcanvas">
+                                <a href="javascript:void(0);" class="btn btn-white d-inline-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#filter-offcanvas" aria-controls="filter-offcanvas">
                                     <i class="icon-funnel me-2"></i>Filter
                                 </a>
 
                                 <!-- column -->
                                 <div class="dropdown">
-                                    <a href="#" class="btn btn-icon btn-white" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="icon-columns-3"></i></a>
+                                    <a href="javascript:void(0);" class="btn btn-icon btn-white" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="icon-columns-3"></i></a>
                                     <div class="dropdown-menu dropdown-menu-md dropdown-menu-end p-3 pb-0">
                                         <h5 class="mb-3">Column</h5>
                                         <div>
@@ -965,35 +971,35 @@
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox" checked>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="0" checked>
                                                     Item
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox" checked>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="1" checked>
                                                         Addon
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="2" checked>
                                                         Price
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="3" checked>
                                                         Status
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="4" checked>
                                                         Actions
                                                     </label>
                                                 </div>
@@ -1004,21 +1010,21 @@
 
                                 <!-- sort by -->
                                 <div class="dropdown">
-                                    <a href="#" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                                        Sort by : Newest
+                                    <a href="javascript:void(0);" id="sort-dropdown-label" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                        Sort by : {{ sort_label|default:"Newest" }}
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end p-3">
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Newest</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="newest">Newest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Oldest</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="oldest">Oldest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Ascending</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="ascending">Ascending</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Descending</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="descending">Descending</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -1026,145 +1032,8 @@
                         </div>
 
                        <!-- table start -->
-                        <div class="table-responsive table-nowrap">
-                            <table class="table mb-0 border datatable">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Addon</th>
-                                        <th>Price</th>
-                                         <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                           Pizza
-                                        </td>
-                                        <td>Extra Cheese</td>
-                                        <td>
-                                            $10
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Sauce</td>
-                                        <td>Garlic Butter Sauce</td>
-                                        <td>$5</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Sea Food</td>
-                                        <td>Grilled Shrimp</td>
-                                        <td>$20</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Salad</td>
-                                        <td>Avocado Slices</td>
-                                        <td>$5</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Sauce</td>
-                                        <td>Spicy Mayo</td>
-                                        <td>$10</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Topping</td>
-                                        <td>Crispy Bacon Bits</td>
-                                        <td>$5</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Side Dish</td>
-                                        <td>Side Fries</td>
-                                        <td>$10</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Topping</td>
-                                        <td>Guacamole</td>
-                                        <td>$12</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Sauce</td>
-                                        <td>Extra Dressing</td>
-                                        <td>$15</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Garnish</td>
-                                        <td>Lemon Wedge</td>
-                                        <td>$10</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    
-                                </tbody>
-                            </table>
+                        <div id="addons-table-container">
+                            {% include "partials/addons_table.html" %}
                         </div>
                         <!-- table end -->
                     </div>
@@ -1189,47 +1058,48 @@
                             <h4 class="modal-title">Add Addon</h4>
                             <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                         </div>
-                        <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/addons.html">                             
+                        <form action="{% url 'addon_add' %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
                             <div class="modal-body p-4 pt-1">             
                                 <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
-                                    <div class="avatar avatar-3xl border bg-light">
-                                        <i class="icon-images fs-28 text-dark"></i>
+                                    <div class="avatar avatar-3xl border bg-light overflow-hidden" id="add-addon-preview-wrap">
+                                        <i class="icon-images fs-28 text-dark" id="add-addon-preview-icon"></i>
+                                        <img id="add-addon-preview-img" src="" alt="addon preview" class="img-fluid d-none w-100 h-100 object-fit-cover">
                                     </div>
                                     <div>
                                         <label class="form-label">Category Image<span class="text-danger"> *</span></label>
                                         <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                         <div class="d-flex align-items-center">
                                             <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                                <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                                <input type="file" name="image" id="add-addon-image-input" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                                 <i class="icon-pencil-line"></i>
                                             </div>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
+                                            <a href="#" id="add-addon-image-clear" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
                                         </div>
                                     </div>                                        
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Item<span class="text-danger"> *</span></label>
-                                    <select class="select">
-                                        <option>Select</option>
-                                        <option>Pizza</option>
-                                        <option>Sea Food</option>
-                                        <option>Salad</option>
-                                        <option>Sauce</option>
-                                        <option>Topping</option>
+                                    <select class="select" name="item_id" required>
+                                        <option value="">Select</option>
+                                        {% for item in all_items %}
+                                        <option value="{{ item.id }}">{{ item.name }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Addon<span class="text-danger"> *</span></label>
-                                    <input type="text" class="form-control">
+                                    <input type="text" name="name" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Price<span class="text-danger"> *</span></label>
-                                    <input type="text" class="form-control">
+                                    <input type="text" name="price" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Description<span class="text-danger"> *</span></label>
-                                    <textarea rows="4" class="form-control"></textarea>
+                                    <textarea rows="4" name="description" class="form-control"></textarea>
                                 </div>
+                                <input type="hidden" name="status" value="Active">
                                 <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
                                     <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-primary w-100">Save</button>
@@ -1249,47 +1119,49 @@
                             <h4 class="modal-title">Edit Addon</h4>
                             <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                         </div>
-                        <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/addons.html">                             
+                        <form action="{% url 'addon_update' %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
                             <div class="modal-body p-4 pt-1">             
                                 <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
-                                    <div class="avatar avatar-3xl border bg-light">
-                                        <img src="{% static 'assets/img/items/food-02.jpg' %}" alt="addon" class="img-fluid">
+                                    <div class="avatar avatar-3xl border bg-light overflow-hidden" id="edit-addon-preview-wrap">
+                                        <i class="icon-images fs-28 text-dark d-none" id="edit-addon-preview-icon"></i>
+                                        <img id="edit-addon-preview-img" src="{% static 'assets/img/items/food-02.jpg' %}" alt="addon" class="img-fluid w-100 h-100 object-fit-cover">
                                     </div>
                                     <div>
                                         <label class="form-label">Category Image<span class="text-danger"> *</span></label>
                                         <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                         <div class="d-flex align-items-center">
                                             <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                                <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                                <input type="file" name="image" id="edit-addon-image-input" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                                 <i class="icon-pencil-line"></i>
                                             </div>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
+                                            <a href="#" id="edit-addon-image-clear" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
                                         </div>
                                     </div>                                        
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Item<span class="text-danger"> *</span></label>
-                                    <select class="select">
-                                        <option>Select</option>
-                                        <option selected>Pizza</option>
-                                        <option>Sea Food</option>
-                                        <option>Salad</option>
-                                        <option>Sauce</option>
-                                        <option>Topping</option>
+                                    <select class="select" id="edit-addon-item" name="item_id" required>
+                                        <option value="">Select</option>
+                                        {% for item in all_items %}
+                                        <option value="{{ item.id }}">{{ item.name }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Addon<span class="text-danger"> *</span></label>
-                                    <input type="text" class="form-control" value="Extra Cheese">
+                                    <input type="text" id="edit-addon-name" name="name" class="form-control" value="Extra Cheese" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Price<span class="text-danger"> *</span></label>
-                                    <input type="text" class="form-control" value="$10">
+                                    <input type="text" id="edit-addon-price" name="price" class="form-control" value="$10" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Description<span class="text-danger"> *</span></label>
-                                    <textarea rows="4" class="form-control">Extra cheese for your pizza.</textarea>
+                                    <textarea rows="4" id="edit-addon-description" name="description" class="form-control">Extra cheese for your pizza.</textarea>
                                 </div>
+                                <input type="hidden" id="edit-addon-id" name="addon_id">
+                                <input type="hidden" id="edit-addon-status" name="status" value="Active">
                                 <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
                                     <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-primary w-100">Save</button>
@@ -1313,10 +1185,14 @@
                         </div>
                         <h4 class="mb-1">Delete Confirmation</h4>
                         <p class="mb-4">Are you sure you want to delete?</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
-                            <a href="{% url 'page' 'addons' %}" class="btn btn-danger w-100">Delete</a>
-                        </div>
+                        <form action="{% url 'addon_delete' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" id="delete-addon-id" name="addon_id">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1331,56 +1207,14 @@
                     <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="offcanvas" aria-label="Close"><i class="icon-x"></i></button>
                 </div>
             </div>
-            <div class="offcanvas-body d-flex flex-column pt-3">
+            <form action="{% url 'addons_apply' %}" method="post" class="offcanvas-body d-flex flex-column pt-3">
+                {% csrf_token %}
+                <input type="hidden" name="sort_by" value="{{ sort_by|default:'newest' }}">
                 <div>
-                    <div class="mb-3">
-                        <label class="form-label">Item<span class="text-danger"> *</span></label>
-                        <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                Select
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end p-3 w-100">
-                                <h6 class="fs-14 fw-semibold mb-3">Category</h6>
-                                <div class="input-icon-end input-icon position-relative mb-3">
-                                    <span class="input-icon-addon">
-                                        <i class="icon-search text-dark"></i>
-                                    </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
-                                </div>  
-                                <div class="vstack gap-2">
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Pizza
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Sea Food
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Salad
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Sauce
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Topping
-                                        </label>
-                                    </div>
-                                </div>  
-                            </div>
-                        </div>
-                    </div>
                     <div class="mb-3">
                         <label class="form-label">Addon<span class="text-danger"> *</span></label>
                         <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 Select
                             </a>
                             <div class="dropdown-menu dropdown-menu-end p-3 w-100">
@@ -1389,75 +1223,37 @@
                                     <span class="input-icon-addon">
                                         <i class="icon-search text-dark"></i>
                                     </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
+                                    <input type="text" id="addon-name-filter-search" class="form-control form-control-md" placeholder="Search">
                                 </div>  
-                                <div class="vstack gap-2">
-                                    <div>
+                                <div class="vstack gap-2" id="addon-name-filter-list">
+                                    {% for addon in all_addons %}
+                                    <div class="addon-name-filter-row" data-name="{{ addon.name|lower }}">
                                         <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Extra Cheese
+                                            <input class="form-check-input m-0 me-2" type="checkbox" name="addon" value="{{ addon.id }}" {% if addon.id|stringformat:'s' in selected_addon_ids %}checked{% endif %}>{{ addon.name }}
                                         </label>
                                     </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Grilled Shrimp
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Avocado Slices
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Spicy Mayo
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Crispy Bacon Bits
-                                        </label>
-                                    </div>
+                                    {% endfor %}
                                 </div>  
                             </div>
                         </div>
                     </div>
                     <div class="mb-0">
                         <label class="form-label">Status<span class="text-danger"> *</span></label>
-                        <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                Select
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end p-3 w-100">
-                                <h6 class="fs-14 fw-semibold mb-3">Category</h6>
-                                <div class="input-icon-end input-icon position-relative mb-3">
-                                    <span class="input-icon-addon">
-                                        <i class="icon-search text-dark"></i>
-                                    </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
-                                </div>  
-                                <div class="vstack gap-2">
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Active
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Expired
-                                        </label>
-                                    </div>
-                                </div>  
-                            </div>
-                        </div>
+                        <select class="select" name="status">
+                            <option value="">Select</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
                 
                     <div class="d-flex align-items-center gap-2 mt-auto border-0">
-                        <a href="#" class="btn btn-light w-100">Reset</a>
-                        <a href="#" class="btn btn-primary w-100">Apply</a>
+                        <a href="{% url 'addons' %}" class="btn btn-light w-100">Reset</a>
+                        <button type="submit" class="btn btn-primary w-100">Apply</button>
                     </div>
                 
-            </div>
+            </form>
         </div>
         <!-- End Filter -->
 
@@ -1484,8 +1280,221 @@
     <!-- Select2 Js -->	
     <script src="{% static 'assets/plugins/select2/js/select2.min.js' %}" type="text/javascript"></script>
 
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
     <!-- Main JS -->
     <script src="{% static 'assets/js/script.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            function getCurrentAddonsDataTable() {
+                if (!window.jQuery || !jQuery.fn.DataTable) return null;
+                const table = jQuery("#addons-table-container .datatable");
+                if (!table.length) return null;
+                if (!jQuery.fn.DataTable.isDataTable(table[0])) return null;
+                return table.DataTable();
+            }
+
+            function applyColumnToggles(dataTable) {
+                if (!dataTable) return;
+                jQuery(".column-toggle-checkbox").each(function () {
+                    const idx = parseInt(this.getAttribute("data-column-index"), 10);
+                    if (Number.isNaN(idx)) return;
+                    dataTable.column(idx).visible(this.checked, false);
+                });
+                dataTable.columns.adjust().draw(false);
+            }
+
+            function initAddonsDatatable() {
+                if (!window.jQuery || !jQuery.fn.DataTable) return;
+                const table = jQuery("#addons-table-container .datatable");
+                if (!table.length) return;
+                if (jQuery.fn.DataTable.isDataTable(table[0])) {
+                    return;
+                }
+                jQuery(".search-input .dt-search").remove();
+                table.DataTable({
+                    bFilter: true,
+                    sDom: "fBtlp",
+                    ordering: false,
+                    language: {
+                        search: " ",
+                        sLengthMenu: "_MENU_",
+                        searchPlaceholder: "Search",
+                        sLengthMenu: " _MENU_ Entries",
+                        info: "_START_ - _END_ of _TOTAL_ items",
+                        paginate: {
+                            next: " Next <i class=\"icon-chevron-right\"></i>",
+                            previous: "<i class=\"icon-chevron-left\"></i> Prev"
+                        }
+                    },
+                    initComplete: function (settings) {
+                        const currentSearch = jQuery(settings.nTableWrapper).find(".dt-search");
+                        if (currentSearch.length) {
+                            currentSearch.appendTo(".search-input");
+                        }
+                    }
+                });
+                applyColumnToggles(getCurrentAddonsDataTable());
+            }
+
+            applyColumnToggles(getCurrentAddonsDataTable());
+
+            jQuery(document).off("change.addonColumnToggles").on("change.addonColumnToggles", ".column-toggle-checkbox", function () {
+                const dataTable = getCurrentAddonsDataTable();
+                if (!dataTable) return;
+                const idx = parseInt(this.getAttribute("data-column-index"), 10);
+                if (Number.isNaN(idx)) return;
+                dataTable.column(idx).visible(this.checked);
+                dataTable.columns.adjust().draw(false);
+            });
+
+            document.body.addEventListener("htmx:afterSwap", function (event) {
+                if (event.target && event.target.id === "addons-table-container") {
+                    initAddonsDatatable();
+                }
+            });
+
+            document.querySelectorAll(".sort-option").forEach(function (el) {
+                el.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    const sortValue = this.getAttribute("data-sort") || "newest";
+                    const params = new URLSearchParams(window.location.search);
+                    params.set("sort_by", sortValue);
+                    const url = `{% url 'addons' %}?${params.toString()}`;
+                    const label = document.getElementById("sort-dropdown-label");
+                    if (label) label.textContent = `Sort by : ${this.textContent.trim()}`;
+                    const hiddenSortInput = document.querySelector('#filter-offcanvas input[name="sort_by"]');
+                    if (hiddenSortInput) hiddenSortInput.value = sortValue;
+                    if (window.htmx) {
+                        htmx.ajax("GET", url, {
+                            target: "#addons-table-container",
+                            swap: "innerHTML"
+                        });
+                    }
+                    window.history.replaceState({}, "", url);
+                });
+            });
+
+            const addImageInput = document.getElementById("add-addon-image-input");
+            const addPreviewImg = document.getElementById("add-addon-preview-img");
+            const addPreviewIcon = document.getElementById("add-addon-preview-icon");
+            const addImageClear = document.getElementById("add-addon-image-clear");
+
+            function resetAddAddonPreview() {
+                if (addImageInput) addImageInput.value = "";
+                if (addPreviewImg) {
+                    addPreviewImg.src = "";
+                    addPreviewImg.classList.add("d-none");
+                }
+                if (addPreviewIcon) addPreviewIcon.classList.remove("d-none");
+            }
+
+            if (addImageInput && addPreviewImg && addPreviewIcon) {
+                addImageInput.addEventListener("change", function () {
+                    const file = this.files && this.files[0];
+                    if (!file) {
+                        resetAddAddonPreview();
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        addPreviewImg.src = e.target.result;
+                        addPreviewImg.classList.remove("d-none");
+                        addPreviewIcon.classList.add("d-none");
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            if (addImageClear) {
+                addImageClear.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    resetAddAddonPreview();
+                });
+            }
+
+            const editModal = document.getElementById("edit_modifier");
+            if (editModal) {
+                editModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+                    const byId = function (id) { return document.getElementById(id); };
+                    if (byId("edit-addon-id")) byId("edit-addon-id").value = trigger.getAttribute("data-addon-id") || "";
+                    if (byId("edit-addon-item")) byId("edit-addon-item").value = trigger.getAttribute("data-addon-item-id") || "";
+                    if (byId("edit-addon-name")) byId("edit-addon-name").value = trigger.getAttribute("data-addon-name") || "";
+                    if (byId("edit-addon-price")) byId("edit-addon-price").value = trigger.getAttribute("data-addon-price") || "";
+                    if (byId("edit-addon-description")) byId("edit-addon-description").value = trigger.getAttribute("data-addon-description") || "";
+                    if (byId("edit-addon-status")) byId("edit-addon-status").value = trigger.getAttribute("data-addon-status") || "Active";
+                    const previewImg = byId("edit-addon-preview-img");
+                    const previewIcon = byId("edit-addon-preview-icon");
+                    const imageUrl = trigger.getAttribute("data-addon-image") || "";
+                    if (previewImg && imageUrl) {
+                        previewImg.src = imageUrl;
+                        previewImg.classList.remove("d-none");
+                    }
+                    if (previewIcon) previewIcon.classList.add("d-none");
+                    const editImageInput = byId("edit-addon-image-input");
+                    if (editImageInput) editImageInput.value = "";
+                });
+            }
+
+            const editImageInput = document.getElementById("edit-addon-image-input");
+            const editPreviewImg = document.getElementById("edit-addon-preview-img");
+            const editPreviewIcon = document.getElementById("edit-addon-preview-icon");
+            const editImageClear = document.getElementById("edit-addon-image-clear");
+
+            if (editImageInput && editPreviewImg && editPreviewIcon) {
+                editImageInput.addEventListener("change", function () {
+                    const file = this.files && this.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        editPreviewImg.src = e.target.result;
+                        editPreviewImg.classList.remove("d-none");
+                        editPreviewIcon.classList.add("d-none");
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            if (editImageClear) {
+                editImageClear.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    if (editImageInput) editImageInput.value = "";
+                    if (editPreviewImg) {
+                        editPreviewImg.src = "";
+                        editPreviewImg.classList.add("d-none");
+                    }
+                    if (editPreviewIcon) editPreviewIcon.classList.remove("d-none");
+                });
+            }
+
+            const deleteModal = document.getElementById("delete_modal");
+            if (deleteModal) {
+                deleteModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+                    const input = document.getElementById("delete-addon-id");
+                    if (input) input.value = trigger.getAttribute("data-addon-id") || "";
+                });
+            }
+
+            function bindFilterSearch(inputId, rowSelector) {
+                const input = document.getElementById(inputId);
+                const rows = document.querySelectorAll(rowSelector);
+                if (!input || !rows.length) return;
+                input.addEventListener("input", function () {
+                    const q = this.value.trim().toLowerCase();
+                    rows.forEach(function (row) {
+                        const name = row.getAttribute("data-name") || "";
+                        row.style.display = name.includes(q) ? "" : "none";
+                    });
+                });
+            }
+
+            bindFilterSearch("addon-item-filter-search", "#addon-item-filter-list .addon-item-filter-row");
+            bindFilterSearch("addon-name-filter-search", "#addon-name-filter-list .addon-name-filter-row");
+        });
+    </script>
 </body>
 
 

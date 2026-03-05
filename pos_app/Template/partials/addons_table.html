@@ -1,0 +1,36 @@
+{% load static %}
+<div class="table-responsive table-nowrap">
+    <table class="table mb-0 border datatable">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Addon</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if addons %}
+            {% for addon in addons %}
+            <tr>
+                <td>{{ addon.item.name }}</td>
+                <td>{{ addon.name }}</td>
+                <td>${{ addon.price|floatformat:2 }}</td>
+                <td>
+                    {% if addon.status == "Active" %}
+                    <span class="badge badge-soft-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-soft-danger">Expired</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_modifier" data-addon-id="{{ addon.id }}" data-addon-item-id="{{ addon.item_id }}" data-addon-name="{{ addon.name }}" data-addon-price="{{ addon.price }}" data-addon-description="{{ addon.description|escapejs }}" data-addon-status="{{ addon.status }}" data-addon-image="{% if addon.image %}{{ addon.image.url }}{% else %}{% static 'assets/img/items/food-02.jpg' %}{% endif %}"><i class="icon-pencil-line"></i></a>
+                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal" data-addon-id="{{ addon.id }}"><i class="icon-trash-2"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>

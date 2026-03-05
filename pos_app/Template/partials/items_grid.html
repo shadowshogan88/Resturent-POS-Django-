@@ -1,0 +1,22 @@
+{% include "partials/items_cards.html" %}
+<div class="col-12 mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            <a class="page-link d-flex align-items-center items-page-link" href="javascript:void(0);" data-page="{% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% else %}{{ page_obj.number }}{% endif %}" aria-label="Previous">
+                <span aria-hidden="true" class="me-1"><i class="icon-chevron-left"></i></span>
+                Pre
+            </a>
+        </li>
+        {% for num in page_numbers %}
+        <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+            <a class="page-link items-page-link" href="javascript:void(0);" data-page="{{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            <a class="page-link d-flex align-items-center items-page-link" href="javascript:void(0);" data-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}{{ page_obj.number }}{% endif %}" aria-label="Next">
+                Next
+                <span aria-hidden="true" class="ms-1"><i class="icon-chevron-right"></i></span>
+            </a>
+        </li>
+    </ul>
+</div>

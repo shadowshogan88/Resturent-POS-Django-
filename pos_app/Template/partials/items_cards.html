@@ -1,0 +1,60 @@
+{% load static %}
+{% for item in items %}
+<div class="col-lg-3 col-md-4 col-sm-6">
+    <div class="card">
+        <div class="card-body">
+            <div class="food-items">
+                <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#items_details">
+                    {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="item" class="img-fluid mb-3 w-100 rounded">
+                    {% else %}
+                    <img src="{% static 'assets/img/items/food-01.jpg' %}" alt="item" class="img-fluid mb-3 w-100 rounded">
+                    {% endif %}
+                </a>
+                <a class="food-items-menu" href="javascript:void(0);" data-bs-toggle="dropdown">
+                    <i class="icon-ellipsis-vertical"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-split">
+                    <li>
+                        <a href="javascript:void(0);" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit_item"
+                           data-item-id="{{ item.id }}"
+                           data-item-name="{{ item.name }}"
+                           data-item-description="{{ item.description|escapejs }}"
+                           data-item-price="{{ item.price }}"
+                           data-item-net-price="{{ item.net_price }}"
+                           data-item-category-id="{{ item.category_id }}"
+                           data-item-tax-id="{{ item.tax_id }}">
+                            <i class="icon-pencil-line me-2"></i>Edit Item
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0);" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_item" data-item-id="{{ item.id }}">
+                            <i class="icon-trash-2 me-2"></i>Delete
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0);" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#hide_item">
+                            <i class="icon-eye-off me-2"></i>Hide Item
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <h6 class="fs-14 fw-semibold"><a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#items_details">{{ item.name }}</a></h6>
+            <div class="d-flex align-items-center justify-content-between">
+                <p class="mb-0">${{ item.price|floatformat:2 }}</p>
+                <div>
+                    <span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>{{ item.category.name }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="col-12">
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <p class="mb-0">No items found.</p>
+        </div>
+    </div>
+</div>
+{% endfor %}
