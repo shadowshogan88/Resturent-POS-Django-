@@ -1162,7 +1162,7 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Name<span class="text-danger"> *</span></label>
-                                                    <input type="text" name="addon_name" class="form-control">
+                                                    <input type="text" name="addon_name" class="form-control" list="item-addon-name-options">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
@@ -1357,7 +1357,7 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Name<span class="text-danger"> *</span></label>
-                                                    <input type="text" name="addon_name" class="form-control" value="Extra Cheese">
+                                                    <input type="text" name="addon_name" class="form-control" value="Extra Cheese" list="item-addon-name-options">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
@@ -1376,7 +1376,7 @@
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
                                                     <label class="form-label">Name<span class="text-danger"> *</span></label>
-                                                    <input type="text" name="addon_name" class="form-control">
+                                                    <input type="text" name="addon_name" class="form-control" list="item-addon-name-options">
                                                 </div>
                                             </div>
                                             <div class="col-lg-5">
@@ -1476,6 +1476,13 @@
     <!-- Select2 Js -->	
     <script src="{% static 'assets/plugins/select2/js/select2.min.js' %}" type="text/javascript"></script>
 
+    <datalist id="item-addon-name-options">
+        {% for entry in addon_suggestions %}
+        <option value="{{ entry.name }}"></option>
+        {% endfor %}
+    </datalist>
+    {{ addon_suggestions|json_script:"item-addon-suggestions-data" }}
+
     <!-- Main JS -->
     <script src="{% static 'assets/js/script.js' %}" type="text/javascript"></script>
     <script type="text/javascript">
@@ -1558,6 +1565,43 @@
                 if (parent && parent.classList.contains("disabled")) return;
                 runItemsSearch(true, pageValue);
             });
+
+            const addonDataScript = document.getElementById("item-addon-suggestions-data");
+            let addonNamePriceMap = {};
+            if (addonDataScript) {
+                try {
+                    const addonList = JSON.parse(addonDataScript.textContent || "[]");
+                    addonList.forEach(function (entry) {
+                        const key = String(entry.name || "").trim().toLowerCase();
+                        if (!key) return;
+                        addonNamePriceMap[key] = entry.price;
+                    });
+                } catch (e) {
+                    addonNamePriceMap = {};
+                }
+            }
+
+            function autoFillAddonPrice(nameInput) {
+                if (!nameInput) return;
+                const row = nameInput.closest(".row");
+                if (!row) return;
+                const priceInput = row.querySelector('input[name="addon_price"]');
+                if (!priceInput) return;
+                const key = (nameInput.value || "").trim().toLowerCase();
+                if (!key || !(key in addonNamePriceMap)) return;
+                priceInput.value = addonNamePriceMap[key];
+            }
+
+            document.addEventListener("change", function (event) {
+                if (event.target && event.target.matches('input[name="addon_name"]')) {
+                    autoFillAddonPrice(event.target);
+                }
+            });
+            document.addEventListener("blur", function (event) {
+                if (event.target && event.target.matches('input[name="addon_name"]')) {
+                    autoFillAddonPrice(event.target);
+                }
+            }, true);
 
             const addImageInput = document.getElementById("add-item-image-input");
             const addPreviewImg = document.getElementById("add-item-preview-img");

@@ -689,6 +689,9 @@ def items_view(request):
         "query": query,
         "all_categories": Category.objects.all(),
         "all_taxes": Tax.objects.all(),
+        "addon_suggestions": list(
+            Addon.objects.order_by("name").values("name", "price")
+        ),
     }
     if request.GET.get("partial") == "1":
         return render(request, "partials/items_grid.html", context)
