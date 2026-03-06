@@ -927,59 +927,61 @@
                     <!-- card start -->
                     <div class="card mb-0">
                         <div class="card-body">
-                            <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/store-settings.html">
+                            <form method="post" enctype="multipart/form-data" action="{% url 'store_settings' %}">
+                                {% csrf_token %}
 
                                 <!-- start row -->
                                 <div class="row">
 
                                     <div class="col-xl-12">
                                         <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
-                                            <div class="avatar avatar-3xl border bg-light">
-                                                <i class="icon-images fs-28 text-dark"></i>
+                                            <div class="avatar avatar-3xl border bg-light overflow-hidden" id="store-image-preview-wrap">
+                                                <i class="icon-images fs-28 text-dark {% if store_settings.store_image %}d-none{% endif %}" id="store-image-preview-icon"></i>
+                                                <img id="store-image-preview-img" src="{% if store_settings.store_image %}{{ store_settings.store_image.url }}{% endif %}" alt="store preview" class="img-fluid {% if not store_settings.store_image %}d-none{% endif %} w-100 h-100 object-fit-cover">
                                             </div>
                                             <div>
-                                                <label class="form-label mb-1">Upload Store Image</label>
+                                                <label class="form-label">Store Image</label>
                                                 <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                                 <div class="d-flex align-items-center">
                                                     <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                                        <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                                        <input type="file" name="store_image" id="store-image-input" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                                         <i class="icon-upload"></i>
                                                     </div>
-                                                    <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
+                                                    <a href="#" id="store-image-clear" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
                                                 </div>
                                             </div>                                        
                                         </div>
+                                        <input type="hidden" name="remove_store_image" id="remove-store-image" value="0">
                                     </div> <!-- end col -->
 
                                     <div class="col-md-12">
                                         <div class="mb-3">
                                             <label class="form-label">Store Name<span class="text-danger ms-1">*</span></label>
-                                            <input type="text" class="form-control">
+                                            <input type="text" name="store_name" value="{{ store_settings.store_name }}" class="form-control">
                                         </div>
                                     </div> <!-- end col -->
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">Address 1<span class="text-danger ms-1">*</span></label>
-                                            <input type="text" class="form-control">
+                                            <input type="text" name="address_1" value="{{ store_settings.address_1 }}" class="form-control">
                                         </div>
                                     </div> <!-- end col -->
 
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">Address 2</label>
-                                            <input type="text" class="form-control">
+                                            <input type="text" name="address_2" value="{{ store_settings.address_2 }}" class="form-control">
                                         </div>
                                     </div> <!-- end col -->
 
                                     <div class="col-md-3">
                                         <div class="mb-3">
                                             <label class="form-label">Country<span class="text-danger ms-1">*</span></label>
-                                            <select class="select">
-                                                <option>Select</option>
-                                                <option>United States</option>
-                                                <option>Canada</option>
-                                                <option>Germany</option>
-                                                <option>France</option>
+                                            <select class="select" name="country">
+                                                <option value="">Select</option>
+                                                {% for country in store_countries %}
+                                                <option value="{{ country }}" {% if store_settings.country == country %}selected{% endif %}>{{ country }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                     </div> <!-- end col -->
@@ -987,12 +989,11 @@
                                     <div class="col-md-3">
                                         <div class="mb-3">
                                             <label class="form-label">State<span class="text-danger ms-1">*</span></label>
-                                            <select class="select">
-                                                <option>Select</option>
-                                                <option>California</option>
-                                                <option>New York</option>
-                                                <option>Texas</option>
-                                                <option>Florida</option>
+                                            <select class="select" name="state">
+                                                <option value="">Select</option>
+                                                {% for state in store_states %}
+                                                <option value="{{ state }}" {% if store_settings.state == state %}selected{% endif %}>{{ state }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                     </div> <!-- end col -->
@@ -1000,12 +1001,11 @@
                                     <div class="col-md-3">
                                         <div class="mb-3">
                                             <label class="form-label">City<span class="text-danger ms-1">*</span></label>
-                                            <select class="select">
-                                                <option>Select</option>
-                                                <option>Los Angeles</option>
-                                                <option>San Diego</option>
-                                                <option>Fresno</option>
-                                                <option>San Francisco</option>
+                                            <select class="select" name="city">
+                                                <option value="">Select</option>
+                                                {% for city in store_cities %}
+                                                <option value="{{ city }}" {% if store_settings.city == city %}selected{% endif %}>{{ city }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                     </div> <!-- end col -->
@@ -1013,7 +1013,7 @@
                                     <div class="col-md-3">
                                         <div class="mb-3">
                                             <label class="form-label">Pincode<span class="text-danger ms-1">*</span></label>
-                                            <input type="text" class="form-control">
+                                            <input type="text" name="pincode" value="{{ store_settings.pincode }}" class="form-control">
                                         </div>
                                     </div> <!-- end col -->
                                     
@@ -1021,26 +1021,25 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">Email<span class="text-danger ms-1">*</span></label>
-                                            <input type="email" class="form-control">
+                                            <input type="email" name="email" value="{{ store_settings.email }}" class="form-control">
                                         </div>
                                     </div> <!-- end col -->
 
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">Phone<span class="text-danger ms-1">*</span></label>
-                                            <input type="tel" class="form-control" id="phone" name="phone">
+                                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ store_settings.phone }}">
                                         </div>
                                     </div> <!-- end col -->
 
                                     <div class="col-md-12">
                                         <div class="mb-3">
                                             <label class="form-label">Currency<span class="text-danger ms-1">*</span></label>
-                                            <select class="select">
-                                                <option>Select</option>
-                                                <option>USD</option>
-                                                <option>AED</option>
-                                                <option>EUR</option>
-                                                <option>INR</option>
+                                            <select class="select" name="currency">
+                                                <option value="">Select</option>
+                                                {% for currency in store_currency_options %}
+                                                <option value="{{ currency.code }}" {% if store_settings.currency == currency.code %}selected{% endif %}>{{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                     </div> <!-- end col -->
@@ -1048,19 +1047,19 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked" name="enable_qr_menu" {% if store_settings.enable_qr_menu %}checked{% endif %}>
                                                 <label class="form-check-label" for="switchCheckChecked">Enable QR Menu</label>
                                             </div>
                                             <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked1" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked1" name="enable_take_away" {% if store_settings.enable_take_away %}checked{% endif %}>
                                                 <label class="form-check-label" for="switchCheckChecked1">Enable Take Away</label>
                                             </div>
                                             <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked2" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked2" name="enable_dine_in" {% if store_settings.enable_dine_in %}checked{% endif %}>
                                                 <label class="form-check-label" for="switchCheckChecked2">Enable Dine In</label>
                                             </div>
                                             <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked3">
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked3" name="enable_reservation" {% if store_settings.enable_reservation %}checked{% endif %}>
                                                 <label class="form-check-label" for="switchCheckChecked3">Enable Reservation</label>
                                             </div>
                                         </div>
@@ -1069,15 +1068,15 @@
                                     <div class="col-md-6">
                                         <div class="mb-0">
                                             <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked4" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked4" name="enable_order_via_qr_menu" {% if store_settings.enable_order_via_qr_menu %}checked{% endif %}>
                                                 <label class="form-check-label" for="switchCheckChecked4">Enable Order Via QR Menu</label>
                                             </div>
                                             <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked5" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked5" name="enable_delivery" {% if store_settings.enable_delivery %}checked{% endif %}>
                                                 <label class="form-check-label" for="switchCheckChecked5">Enable Delivery</label>
                                             </div>
                                             <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked6" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked6" name="enable_table" {% if store_settings.enable_table %}checked{% endif %}>
                                                 <label class="form-check-label" for="switchCheckChecked6">Enable Table</label>
                                             </div>
                                         </div>
@@ -1087,7 +1086,7 @@
                                 <!-- end row -->                              
 
                                 <div class="d-flex align-items-center justify-content-end flex-wrap row-gap-2 border-top mt-2 pt-4">
-                                    <button type="button" class="btn btn-light me-2">Cancel</button>
+                                    <button type="reset" class="btn btn-light me-2">Cancel</button>
                                     <button type="submit" class="btn btn-primary">Save Changes</button>
                                 </div>
 
@@ -1128,6 +1127,54 @@
 
     <!-- Flatpickr JS -->
 	<script src="{% static 'assets/plugins/flatpickr/flatpickr.min.js' %}" type="text/javascript"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const imageInput = document.getElementById("store-image-input");
+            const previewImg = document.getElementById("store-image-preview-img");
+            const previewIcon = document.getElementById("store-image-preview-icon");
+            const clearBtn = document.getElementById("store-image-clear");
+            const removeFlagInput = document.getElementById("remove-store-image");
+            const initialSrc = previewImg ? (previewImg.getAttribute("src") || "").trim() : "";
+
+            if (!imageInput || !previewImg || !previewIcon || !clearBtn || !removeFlagInput) {
+                return;
+            }
+
+            function showIcon() {
+                previewImg.classList.add("d-none");
+                previewImg.setAttribute("src", "");
+                previewIcon.classList.remove("d-none");
+            }
+
+            function showImage(src) {
+                previewImg.setAttribute("src", src);
+                previewImg.classList.remove("d-none");
+                previewIcon.classList.add("d-none");
+            }
+
+            imageInput.addEventListener("change", function () {
+                const file = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+                if (!file) {
+                    if (initialSrc) {
+                        showImage(initialSrc);
+                    } else {
+                        showIcon();
+                    }
+                    return;
+                }
+                showImage(URL.createObjectURL(file));
+                removeFlagInput.value = "0";
+            });
+
+            clearBtn.addEventListener("click", function (event) {
+                event.preventDefault();
+                imageInput.value = "";
+                showIcon();
+                removeFlagInput.value = initialSrc ? "1" : "0";
+            });
+        });
+    </script>
 
     <!-- Main JS -->
     <script src="{% static 'assets/js/script.js' %}" type="text/javascript"></script>

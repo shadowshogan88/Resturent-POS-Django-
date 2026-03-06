@@ -928,7 +928,8 @@
                     <div class="card">
                         
                         <div class="card-body">
-                            <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/print-settings.html">
+                            <form method="post" action="{% url 'print_settings' %}">
+                                {% csrf_token %}
 
                                 <h5 class="mb-3">Print Settings</h5>
 
@@ -939,15 +940,15 @@
                                         <div class="mb-3">
                                             <div class="form-check form-switch mb-3 d-flex align-items-center justify-content-between ps-0">
                                                 <label class="form-check-label" for="switchCheckChecked">Enable Print</label>
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked" name="enable_print" {% if print_settings.enable_print %}checked{% endif %}>
                                             </div>
                                             <div class="form-check form-switch mb-3 d-flex align-items-center justify-content-between ps-0">
                                                 <label class="form-check-label" for="switchCheckChecked2">Show Store Details</label>
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked2" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked2" name="show_store_details" {% if print_settings.show_store_details %}checked{% endif %}>
                                             </div>
                                             <div class="form-check form-switch mb-3 d-flex align-items-center justify-content-between ps-0">
                                                 <label class="form-check-label" for="switchCheckChecked3">Show Customer Details</label>
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked3" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked3" name="show_customer_details" {% if print_settings.show_customer_details %}checked{% endif %}>
                                             </div>
                                         </div>
                                     </div> <!-- end col -->
@@ -955,13 +956,11 @@
                                     <div class="col-md-12">
                                         <div class="mb-3">
                                             <label class="form-label">Format (Page Sizes)<span class="text-danger ms-1">*</span></label>
-                                            <select class="select">
-                                                <option>Select</option>
-                                                <option>A1</option>
-                                                <option>A2</option>
-                                                <option>A3</option>
-                                                <option>A4</option>
-                                                <option>A5</option>
+                                            <select class="select" name="page_size" required>
+                                                <option value="">Select</option>
+                                                {% for size in print_page_sizes %}
+                                                <option value="{{ size }}" {% if print_settings.page_size == size %}selected{% endif %}>{{ size }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                     </div> <!-- end col -->
@@ -969,14 +968,14 @@
                                     <div class="col-md-12">
                                         <div class="mb-3">
                                             <label class="form-label">Header</label>
-                                            <textarea class="form-control"></textarea>
+                                            <textarea class="form-control" name="header">{{ print_settings.header }}</textarea>
                                         </div>
                                     </div> <!-- end col -->
 
                                     <div class="col-md-12">
                                         <div class="mb-3">
                                             <label class="form-label">Footer</label>
-                                            <textarea class="form-control"></textarea>
+                                            <textarea class="form-control" name="footer">{{ print_settings.footer }}</textarea>
                                         </div>
                                     </div> <!-- end col -->
 
@@ -984,11 +983,11 @@
                                         <div class="mb-0">
                                             <div class="form-check form-switch d-flex align-items-center justify-content-between mb-3 ps-0">
                                                 <label class="form-check-label" for="switchCheckChecked4">Show Notes</label>
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked4" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked4" name="show_notes" {% if print_settings.show_notes %}checked{% endif %}>
                                             </div>
                                             <div class="form-check form-switch d-flex align-items-center justify-content-between mb-0 ps-0">
                                                 <label class="form-check-label" for="switchCheckChecked5">Print Tokens</label>
-                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked5" checked>
+                                                <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked5" name="print_tokens" {% if print_settings.print_tokens %}checked{% endif %}>
                                             </div>
                                         </div>
                                     </div> <!-- end col -->
@@ -997,7 +996,7 @@
                                 <!-- end row -->                              
 
                                 <div class="d-flex align-items-center justify-content-end flex-wrap row-gap-2 border-top mt-4 pt-4">
-                                    <button type="button" class="btn btn-light me-2">Cancel</button>
+                                    <button type="reset" class="btn btn-light me-2">Cancel</button>
                                     <button type="submit" class="btn btn-primary">Save Changes</button>
                                 </div>
 
