@@ -960,17 +960,17 @@
                             <div class="row row-gap-3">
                                 <div class="col-lg-6 col-sm-12">
                                     <div class="bg-light p-3 rounded">
-                                        <img src="{% static 'assets/img/items/food-17.jpg' %}" alt="item" class="img-fluid w-100">
+                                        <img id="items-details-image" src="{% static 'assets/img/items/food-17.jpg' %}" alt="item" class="img-fluid w-100">
                                     </div>
                                 </div>
                                 <div class="col-lg-6 col-sm-12">
                                     <div class="mb-3">
-                                        <h5>Chicken Taco</h5>
-                                        <p>Tender grilled chicken wrapped in soft tortillas, topped with fresh lettuce, salsa, and creamy sauce.</p>
+                                        <h5 id="items-details-name">Item Name</h5>
+                                        <p id="items-details-description">Description</p>
                                     </div>
                                     <div class="mb-3 pb-3 border-bottom size-tabs">
                                         <h6>Sizes</h6>
-                                        <div class="d-flex gap-3">
+                                        <div id="items-details-sizes" class="d-flex gap-3">
                                             <div class="size-tab">
                                                 <h6 class="fs-13 mb-0 fw-medium">Small</h6>
                                             </div>
@@ -983,9 +983,9 @@
                                         </div>
                                         
                                     </div>
-                                    <div>
+                                    <div id="items-details-addons-wrap">
                                         <h6 class="mb-3">Add-ons & Upgrades</h6>
-                                        <div class="row row-gap-md-4 row-gap-sm-3">
+                                        <div id="items-details-addons" class="row row-gap-md-4 row-gap-sm-3">
                                             <div class="col-lg-6">
                                                 <div class="items-card">  
                                                     <div class="d-flex align-items-center">
@@ -1212,18 +1212,18 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
-                                        <div class="avatar avatar-3xl border bg-light mb-3">
-                                            <img src="{% static 'assets/img/items/food-10.jpg' %}" alt="item" class="img-fluid rounded">
+                                        <div class="avatar avatar-3xl avatar-rounded border bg-light mb-3">
+                                            <img id="edit-item-preview" src="{% static 'assets/img/items/food-10.jpg' %}" alt="item" class="img-fluid rounded">
                                         </div>
                                         <div>
                                             <label class="form-label">Item Image<span class="text-danger"> *</span></label>
                                             <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                             <div class="d-flex align-items-center">
                                                 <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                                    <input type="file" name="image" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
+                                                    <input type="file" id="edit-item-image-input" name="image" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                                     <i class="icon-pencil-line"></i>
                                                 </div>
-                                                <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
+                                                <a href="#" id="edit-item-image-clear" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
                                             </div>
                                         </div>                                        
                                     </div>
@@ -1293,25 +1293,6 @@
                                     <div class="accordion-body border-0 pb-0">
                                         <div id="group3" class="rowsContainer"></div>
                                         <!-- TEMPLATE for this group -->
-                                        <div class="row">
-                                            <div class="col-lg-5">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Size<span class="text-danger"> *</span></label>
-                                                    <input type="text" name="variation_size" class="form-control" value="M">
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-5">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Price<span class="text-danger"> *</span></label>
-                                                    <input type="text" name="variation_price" class="form-control" value="22.25">
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-2 d-flex align-items-center gap-2 mt-3">
-                                                <span class="btn btn-icon btn-sm btn-white rounded-circle deleteRowBtn">
-                                                    <i class="icon-trash-2 text-danger"></i>
-                                                </span>
-                                            </div>
-                                        </div>
                                         <div id="group3-template" class="row d-none rowTemplate">
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
@@ -1353,25 +1334,6 @@
                                     <div class="accordion-body border-0 pb-0">
                                         <div id="group4" class="rowsContainer"></div>
                                         <!-- TEMPLATE for this group -->
-                                        <div class="row">
-                                            <div class="col-lg-5">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Name<span class="text-danger"> *</span></label>
-                                                    <input type="text" name="addon_name" class="form-control" value="Extra Cheese" list="item-addon-name-options">
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-5">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Price($)<span class="text-danger"> *</span></label>
-                                                    <input type="text" name="addon_price" class="form-control" value="2.50">
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-2 d-flex align-items-center gap-2 mt-3">
-                                                <span class="btn btn-icon btn-sm btn-white rounded-circle deleteRowBtn">
-                                                    <i class="icon-trash-2 text-danger"></i>
-                                                </span>
-                                            </div>
-                                        </div>
                                         <div id="group4-template" class="row d-none rowTemplate">
                                             <div class="col-lg-5">
                                                 <div class="mb-3">
@@ -1566,6 +1528,112 @@
                 runItemsSearch(true, pageValue);
             });
 
+            let lastItemsDetailsTrigger = null;
+            function formatMoney(value) {
+                const amount = Number.parseFloat(String(value || "0"));
+                return "$" + (Number.isFinite(amount) ? amount : 0).toFixed(2);
+            }
+            function escapeHtml(value) {
+                return String(value || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
+            document.addEventListener("click", function (event) {
+                const trigger = event.target.closest('[data-bs-target="#items_details"]');
+                if (trigger) {
+                    lastItemsDetailsTrigger = trigger;
+                }
+            });
+
+            const itemsDetailsModal = document.getElementById("items_details");
+            if (itemsDetailsModal) {
+                itemsDetailsModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget || lastItemsDetailsTrigger;
+                    if (!trigger) return;
+
+                    const imageEl = document.getElementById("items-details-image");
+                    const nameEl = document.getElementById("items-details-name");
+                    const descriptionEl = document.getElementById("items-details-description");
+                    const sizesEl = document.getElementById("items-details-sizes");
+                    const addonsWrapEl = document.getElementById("items-details-addons-wrap");
+                    const addonsEl = document.getElementById("items-details-addons");
+                    if (!sizesEl) return;
+                    if (nameEl) {
+                        nameEl.textContent = (trigger.getAttribute("data-item-name") || "").trim() || "Item Name";
+                    }
+                    if (descriptionEl) {
+                        descriptionEl.textContent = (trigger.getAttribute("data-item-description") || "").trim() || "Description";
+                    }
+                    if (imageEl) {
+                        const imageSrc = (trigger.getAttribute("data-item-image") || "").trim();
+                        if (imageSrc) {
+                            imageEl.src = imageSrc;
+                        }
+                    }
+
+                    const rawVariations = (trigger.getAttribute("data-item-variations") || "").trim();
+                    const variationRows = rawVariations
+                        ? rawVariations.split("||").map(function (row) {
+                            const parts = row.split("::");
+                            const size = (parts[0] || "").trim();
+                            const price = (parts[1] || "").trim();
+                            if (!size) return null;
+                            return { size: size, price: price };
+                        }).filter(Boolean)
+                        : [];
+                    const rawAddons = (trigger.getAttribute("data-item-addons") || "").trim();
+                    const addonRows = rawAddons
+                        ? rawAddons.split("||").map(function (row) {
+                            const parts = row.split("::");
+                            const name = (parts[0] || "").trim();
+                            const price = (parts[1] || "").trim();
+                            if (!name) return null;
+                            return { name: name, price: price };
+                        }).filter(Boolean)
+                        : [];
+
+                    sizesEl.className = "d-flex align-items-center flex-wrap gap-2 size-group";
+                    if (!variationRows.length) {
+                        sizesEl.innerHTML = '<p class="mb-0 text-muted fs-13">No variations available.</p>';
+                    } else {
+                        sizesEl.innerHTML = variationRows.map(function (row, index) {
+                            const activeClass = index === 0 ? " active" : "";
+                            return (
+                                '<div class="size-tab' + activeClass + '">' +
+                                    '<button type="button" class="tag d-flex align-items-center justify-content-between gap-3">' +
+                                        escapeHtml(row.size) + '<span>' + formatMoney(row.price) + '</span>' +
+                                    "</button>" +
+                                "</div>"
+                            );
+                        }).join("");
+                    }
+
+                    if (addonsWrapEl && addonsEl) {
+                        addonsWrapEl.style.display = "";
+                        if (!addonRows.length) {
+                            addonsEl.innerHTML = '<div class="col-12"><p class="mb-0 text-muted fs-13">No add-ons available.</p></div>';
+                        } else {
+                            addonsEl.innerHTML = addonRows.map(function (row) {
+                                return (
+                                    '<div class="col-lg-6">' +
+                                        '<div class="items-card">' +
+                                            '<div class="d-flex align-items-center">' +
+                                                '<span class="avatar avatar-lg border rounded-circle me-1"><img src="{% static "assets/img/items/food-17.jpg" %}" alt="item" class="img-fluid rounded-circle"></span>' +
+                                                '<h6 class="fs-12 fw-medium mb-0' + (String(row.name || "").length > 16 ? " text-nowrap" : "") + '">' + escapeHtml(row.name) + ' <span class="text-body">(' + formatMoney(row.price) + ')</span></h6>' +
+                                            '</div>' +
+                                        '</div>' +
+                                    '</div>'
+                                );
+                            }).join("");
+                        }
+                    }
+                });
+            }
+
             const addonDataScript = document.getElementById("item-addon-suggestions-data");
             let addonNamePriceMap = {};
             if (addonDataScript) {
@@ -1642,6 +1710,40 @@
             }
 
             const editModal = document.getElementById("edit_item");
+            const editItemPreview = document.getElementById("edit-item-preview");
+            const editItemImageInput = document.getElementById("edit-item-image-input");
+            const editItemImageClear = document.getElementById("edit-item-image-clear");
+            const defaultEditItemPreviewSrc = editItemPreview ? editItemPreview.getAttribute("src") : "";
+            function parseSerializedRows(rawValue) {
+                const raw = String(rawValue || "").trim();
+                if (!raw) return [];
+                return raw.split("||").map(function (row) {
+                    const parts = row.split("::");
+                    const first = (parts[0] || "").trim();
+                    const second = (parts[1] || "").trim();
+                    if (!first) return null;
+                    return { first: first, second: second };
+                }).filter(Boolean);
+            }
+
+            function renderEditRows(containerId, templateId, rows, firstInputName, secondInputName, firstValueKey, secondValueKey) {
+                const container = document.getElementById(containerId);
+                const template = document.getElementById(templateId);
+                if (!container || !template) return;
+                container.innerHTML = "";
+                rows.forEach(function (row) {
+                    const clone = template.cloneNode(true);
+                    clone.classList.remove("d-none");
+                    clone.removeAttribute("id");
+                    clone.classList.remove("rowTemplate");
+                    const firstInput = clone.querySelector('input[name="' + firstInputName + '"]');
+                    const secondInput = clone.querySelector('input[name="' + secondInputName + '"]');
+                    if (firstInput) firstInput.value = row[firstValueKey] || "";
+                    if (secondInput) secondInput.value = row[secondValueKey] || "";
+                    container.appendChild(clone);
+                });
+            }
+
             if (editModal) {
                 editModal.addEventListener("show.bs.modal", function (event) {
                     const trigger = event.relatedTarget;
@@ -1654,6 +1756,40 @@
                     if (byId("edit-item-net-price")) byId("edit-item-net-price").value = trigger.getAttribute("data-item-net-price") || "";
                     if (byId("edit-item-category")) byId("edit-item-category").value = trigger.getAttribute("data-item-category-id") || "";
                     if (byId("edit-item-tax")) byId("edit-item-tax").value = trigger.getAttribute("data-item-tax-id") || "";
+                    if (editItemPreview) {
+                        editItemPreview.src = trigger.getAttribute("data-item-image") || defaultEditItemPreviewSrc;
+                    }
+                    if (editItemImageInput) {
+                        editItemImageInput.value = "";
+                    }
+                    if (window.jQuery) {
+                        window.jQuery("#edit-item-category").trigger("change");
+                        window.jQuery("#edit-item-tax").trigger("change");
+                    }
+
+                    const variationRows = parseSerializedRows(trigger.getAttribute("data-item-variations"));
+                    const addonRows = parseSerializedRows(trigger.getAttribute("data-item-addons"));
+                    renderEditRows("group3", "group3-template", variationRows, "variation_size", "variation_price", "first", "second");
+                    renderEditRows("group4", "group4-template", addonRows, "addon_name", "addon_price", "first", "second");
+                });
+            }
+
+            if (editItemImageInput && editItemPreview) {
+                editItemImageInput.addEventListener("change", function () {
+                    const file = this.files && this.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        editItemPreview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            if (editItemImageClear) {
+                editItemImageClear.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    if (editItemImageInput) editItemImageInput.value = "";
+                    if (editItemPreview) editItemPreview.src = defaultEditItemPreviewSrc;
                 });
             }
 

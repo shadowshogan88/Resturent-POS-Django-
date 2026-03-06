@@ -4,7 +4,12 @@
     <div class="card">
         <div class="card-body">
             <div class="food-items">
-                <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#items_details">
+                <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#items_details"
+                   data-item-name="{{ item.name|escape }}"
+                   data-item-description="{{ item.description|default_if_none:''|escape }}"
+                   data-item-image="{% if item.image %}{{ item.image.url }}{% else %}{% static 'assets/img/items/food-01.jpg' %}{% endif %}"
+                   data-item-variations="{% for variation in item.variations.all %}{{ variation.size|escape }}::{{ variation.price }}{% if not forloop.last %}||{% endif %}{% endfor %}"
+                   data-item-addons="{% for addon in item.item_addons.all %}{{ addon.name|escape }}::{{ addon.price }}{% if not forloop.last %}||{% endif %}{% endfor %}">
                     {% if item.image %}
                     <img src="{{ item.image.url }}" alt="item" class="img-fluid mb-3 w-100 rounded">
                     {% else %}
@@ -23,7 +28,10 @@
                            data-item-price="{{ item.price }}"
                            data-item-net-price="{{ item.net_price }}"
                            data-item-category-id="{{ item.category_id }}"
-                           data-item-tax-id="{{ item.tax_id }}">
+                           data-item-tax-id="{{ item.tax_id }}"
+                           data-item-image="{% if item.image %}{{ item.image.url }}{% else %}{% static 'assets/img/items/food-01.jpg' %}{% endif %}"
+                           data-item-variations="{% for variation in item.variations.all %}{{ variation.size|escape }}::{{ variation.price }}{% if not forloop.last %}||{% endif %}{% endfor %}"
+                           data-item-addons="{% for addon in item.item_addons.all %}{{ addon.name|escape }}::{{ addon.price }}{% if not forloop.last %}||{% endif %}{% endfor %}">
                             <i class="icon-pencil-line me-2"></i>Edit Item
                         </a>
                     </li>
@@ -39,7 +47,12 @@
                     </li>
                 </ul>
             </div>
-            <h6 class="fs-14 fw-semibold"><a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#items_details">{{ item.name }}</a></h6>
+            <h6 class="fs-14 fw-semibold"><a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#items_details"
+                data-item-name="{{ item.name|escape }}"
+                data-item-description="{{ item.description|default_if_none:''|escape }}"
+                data-item-image="{% if item.image %}{{ item.image.url }}{% else %}{% static 'assets/img/items/food-01.jpg' %}{% endif %}"
+                data-item-variations="{% for variation in item.variations.all %}{{ variation.size|escape }}::{{ variation.price }}{% if not forloop.last %}||{% endif %}{% endfor %}"
+                data-item-addons="{% for addon in item.item_addons.all %}{{ addon.name|escape }}::{{ addon.price }}{% if not forloop.last %}||{% endif %}{% endfor %}">{{ item.name }}</a></h6>
             <div class="d-flex align-items-center justify-content-between">
                 <p class="mb-0">${{ item.price|floatformat:2 }}</p>
                 <div>

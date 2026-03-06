@@ -1,0 +1,322 @@
+{% load static %}
+<div class="slider-wrapper mb-4 pb-4 border-bottom">
+    <div class="d-flex align-items-center flex-wrap gap-3 mb-4">
+        <h3 class="mb-0">Recent Orders</h3>
+        <div class="d-flex align-items-center flex-wrap justify-content-between gap-2 flex-fill">
+            <ul class="nav nav-tabs nav-tabs-solid border-0 align-items-center flex-wrap gap-2" role="tablist">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active shadow-sm" data-bs-toggle="tab" data-bs-target="#all">All Orders</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link shadow-sm" data-bs-toggle="tab" data-bs-target="#dinein">Dine In</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link shadow-sm" data-bs-toggle="tab" data-bs-target="#takeaway">Take Away</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link shadow-sm" data-bs-toggle="tab" data-bs-target="#delivery">Delivery</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link shadow-sm" data-bs-toggle="tab" data-bs-target="#table">Table</a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="slick-arrow all-prev"><i class="icon-arrow-left"></i></button>
+                <button type="button" class="slick-arrow all-next"><i class="icon-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content">
+        <div class="tab-pane fade active show" id="all">
+            <div class="all-slider">
+                {% for order in recent_orders_all %}
+                <div class="slide-item">
+                    <div class="order-item">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <div>
+                                <p class="fs-12 mb-1">#{{ order.order_label }}</p>
+                                <h6 class="fs-14 fw-semibold mb-1">{{ order.customer_name }}</h6>
+                                <p class="fs-13 mb-0{% if order.table_name %} d-flex align-items-center gap-2{% endif %}">
+                                    {{ order.created_time }}{% if order.table_name %}<span class="even-line"></span>{{ order.table_name }}{% endif %}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark d-flex align-items-center mb-3"><i class="{{ order.badge_icon }} text-dark me-1"></i>{{ order.type_label }}</span>
+                                <div class="time badge {{ order.badge_class }} rounded-pill fs-12 fw-normal">
+                                    <span class="me-1"><i class="icon-clock-arrow-up"></i></span>
+                                    {{ order.remaining_label }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <div class="progress-item">
+                                <div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div>
+                            </div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="slide-item">
+                    <div class="order-item"><p class="mb-0">No recent orders found.</p></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="dinein">
+            <div class="dinein-slider">
+                {% for order in recent_orders_dinein %}
+                <div class="slide-item">
+                    <div class="order-item">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <div>
+                                <p class="fs-12 mb-1">#{{ order.order_label }}</p>
+                                <h6 class="fs-14 fw-semibold mb-1">{{ order.customer_name }}</h6>
+                                <p class="fs-13 mb-0{% if order.table_name %} d-flex align-items-center gap-2{% endif %}">
+                                    {{ order.created_time }}{% if order.table_name %}<span class="even-line"></span>{{ order.table_name }}{% endif %}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark d-flex align-items-center mb-3"><i class="{{ order.badge_icon }} text-dark me-1"></i>{{ order.type_label }}</span>
+                                <div class="time badge {{ order.badge_class }} rounded-pill fs-12 fw-normal"><span class="me-1"><i class="icon-clock-arrow-up"></i></span>{{ order.remaining_label }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div></div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="slide-item"><div class="order-item"><p class="mb-0">No dine in orders.</p></div></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="takeaway">
+            <div class="takeaway-slider">
+                {% for order in recent_orders_takeaway %}
+                <div class="slide-item">
+                    <div class="order-item">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <div>
+                                <p class="fs-12 mb-1">#{{ order.order_label }}</p>
+                                <h6 class="fs-14 fw-semibold mb-1">{{ order.customer_name }}</h6>
+                                <p class="fs-13 mb-0">{{ order.created_time }}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark d-flex align-items-center mb-3"><i class="{{ order.badge_icon }} text-dark me-1"></i>{{ order.type_label }}</span>
+                                <div class="time badge {{ order.badge_class }} rounded-pill fs-12 fw-normal"><span class="me-1"><i class="icon-clock-arrow-up"></i></span>{{ order.remaining_label }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div></div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="slide-item"><div class="order-item"><p class="mb-0">No takeaway orders.</p></div></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="delivery">
+            <div class="delivery-slider">
+                {% for order in recent_orders_delivery %}
+                <div class="slide-item">
+                    <div class="order-item">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <div>
+                                <p class="fs-12 mb-1">#{{ order.order_label }}</p>
+                                <h6 class="fs-14 fw-semibold mb-1">{{ order.customer_name }}</h6>
+                                <p class="fs-13 mb-0">{{ order.created_time }}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark d-flex align-items-center mb-3"><i class="{{ order.badge_icon }} text-dark me-1"></i>{{ order.type_label }}</span>
+                                <div class="time badge {{ order.badge_class }} rounded-pill fs-12 fw-normal"><span class="me-1"><i class="icon-clock-arrow-up"></i></span>{{ order.remaining_label }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div></div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="slide-item"><div class="order-item"><p class="mb-0">No delivery orders.</p></div></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="table">
+            <div class="table-slider">
+                {% for order in recent_orders_table %}
+                <div class="slide-item">
+                    <div class="order-item">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <div>
+                                <p class="fs-12 mb-1">#{{ order.order_label }}</p>
+                                <h6 class="fs-14 fw-semibold mb-1">{{ order.customer_name }}</h6>
+                                <p class="fs-13 mb-0 d-flex align-items-center gap-2">{{ order.created_time }}<span class="even-line"></span>{{ order.table_name }}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark d-flex align-items-center mb-3"><i class="icon-concierge-bell text-dark me-1"></i>Table</span>
+                                <div class="time badge {{ order.badge_class }} rounded-pill fs-12 fw-normal"><span class="me-1"><i class="icon-clock-arrow-up"></i></span>{{ order.remaining_label }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div></div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="slide-item"><div class="order-item"><p class="mb-0">No table orders.</p></div></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pos-menu-section">
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h5 class="mb-0 me-2">Menu Categories</h5>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <form method="get" class="page-search" id="pos-menu-search-form">
+            <input type="search" name="q" value="{{ pos_menu_query }}" class="form-control form-control-sm pe-4" placeholder="Search menu" id="pos-menu-search-input" autocomplete="off">
+            <i class="icon-search fs-14"></i>
+        </form>
+        <a href="{% url 'page' 'pos' %}" id="pos-left-refresh-btn" class="btn btn-icon btn-sm btn-outline-white rounded-circle" aria-label="refresh"><i class="icon-refresh-ccw"></i></a>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="slick-arrow category-prev"><i class="icon-arrow-left"></i></button>
+            <button type="button" class="slick-arrow category-next"><i class="icon-arrow-right"></i></button>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs nav-tabs-solid category-tab border-0 category-slider mb-4" role="tablist">
+    <li class="nav-item">
+        <a href="#all-menu" class="nav-link active shadow" data-bs-toggle="tab">
+            <div class="avatar avatar-lg rounded-circle flex-shrink-0">
+                <img src="{% static 'assets/img/food/food-1.png' %}" alt="food" class="img-fluid">
+            </div>
+            <div>
+                <h6 class="fs-14 fw-semibold mb-1">All Menus</h6>
+                <p class="text-body fw-normal mb-0">{{ pos_all_items|length }} Menus</p>
+            </div>
+        </a>
+    </li>
+    {% for category in pos_menu_categories %}
+    <li class="nav-item">
+        <a href="#menu-{{ category.slug }}" class="nav-link shadow-sm" data-bs-toggle="tab">
+            <div class="avatar avatar-lg rounded-circle flex-shrink-0">
+                {% if category.image_url %}
+                <img src="{{ category.image_url }}" alt="{{ category.name }}" class="img-fluid">
+                {% else %}
+                <img src="{% static 'assets/img/food/food-2.png' %}" alt="{{ category.name }}" class="img-fluid">
+                {% endif %}
+            </div>
+            <div>
+                <h6 class="fs-14 fw-semibold mb-1">{{ category.name }}</h6>
+                <p class="text-body fw-normal mb-0">{{ category.menu_count }} Menus</p>
+            </div>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="all-menu">
+        <div class="row g-3">
+            {% for item in pos_all_items %}
+            <div class="col-xl-3 col-md-4 col-sm-6"
+                 data-menu-item
+                 data-item-id="{{ item.id }}"
+                 data-item-name="{{ item.name|escape }}"
+                 data-item-price="{{ item.price }}"
+                 data-item-category="{{ item.category_name|escape }}"
+                 data-item-image="{% if item.image_url %}{{ item.image_url }}{% else %}{% static 'assets/img/items/food-01.jpg' %}{% endif %}">
+                <div class="bg-white rounded border p-2">
+                    <div class="food-items position-relative mb-2">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
+                            {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="img-fluid w-100 rounded">
+                            {% else %}
+                            <img src="{% static 'assets/img/items/food-01.jpg' %}" alt="{{ item.name }}" class="img-fluid w-100 rounded">
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <p class="fs-12 mb-0">{{ item.category_name }}</p>
+                            <div><span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Menu</span></div>
+                        </div>
+                        <h6 class="fs-14 fw-semibold text-truncate mb-2"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">{{ item.name }}</a></h6>
+                        <div class="d-flex align-items-center justify-content-between flex gap-2">
+                            <p class="mb-0 text-dark">${{ item.price }}</p>
+                            <div class="quantity-control">
+                                <button type="button" class="minus-btn"><i class="icon-minus"></i></button>
+                                <input type="text" class="quantity-input" value="0" aria-label="Quantity">
+                                <button type="button" class="add-btn"><i class="icon-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12"><div class="bg-white rounded border p-3">No menu items found.</div></div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% for category in pos_menu_categories %}
+    <div class="tab-pane fade" id="menu-{{ category.slug }}">
+        <div class="row g-3">
+            {% for item in category.items %}
+            <div class="col-xl-3 col-md-4 col-sm-6"
+                 data-menu-item
+                 data-item-id="{{ item.id }}"
+                 data-item-name="{{ item.name|escape }}"
+                 data-item-price="{{ item.price }}"
+                 data-item-category="{{ item.category_name|escape }}"
+                 data-item-image="{% if item.image_url %}{{ item.image_url }}{% else %}{% static 'assets/img/items/food-01.jpg' %}{% endif %}">
+                <div class="bg-white rounded border p-2">
+                    <div class="food-items position-relative mb-2">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#items_details">
+                            {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="img-fluid w-100 rounded">
+                            {% else %}
+                            <img src="{% static 'assets/img/items/food-01.jpg' %}" alt="{{ item.name }}" class="img-fluid w-100 rounded">
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <p class="fs-12 mb-0">{{ item.category_name }}</p>
+                            <div><span class="d-flex align-items-center"><i class="icon-square-dot text-success me-1"></i>Menu</span></div>
+                        </div>
+                        <h6 class="fs-14 fw-semibold text-truncate mb-2"><a href="#" data-bs-toggle="modal" data-bs-target="#items_details">{{ item.name }}</a></h6>
+                        <div class="d-flex align-items-center justify-content-between flex gap-2">
+                            <p class="mb-0 text-dark">${{ item.price }}</p>
+                            <div class="quantity-control">
+                                <button type="button" class="minus-btn"><i class="icon-minus"></i></button>
+                                <input type="text" class="quantity-input" value="0" aria-label="Quantity">
+                                <button type="button" class="add-btn"><i class="icon-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12"><div class="bg-white rounded border p-3">No items in this category.</div></div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+ </div>

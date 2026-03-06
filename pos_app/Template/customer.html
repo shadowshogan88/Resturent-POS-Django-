@@ -922,8 +922,8 @@
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="input-group input-group-flat w-auto">
-                            <input type="text" class="form-control" placeholder="Search">
-                            <span class="input-group-text">
+                            <input type="text" id="customer-search-input" class="form-control" placeholder="Search" value="{{ customer_query }}">
+                            <span class="input-group-text" id="customer-search-trigger">
                                 <i class="icon-search text-dark"></i>
                             </span>
                         </div>
@@ -931,438 +931,9 @@
                     </div>
 				</div>
 				<!-- End Page Header -->
-
-                <!-- Row start -->
-                <div class="row">
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details" class="avatar avatar-rounded flex-shrink-0 me-2">
-                                            <img src="{% static 'assets/img/profiles/avatar-32.jpg' %}" alt="category" class="img-fluid">
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">Adrian James</a></h6>
-                                            <p class="mb-0">Male</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#CR6569</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <div class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 987 654 3210</span> 
-                                    </div> 
-                                    <div class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="79181d0b101817391c01181409151c571a1614">[email&#160;protected]</a></span> 
-                                    </div> 
-                                    <div class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">25 Nov, 2025, 02:44 PM</span> 
-                                    </div> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-success">Active</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details" class="avatar avatar-rounded flex-shrink-0 me-2">
-                                            <img src="{% static 'assets/img/profiles/avatar-33.jpg' %}" alt="category" class="img-fluid">
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">Sue Allen</a></h6>
-                                            <p class="mb-0">Female</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#CR8238</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 67890 12345</span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a4d7d1c1e4c1dcc5c9d4c8c18ac7cbc9">[email&#160;protected]</a></span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">30 Nov, 2025 - 03:15 PM</span> 
-                                    </p> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-danger">Disabled</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details" class="avatar avatar-rounded flex-shrink-0 me-2">
-                                            <img src="{% static 'assets/img/profiles/avatar-34.jpg' %}" alt="category" class="img-fluid">
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">Frank Barrett</a></h6>
-                                            <p class="mb-0">Female</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#CR4824</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 23456 78901</span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="91f7e3f0fffad1f4e9f0fce1fdf4bff2fefc">[email&#160;protected]</a></span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">05 Dec, 2025 - 11:30 AM</span> 
-                                    </p> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-success">Active</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" class="avatar avatar-rounded badge bg-light flex-shrink-0 me-2">
-                                           <i class="icon-user text-dark fs-16"></i>
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">Walkin Customer</a></h6>
-                                            <p class="mb-0">Male</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#CR4578</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 56985 65895</span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="422b2c242d02273a232f322e276c212d2f">[email&#160;protected]</a></span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">25 Nov, 2025, 02:44 PM</span> 
-                                    </p> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-success">Active</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" class="avatar avatar-rounded badge bg-light flex-shrink-0 me-2">
-                                           <i class="icon-user text-dark fs-16"></i>
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">Walkin Customer</a></h6>
-                                            <p class="mb-0">Female</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#CR6569</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 42367 12345</span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5e363b3232311e3b263f332e323b703d3133">[email&#160;protected]</a></span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">26 Nov, 2025 - 03:15 PM</span> 
-                                    </p> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-success">Active</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details" class="avatar avatar-rounded flex-shrink-0 me-2">
-                                            <img src="{% static 'assets/img/profiles/avatar-36.jpg' %}" alt="category" class="img-fluid">
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">Jim Vickers</a></h6>
-                                            <p class="mb-0">Male</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#CR5458</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 78912 34567</span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b4deddd9f4d1ccd5d9c4d8d19ad7dbd9">[email&#160;protected]</a></span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">27 Nov, 2025 - 09:30 AM</span> 
-                                    </p> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-danger">Disabled</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details" class="avatar avatar-rounded flex-shrink-0 me-2">
-                                            <img src="{% static 'assets/img/profiles/avatar-40.jpg' %}" alt="category" class="img-fluid">
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">David Belcher</a></h6>
-                                            <p class="mb-0">Male</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#CR5458</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 23456 78901</span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="86e2e7f0efe2c6e3fee7ebf6eae3a8e5e9eb">[email&#160;protected]</a></span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">12 Dec, 2025 - 09:15 AM</span> 
-                                    </p> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-success">Active</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details" class="avatar avatar-rounded flex-shrink-0 me-2">
-                                            <img src="{% static 'assets/img/profiles/avatar-37.jpg' %}" alt="category" class="img-fluid">
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">Nancy Chapman</a></h6>
-                                            <p class="mb-0">Female</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#7ED321</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 34567 89012</span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="721c131c110b32170a131f021e175c111d1f">[email&#160;protected]</a></span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">14 Jan, 2025 - 11:30 AM</span> 
-                                    </p> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-success">Active</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details" class="avatar avatar-rounded flex-shrink-0 me-2">
-                                            <img src="{% static 'assets/img/profiles/avatar-41.jpg' %}" alt="category" class="img-fluid">
-                                        </a>
-                                        <span>
-                                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">Julie Kangas</a></h6>
-                                            <p class="mb-0">Female</p>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#D0021B</p>
-                                    </div>
-                                </div>
-                                <div class="mb-3">                                        
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span> 
-                                        <span class="fw-medium text-dark">+1 45678 90123</span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span> 
-                                        <span class="fw-medium text-dark"><a href="https://dreamspos.dreamstechnologies.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="513b243d3834113429303c213d347f323e3c">[email&#160;protected]</a></span> 
-                                    </p> 
-                                    <p class="d-flex align-items-center justify-content-between mb-2"> 
-                                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span> 
-                                        <span class="fw-medium text-dark">05 Feb, 2025 - 04:20 PM</span> 
-                                    </p> 
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between border-top pt-3">
-                                    <span class="badge badge-soft-success">Active</span>
-                                    <div class="d-flex">
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_customer">
-                                            <i class="icon-pencil-line"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                            <i class="icon-trash-2 text-danger"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="customers-grid-container">
+                    {% include "partials/customers_grid.html" %}
                 </div>
-                <!-- Row end -->
-
-                <!-- Pagination start -->
-                <nav class="pagination-nav">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item">
-                            <a class="page-link d-flex align-items-center" href="javascript:void(0);" aria-label="Previous">
-                                <span aria-hidden="true" class="me-1"><i class="icon-chevron-left"></i></span>
-                                Pre
-                            </a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="javascript:void(0);">1</a></li>
-                        <li class="page-item"><a class="page-link" href="javascript:void(0);">2</a></li>
-                        <li class="page-item"><a class="page-link" href="javascript:void(0);">3</a></li>
-                        <li class="page-item">
-                            <a class="page-link d-flex align-items-center" href="javascript:void(0);" aria-label="Previous">
-                                Next
-                                <span aria-hidden="true" class="ms-1"><i class="icon-chevron-right"></i></span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-                <!-- Pagination end -->
                                 
             </div>
             <!-- End Content -->  
@@ -1381,42 +952,45 @@
                         <h4 class="modal-title">Add Customer</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/customer.html">                             
+                    <form action="{% url 'customer_add' %}" method="post" enctype="multipart/form-data">                             
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'page' 'customer' %}">
                         <div class="modal-body p-4 pt-1">             
                             <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
-                                <div class="avatar avatar-3xl border bg-light">
-                                    <i class="icon-images fs-28 text-dark"></i>
+                                <div class="avatar avatar-3xl border bg-light overflow-hidden" id="add-customer-preview-wrap">
+                                    <i class="icon-images fs-28 text-dark" id="add-customer-preview-icon"></i>
+                                    <img id="add-customer-preview-img" src="" alt="customer preview" class="img-fluid d-none w-100 h-100 object-fit-cover">
                                 </div>
                                 <div>
                                     <label class="form-label">Customer Image<span class="text-danger"> *</span></label>
                                     <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                     <div class="d-flex align-items-center">
                                         <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                            <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                            <input type="file" name="image" id="add-customer-image-input" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                             <i class="icon-upload"></i>
                                         </div>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2 text-danger"></i></a>
+                                        <a href="#" id="add-customer-image-clear" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2 text-danger"></i></a>
                                     </div>
                                 </div>                                        
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Customer Name<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control">
+                                <input type="text" name="name" class="form-control" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Phone<span class="text-danger"> *</span></label>
-                                <input type="number" class="form-control">
+                                <input type="text" name="phone" class="form-control" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Email<span class="text-danger"> *</span></label>
-                                <input type="mail" class="form-control">
+                                <input type="email" name="email" class="form-control" required>
                             </div>
                             <div class="row algin-items-center justify-content-center">
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                         <label class="form-label">Date of Birth</label>
                                         <div class="input-group w-auto input-group-flat">
-                                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                            <input type="text" name="date_of_birth" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
                                             <span class="input-group-text">
                                                 <i class="icon-calendar-fold"></i>
                                             </span>
@@ -1426,18 +1000,18 @@
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                          <label class="form-label">Gender</label>
-                                        <select class="select">
+                                        <select class="select" name="gender">
                                             <option>Select</option>
                                             <option>Male</option>
                                             <option>Female</option>
+                                            <option>Other</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Status</label>
-                                <select class="select">
-                                    <option>Select</option>
+                                <select class="select" name="status">
                                     <option>Active</option>
                                     <option>Disabled</option>
                                 </select>
@@ -1461,42 +1035,47 @@
                         <h4 class="modal-title">Edit Customer</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/customer.html">                             
+                    <form action="{% url 'customer_update' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="customer_id" id="edit-customer-id">
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <input type="hidden" name="remove_image" id="edit-customer-remove-image" value="0">
                         <div class="modal-body p-4 pt-1">             
                             <div class="mb-3 d-flex align-items-center flex-wrap gap-3">
-                                <div class="avatar avatar-3xl avatar-rounded border">
-                                    <img src="{% static 'assets/img/profiles/avatar-32.jpg' %}" alt="category" class="img-fluid">
+                                <div class="avatar avatar-3xl avatar-rounded border overflow-hidden" id="edit-customer-preview-wrap">
+                                    <i class="icon-images fs-28 text-dark d-none" id="edit-customer-preview-icon"></i>
+                                    <img src="{% static 'assets/img/profiles/avatar-32.jpg' %}" alt="category" class="img-fluid" id="edit-customer-preview-img">
                                 </div>
                                 <div>
                                     <label class="form-label">Customer Image<span class="text-danger"> *</span></label>
                                     <p class="fs-13 mb-3">Image should be with in 5 MB</p>
                                     <div class="d-flex align-items-center">
                                         <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                            <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
+                                            <input type="file" name="image" id="edit-customer-image-input" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0" accept="image/*">
                                             <i class="icon-pencil-line"></i>
                                         </div>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
+                                        <a href="#" id="edit-customer-image-clear" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
                                     </div>
                                 </div>                                        
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Customer Name<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control" value="Adrian James">
+                                <input type="text" class="form-control" name="name" id="edit-customer-name" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Phone<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control" value="+1 56985 65895">
+                                <input type="text" class="form-control" name="phone" id="edit-customer-phone" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Email<span class="text-danger"> *</span></label>
-                                <input type="mail" class="form-control" value="adrian@example.com">
+                                <input type="email" class="form-control" name="email" id="edit-customer-email" required>
                             </div>
                             <div class="row algin-items-center justify-content-center">
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                         <label class="form-label">Date of Birth</label>
                                         <div class="input-group w-auto input-group-flat">
-                                            <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy" value="25/12/2025">
+                                            <input type="text" class="form-control" name="date_of_birth" id="edit-customer-dob" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
                                             <span class="input-group-text">
                                                 <i class="icon-calendar-fold"></i>
                                             </span>
@@ -1506,19 +1085,19 @@
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                          <label class="form-label">Gender</label>
-                                        <select class="select">
+                                        <select class="select" name="gender" id="edit-customer-gender">
                                             <option>Select</option>
-                                            <option selected>Male</option>
+                                            <option>Male</option>
                                             <option>Female</option>
+                                            <option>Other</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Status</label>
-                                <select class="select">
-                                    <option>Select</option>
-                                    <option selected>Active</option>
+                                <select class="select" name="status" id="edit-customer-status">
+                                    <option>Active</option>
                                     <option>Disabled</option>
                                 </select>
                             </div>
@@ -1758,11 +1337,211 @@
 
     <!-- Main JS -->
     <script src="{% static 'assets/js/script.js' %}" type="text/javascript"></script>
+    <script type="text/javascript">
+        (function () {
+            const input = document.getElementById("customer-search-input");
+            const trigger = document.getElementById("customer-search-trigger");
+            const container = document.getElementById("customers-grid-container");
+
+            const addCustomerImageInput = document.getElementById("add-customer-image-input");
+            const addCustomerPreviewImg = document.getElementById("add-customer-preview-img");
+            const addCustomerPreviewIcon = document.getElementById("add-customer-preview-icon");
+            const addCustomerImageClear = document.getElementById("add-customer-image-clear");
+            const editCustomerModal = document.getElementById("edit_customer");
+            const editCustomerIdInput = document.getElementById("edit-customer-id");
+            const editCustomerNameInput = document.getElementById("edit-customer-name");
+            const editCustomerPhoneInput = document.getElementById("edit-customer-phone");
+            const editCustomerEmailInput = document.getElementById("edit-customer-email");
+            const editCustomerDobInput = document.getElementById("edit-customer-dob");
+            const editCustomerGenderSelect = document.getElementById("edit-customer-gender");
+            const editCustomerStatusSelect = document.getElementById("edit-customer-status");
+            const editCustomerImageInput = document.getElementById("edit-customer-image-input");
+            const editCustomerPreviewImg = document.getElementById("edit-customer-preview-img");
+            const editCustomerPreviewIcon = document.getElementById("edit-customer-preview-icon");
+            const editCustomerImageClear = document.getElementById("edit-customer-image-clear");
+            const editCustomerRemoveImageInput = document.getElementById("edit-customer-remove-image");
+
+            function resetAddCustomerImagePreview() {
+                if (addCustomerImageInput) addCustomerImageInput.value = "";
+                if (addCustomerPreviewImg) {
+                    addCustomerPreviewImg.src = "";
+                    addCustomerPreviewImg.classList.add("d-none");
+                }
+                if (addCustomerPreviewIcon) {
+                    addCustomerPreviewIcon.classList.remove("d-none");
+                }
+            }
+
+            if (addCustomerImageInput && addCustomerPreviewImg && addCustomerPreviewIcon) {
+                addCustomerImageInput.addEventListener("change", function () {
+                    const file = this.files && this.files[0];
+                    if (!file) {
+                        resetAddCustomerImagePreview();
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        addCustomerPreviewImg.src = event.target.result;
+                        addCustomerPreviewImg.classList.remove("d-none");
+                        addCustomerPreviewIcon.classList.add("d-none");
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (addCustomerImageClear) {
+                addCustomerImageClear.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    resetAddCustomerImagePreview();
+                });
+            }
+
+            function showEditCustomerPreview(imageUrl) {
+                if (!editCustomerPreviewImg || !editCustomerPreviewIcon) return;
+                if (imageUrl) {
+                    editCustomerPreviewImg.src = imageUrl;
+                    editCustomerPreviewImg.classList.remove("d-none");
+                    editCustomerPreviewIcon.classList.add("d-none");
+                } else {
+                    editCustomerPreviewImg.src = "";
+                    editCustomerPreviewImg.classList.add("d-none");
+                    editCustomerPreviewIcon.classList.remove("d-none");
+                }
+            }
+
+            if (editCustomerModal) {
+                editCustomerModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+
+                    const customerId = trigger.getAttribute("data-customer-id") || "";
+                    const customerName = trigger.getAttribute("data-customer-name") || "";
+                    const customerPhone = trigger.getAttribute("data-customer-phone") || "";
+                    const customerEmail = trigger.getAttribute("data-customer-email") || "";
+                    const customerDob = trigger.getAttribute("data-customer-dob") || "";
+                    const customerGender = trigger.getAttribute("data-customer-gender") || "";
+                    const customerStatus = trigger.getAttribute("data-customer-status") || "Active";
+                    const customerImage = trigger.getAttribute("data-customer-image") || "";
+
+                    if (editCustomerIdInput) editCustomerIdInput.value = customerId;
+                    if (editCustomerNameInput) editCustomerNameInput.value = customerName;
+                    if (editCustomerPhoneInput) editCustomerPhoneInput.value = customerPhone;
+                    if (editCustomerEmailInput) editCustomerEmailInput.value = customerEmail;
+                    if (editCustomerDobInput) editCustomerDobInput.value = customerDob;
+                    if (editCustomerGenderSelect) editCustomerGenderSelect.value = customerGender || "Select";
+                    if (editCustomerStatusSelect) editCustomerStatusSelect.value = customerStatus;
+                    if (editCustomerImageInput) editCustomerImageInput.value = "";
+                    if (editCustomerRemoveImageInput) editCustomerRemoveImageInput.value = "0";
+
+                    showEditCustomerPreview(customerImage);
+                });
+            }
+
+            if (editCustomerImageInput) {
+                editCustomerImageInput.addEventListener("change", function () {
+                    const file = this.files && this.files[0];
+                    if (!file) return;
+                    if (editCustomerRemoveImageInput) editCustomerRemoveImageInput.value = "0";
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        showEditCustomerPreview(event.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (editCustomerImageClear) {
+                editCustomerImageClear.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    if (editCustomerImageInput) editCustomerImageInput.value = "";
+                    if (editCustomerRemoveImageInput) editCustomerRemoveImageInput.value = "1";
+                    showEditCustomerPreview("");
+                });
+            }
+
+            if (!input || !container) return;
+
+            let debounceTimer = null;
+
+            function setQueryString(value) {
+                const url = new URL(window.location.href);
+                if (value) {
+                    url.searchParams.set("q", value);
+                } else {
+                    url.searchParams.delete("q");
+                }
+                url.searchParams.delete("partial");
+                window.history.replaceState({}, "", url.toString());
+            }
+
+            function liveSearch(queryText, targetPage) {
+                const q = (queryText || "").trim();
+                const params = new URLSearchParams(window.location.search);
+                if (q) {
+                    params.set("q", q);
+                } else {
+                    params.delete("q");
+                }
+                if (targetPage) {
+                    params.set("page", String(targetPage));
+                } else {
+                    params.delete("page");
+                }
+                params.set("partial", "1");
+
+                fetch(`{% url 'page' 'customer' %}?${params.toString()}`, {
+                    method: "GET",
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                })
+                    .then((response) => response.text())
+                    .then((html) => {
+                        container.innerHTML = html;
+                        setQueryString(q);
+                    })
+                    .catch(() => {
+                        // Keep page stable on transient fetch errors.
+                    });
+            }
+
+            function queueSearch() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => liveSearch(input.value, 1), 200);
+            }
+
+            input.addEventListener("input", queueSearch);
+            input.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    clearTimeout(debounceTimer);
+                    liveSearch(input.value, 1);
+                }
+            });
+
+            if (trigger) {
+                trigger.addEventListener("click", function () {
+                    clearTimeout(debounceTimer);
+                    liveSearch(input.value, 1);
+                });
+            }
+
+            document.addEventListener("click", function (event) {
+                const link = event.target.closest(".customer-page-link");
+                if (!link) return;
+                event.preventDefault();
+                const parentItem = link.closest(".page-item");
+                if (parentItem && parentItem.classList.contains("disabled")) return;
+                const page = parseInt(link.getAttribute("data-page"), 10);
+                if (Number.isNaN(page)) return;
+                liveSearch(input.value, page);
+            });
+        })();
+    </script>
 </body>
 
 
 <!-- Mirrored from dreamspos.dreamstechnologies.com/food-pos/html/customer.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 04 Mar 2026 11:21:28 GMT -->
 </html>
+
 
 
 

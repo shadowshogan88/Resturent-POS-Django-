@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -915,364 +915,116 @@
             <!-- Start Content -->
             <div class="content">
 
-                <!-- Page Header -->
+                                <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Users <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Users <a href="{% url 'page' 'users' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
-                        <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                                <i class="icon-upload me-1"></i>Export
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end p-3">
-                                <li>
-                                    <a href="#" class="dropdown-item rounded">Export as PDF</a>
-                                </li>
-                                <li>
-                                    <a href="#" class="dropdown-item rounded">Export as Excel</a>
-                                </li>
-                            </ul>
-                        </div>
                         <a href="#" class="btn btn-primary d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#add_users"><i class="icon-circle-plus me-1"></i>Add New</a>
                     </div>
-				</div>
-				<!-- End Page Header -->
+                </div>
+                <!-- End Page Header -->
 
-                <!-- card start -->
                 <div class="card mb-0">
                     <div class="card-body">
                         <div class="d-flex align-items-center flex-wrap gap-3 justify-content-between mb-4">
-
-                            <div class="search-input">
-								<span class="btn-searchset"><i class="icon-search fs-14"></i></span>
-							</div>
-
-                            <div class="d-flex align-items-center gap-2 flex-wrap">      
-                                
-                                <!-- filter -->
-                                <a href="#" class="btn btn-white d-inline-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#filter-offcanvas" aria-controls="filter-offcanvas">
-                                    <i class="icon-funnel me-2"></i>Filter
-                                </a>
-
-                                <!-- column -->
-                                <div class="dropdown">
-                                    <a href="#" class="btn btn-icon btn-white" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="icon-columns-3"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-md dropdown-menu-end p-3 pb-0">
-                                        <h5 class="mb-3">Column</h5>
-                                        <div id="drag-container">
-                                            <div class="mb-3 drag-item" draggable="true">
-                                                <label class="d-flex align-items-center">
-                                                    <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
-                                                   Name
-                                                </label>
-                                            </div>
-                                            <div class="mb-3 drag-item" draggable="true">
-                                                <label class="d-flex align-items-center">
-                                                    <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
-                                                    Role
-                                                </label>
-                                            </div>
-                                            <div class="mb-3 drag-item" draggable="true">
-                                                <label class="d-flex align-items-center">
-                                                    <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
-                                                    Phone Number
-                                                </label>
-                                            </div>
-                                            <div class="mb-3 drag-item" draggable="true">
-                                                <label class="d-flex align-items-center">
-                                                    <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
-                                                    Status
-                                                </label>
-                                            </div>
-                                            <div class="mb-3 drag-item" draggable="true">
-                                                <label class="d-flex align-items-center">
-                                                    <i class="icon-grip-vertical me-2"></i>
-                                                    <input class="form-check-input m-0 me-2" type="checkbox">
-                                                    Actions
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- sort by -->
-                                <div class="dropdown">
-                                    <a href="#" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                                        Sort by : Newest
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end p-3">
-                                        <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Newest</a>
-                                        </li>
-                                        <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Oldest</a>
-                                        </li>
-                                        <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Ascending</a>
-                                        </li>
-                                        <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Descending</a>
-                                        </li>
-                                    </ul>
-                                </div>
+                            <form method="get" class="input-group input-group-flat w-auto">
+                                <input type="text" name="q" value="{{ user_query }}" class="form-control" placeholder="Search users">
+                                <button type="submit" class="input-group-text border-0 bg-transparent"><i class="icon-search text-dark"></i></button>
+                            </form>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <a href="{% url 'page' 'users' %}" class="btn btn-white">Reset</a>
                             </div>
                         </div>
 
-                       <!-- table start -->
                         <div class="table-responsive table-nowrap">
-                            <table class="table mb-0 border datatable">
+                            <table class="table mb-0 border">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
+                                        <th>Email</th>
                                         <th>Role</th>
                                         <th>Phone Number</th>
-                                         <th>Status</th>
+                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for user_row in users_rows %}
                                     <tr>
+                                        <td><h6 class="fs-14 fw-normal mb-0">{{ user_row.full_name }}</h6></td>
+                                        <td><span class="text-dark">{{ user_row.email }}</span></td>
+                                        <td>{{ user_row.role }}</td>
+                                        <td><p class="text-dark mb-0">{{ user_row.phone_number }}</p></td>
+                                        <td><span class="badge {{ user_row.status_class }}">{{ user_row.status_label }}</span></td>
                                         <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-01.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">John Smith</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Admin / Owner</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 23456 78901</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2 disabled" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2 disabled" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle disabled" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
+                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2 js-user-permission"
+                                               data-bs-toggle="modal"
+                                               data-bs-target="#user_permission"
+                                               data-user-id="{{ user_row.id }}"
+                                               data-user-name="{{ user_row.full_name }}"
+                                               data-role-name="{{ user_row.role }}">
+                                               <i class="icon-shield"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2 js-edit-user"
+                                               data-bs-toggle="modal"
+                                               data-bs-target="#edit_users"
+                                               data-id="{{ user_row.id }}"
+                                               data-first-name="{{ user_row.first_name }}"
+                                               data-last-name="{{ user_row.last_name }}"
+                                               data-email="{{ user_row.email }}"
+                                               data-role="{{ user_row.role }}"
+                                               data-phone="{{ user_row.phone_number }}"
+                                               data-status="{{ user_row.status_label }}">
+                                               <i class="icon-pencil-line"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle js-delete-user"
+                                               data-bs-toggle="modal"
+                                               data-bs-target="#delete_modal"
+                                               data-id="{{ user_row.id }}"
+                                               data-name="{{ user_row.full_name }}">
+                                               <i class="icon-trash-2"></i>
+                                            </a>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-02.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Emily Johnson</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Supervisor</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 34567 89012</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-03.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">David Williams</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Cashier</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 45678 90123</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-04.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Ashley Brown</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Chef</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 56789 01234</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-05.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Michael Davis</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Waiter</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 67890 12345</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                          <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-06.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Brittany Miller</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Delivery</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 78901 23456</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                          <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-07.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Christopher Wilson</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Accountant</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 89012 34567</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-08.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Jessica Moore</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>System Operator</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 90123 45678</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                          <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-09.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Matthew Taylor</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Chef</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 01234 56789</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/users/user-10.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Sarah Anderson</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>Chef</td>
-                                        <td>
-                                            <p class="text-dark mb-0">+1 12345 67890</p>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                          <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#user_permission"><i class="icon-shield"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_users"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="6" class="text-center text-muted py-4">No users found.</td></tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        <!-- table end -->
-                    </div>
 
+                        {% if paginator.num_pages > 1 %}
+                        <div class="pt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?q={{ user_query|urlencode }}&page={{ page_obj.previous_page_number }}">Pre</a></li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">Pre</span></li>
+                                {% endif %}
+
+                                {% for number in page_numbers %}
+                                <li class="page-item {% if page_obj.number == number %}active{% endif %}">
+                                    <a class="page-link" href="?q={{ user_query|urlencode }}&page={{ number }}">{{ number }}</a>
+                                </li>
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link" href="?q={{ user_query|urlencode }}&page={{ page_obj.next_page_number }}">Next</a></li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">Next</span></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                <!-- card start -->
-                                
+
             </div>
-            <!-- End Content -->  
+            <!-- End Content -->
 
         </div>
-
-        <!-- ========================
-			End Page Content
-		========================= -->
 
         <!-- Add users -->
         <div class="modal fade" id="add_users">
@@ -1282,59 +1034,27 @@
                         <h4 class="modal-title">Add New User</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/users.html">                             
-                        <div class="modal-body p-4 pt-1">             
-                            <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
-                                <div class="avatar avatar-3xl border bg-light">
-                                    <i class="icon-images fs-28 text-dark"></i>
-                                </div>
-                                <div>
-                                    <label class="form-label">User Image<span class="text-danger"> *</span></label>
-                                    <p class="fs-13 mb-3">Image should be with in 5 MB</p>                                        
-                                    <div class="d-flex align-items-center">
-                                        <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                            <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
-                                            <i class="icon-upload"></i>
-                                        </div>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
-                                    </div> 
-                                </div>                               
-                            </div>
+                    <form method="post" action="{% url 'users_add' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <div class="modal-body p-4 pt-1">
                             <div class="row algin-items-center justify-content-center">
-                                <div class="col-lg-6">
-                                    <div class="mb-3">
-                                         <label class="form-label">First Name<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-lg-6">
-                                    <div class="mb-3">
-                                         <label class="form-label">Last Name<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control">
-                                    </div>
-                                </div>
+                                <div class="col-lg-6"><div class="mb-3"><label class="form-label">First Name<span class="text-danger"> *</span></label><input type="text" name="first_name" class="form-control" required></div></div>
+                                <div class="col-lg-6"><div class="mb-3"><label class="form-label">Last Name</label><input type="text" name="last_name" class="form-control"></div></div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Role<span class="text-danger"> *</span></label>
-                                <select class="select">
-                                    <option>Select</option>
-                                    <option>Admin / Owner</option>
-                                    <option>Supervisor</option>
-                                    <option>Cashier</option>
-                                    <option>Chef</option>
-                                    <option>Waiter</option>
+                            <div class="mb-3"><label class="form-label">Email<span class="text-danger"> *</span></label><input type="email" name="email" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label">Role<span class="text-danger"> *</span></label>
+                                <select class="select" name="role" required>
+                                    {% for role_name in roles %}<option value="{{ role_name }}">{{ role_name }}</option>{% endfor %}
                                 </select>
                             </div>
-                             <div class="mb-3">
-                                <label class="form-label">Phone Number<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control">
-                            </div>
-                           <div class="mb-3">
-                                <label class="form-label">Status<span class="text-danger"> *</span></label>
-                                <select class="select">
-                                    <option>Select</option>
-                                    <option>Active</option>
-                                    <option>Inactive</option>
+                            <div class="mb-3"><label class="form-label">Phone Number<span class="text-danger"> *</span></label><input type="text" name="phone_number" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label">PIN Number</label><input type="text" name="pin_number" class="form-control"></div>
+                            <div class="mb-3"><label class="form-label">Password</label><input type="password" name="password" class="form-control" placeholder="Default 123456"></div>
+                            <div class="mb-3"><label class="form-label">Status<span class="text-danger"> *</span></label>
+                                <select class="select" name="status" required>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
                                 </select>
                             </div>
                             <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
@@ -1342,11 +1062,10 @@
                                 <button type="submit" class="btn btn-primary w-100">Save</button>
                             </div>
                         </div>
-                    </form>     
+                    </form>
                 </div>
             </div>
         </div>
-        <!-- Add users End -->
 
         <!-- Edit users -->
         <div class="modal fade" id="edit_users">
@@ -1356,59 +1075,28 @@
                         <h4 class="modal-title">Edit User</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/users.html">                             
-                        <div class="modal-body p-4 pt-1"> 
-                            <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
-                                <div class="avatar avatar-3xl border bg-light mb-3">
-                                    <img src="{% static 'assets/img/profiles/avatar-03.jpg' %}" alt="item" class="img-fluid rounded">
-                                </div>
-                                <div>
-                                    <label class="form-label">User Image<span class="text-danger"> *</span></label>
-                                    <p class="fs-13 mb-3">Image should be with in 5 MB</p>                                        
-                                    <div class="d-flex align-items-center">
-                                        <div class="btn btn-icon btn-sm btn-white rounded-circle position-relative me-2">
-                                            <input type="file" class="form-control position-absolute w-100 h-100 top-0 start-0 opacity-0">
-                                            <i class="icon-pencil-line"></i>
-                                        </div>
-                                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle text-danger"><i class="icon-trash-2"></i></a>
-                                    </div> 
-                                </div>                               
-                            </div>    
+                    <form method="post" action="{% url 'users_update' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <input type="hidden" name="user_id" id="edit-user-id">
+                        <div class="modal-body p-4 pt-1">
                             <div class="row algin-items-center justify-content-center">
-                                <div class="col-lg-6">
-                                    <div class="mb-3">
-                                         <label class="form-label">First Name<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control" value="Emily">
-                                    </div>
-                                </div>
-                                <div class="col-lg-6">
-                                    <div class="mb-3">
-                                         <label class="form-label">Last Name<span class="text-danger"> *</span></label>
-                                        <input type="text" class="form-control" value="Johnson">
-                                    </div>
-                                </div>
+                                <div class="col-lg-6"><div class="mb-3"><label class="form-label">First Name<span class="text-danger"> *</span></label><input type="text" name="first_name" id="edit-user-first-name" class="form-control" required></div></div>
+                                <div class="col-lg-6"><div class="mb-3"><label class="form-label">Last Name</label><input type="text" name="last_name" id="edit-user-last-name" class="form-control"></div></div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Role<span class="text-danger"> *</span></label>
-                                <select class="select">
-                                    <option>Select</option>
-                                    <option>Admin / Owner</option>
-                                    <option selected>Supervisor</option>
-                                    <option>Cashier</option>
-                                    <option>Chef</option>
-                                    <option>Waiter</option>
+                            <div class="mb-3"><label class="form-label">Email<span class="text-danger"> *</span></label><input type="email" name="email" id="edit-user-email" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label">Role<span class="text-danger"> *</span></label>
+                                <select class="select" name="role" id="edit-user-role" required>
+                                    {% for role_name in roles %}<option value="{{ role_name }}">{{ role_name }}</option>{% endfor %}
                                 </select>
                             </div>
-                             <div class="mb-3">
-                                <label class="form-label">Phone Number<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control" value="+1 34567 89012">
-                            </div>
-                           <div class="mb-3">
-                                <label class="form-label">Status<span class="text-danger"> *</span></label>
-                                <select class="select">
-                                    <option>Select</option>
-                                    <option selected>Active</option>
-                                    <option>Inactive</option>
+                            <div class="mb-3"><label class="form-label">Phone Number<span class="text-danger"> *</span></label><input type="text" name="phone_number" id="edit-user-phone" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label">PIN Number</label><input type="text" name="pin_number" id="edit-user-pin" class="form-control"></div>
+                            <div class="mb-3"><label class="form-label">New Password</label><input type="password" name="password" class="form-control" placeholder="Keep empty to keep current"></div>
+                            <div class="mb-3"><label class="form-label">Status<span class="text-danger"> *</span></label>
+                                <select class="select" name="status" id="edit-user-status" required>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
                                 </select>
                             </div>
                             <div class="d-flex align-items-center justify-content-end gap-2 pt-1">
@@ -1416,354 +1104,44 @@
                                 <button type="submit" class="btn btn-primary">Save</button>
                             </div>
                         </div>
-                    </form>     
+                    </form>
                 </div>
             </div>
         </div>
-        <!-- Edit users End -->
 
         <!-- User Permission -->
         <div class="modal fade" id="user_permission">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
                     <div class="modal-header border-0 p-4 pb-3">
-                        <h4 class="modal-title">Permissions</h4>
+                        <h4 class="modal-title">Permissions - <span id="permission-user-title">User</span></h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/users.html">                             
-                        <div class="modal-body p-4 pt-1">  
+                    <form method="post" action="{% url 'users_permissions_update' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <input type="hidden" name="user_id" id="permission-user-id">
+                        <div class="modal-body p-4 pt-1">
                             <div class="d-flex justify-content-end mb-3">
                                 <div class="form-check form-check-md">
-                                    <input class="form-check-input" type="checkbox" id="select-all">
-                                    <label for="select-all">Revert All</label>
-                                </div>  
-                            </div> 
+                                    <input class="form-check-input" type="checkbox" id="user-perm-select-all">
+                                    <label for="user-perm-select-all">Revert All</label>
+                                </div>
+                            </div>
                             <div class="table-responsive mb-3">
                                 <table class="table m-0 table-nowrap bg-white border">
                                     <thead>
                                         <tr>
                                             <th>Module</th>
-                                            <th>View</th>
-                                            <th>Add</th>
-                                            <th>Edit</th>
-                                            <th>Delete</th>
-                                            <th>Export</th>
-                                            <th>Approved/Void</th>
+                                            {% for action in permission_actions %}<th>{{ action.2 }}</th>{% endfor %}
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="text-dark fw-medium">Dashboard</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td class="text-dark fw-medium">POS</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td class="text-dark fw-medium">Hold/Resume Sale</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td class="text-dark fw-medium">Refund / Return</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td class="text-dark fw-medium">Products</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td class="text-dark fw-medium">Categories</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td class="text-dark fw-medium">Customers</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td class="text-dark fw-medium">Reports</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-                                        <tr>
-                                            <td class="text-dark fw-medium">Settings</td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-check-md ps-0">
-                                                    <input class="form-check-input ms-0" type="checkbox">
-                                                </div>
-                                            </td>
-                                            
-                                        </tr>
-        
-                                    </tbody>
+                                    <tbody id="user-permission-body"></tbody>
                                 </table>
                             </div>
                             <div class="d-flex align-items-center justify-content-end gap-2 pt-1">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" name="reset_to_role" value="1" class="btn btn-outline-secondary">Use Role Default</button>
                                 <button type="submit" class="btn btn-primary">Save Permission</button>
                             </div>
                         </div>
@@ -1772,151 +1150,30 @@
             </div>
         </div>
 
-        <!-- Start Modal  -->
+        <!-- Delete Modal -->
         <div class="modal fade" id="delete_modal">
             <div class="modal-dialog modal-dialog-centered modal-sm">
                 <div class="modal-content">
                     <div class="modal-body text-center p-4">
-                        <div class="mb-4">
-                            <span class="avatar avatar-xxl rounded-circle bg-danger-subtle">
-                                <img src="{% static 'assets/img/icons/trash-icon.svg' %}" alt="trash" class="img-fluid w-auto h-auto">
-                            </span>
-                        </div>
                         <h4 class="mb-1">Delete Confirmation</h4>
-                        <p class="mb-4">Are you sure you want to delete?</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
-                            <a href="{% url 'page' 'users' %}" class="btn btn-danger w-100">Delete</a>
-                        </div>
+                        <p class="mb-4">Are you sure you want to delete <span id="delete-user-name" class="fw-semibold"></span>?</p>
+                        <form method="post" action="{% url 'users_delete' %}" class="d-flex justify-content-center gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <input type="hidden" name="user_id" id="delete-user-id">
+                            <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger w-100">Delete</button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Modal  -->    
-        
-        <!-- Start Filter -->
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="filter-offcanvas">
-            <div class="offcanvas-header pb-0">
-                <div class="border-bottom d-flex align-items-center justify-content-between w-100 pb-3">
-                    <h4 class="offcanvas-title mb-0">Filter</h4>
-                    <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="offcanvas" aria-label="Close"><i class="icon-x"></i></button>
-                </div>
-            </div>
-            <div class="offcanvas-body d-flex flex-column pt-3">
-                <div>
-                    <div class="mb-3">
-                        <label class="form-label">Name<span class="text-danger"> *</span></label>
-                        <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                Select
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end p-3 w-100">
-                                <h6 class="fs-14 fw-semibold mb-3">Name</h6>
-                                <div class="input-icon-end input-icon position-relative mb-3">
-                                    <span class="input-icon-addon">
-                                        <i class="icon-search text-dark"></i>
-                                    </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
-                                </div>  
-                                <div class="vstack gap-2">
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">John Smith
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Emily Johnson
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">David Williams
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Ashley Brown
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Michael Davis
-                                        </label>
-                                    </div>
-                                </div>  
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Role<span class="text-danger"> *</span></label>
-                        <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                Select
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end p-3 w-100">
-                                <h6 class="fs-14 fw-semibold mb-3">Role</h6>
-                                <div class="input-icon-end input-icon position-relative mb-3">
-                                    <span class="input-icon-addon">
-                                        <i class="icon-search text-dark"></i>
-                                    </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
-                                </div>  
-                                <div class="vstack gap-2">
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Admin / Owner
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Supervisor
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Cashier
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Chef
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Waiter
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Delivery
-                                        </label>
-                                    </div>
-                                </div>  
-                            </div>
-                        </div>
-                    </div>
-                     <div class="mb-3">
-                        <label class="form-label">Status<span class="text-danger"> *</span></label>
-                        <select class="select">
-                            <option>Select</option>
-                            <option>Active</option>
-                            <option>Inactive</option>
-                        </select>
-                    </div>
-                </div>
-                
-                    <div class="d-flex align-items-center gap-2 mt-auto border-0">
-                        <a href="#" class="btn btn-light w-100">Reset</a>
-                        <a href="#" class="btn btn-primary w-100">Apply</a>
-                    </div>
-            </div>
-        </div>
-        <!-- End Filter -->
 
-    </div>
-    <!-- End Wrapper -->
+        {{ user_permissions_data|json_script:"userPermissionsData" }}
+
+        <!-- ========================
+			End Page Content
+		========================= -->
 
     <!-- jQuery -->
     <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}" type="text/javascript"></script>
@@ -1938,6 +1195,75 @@
     <!-- Select2 Js -->	
     <script src="{% static 'assets/plugins/select2/js/select2.min.js' %}" type="text/javascript"></script>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var userPermissionsData = {};
+            try {
+                userPermissionsData = JSON.parse(document.getElementById("userPermissionsData").textContent || "{}");
+            } catch (err) {
+                userPermissionsData = {};
+            }
+
+            document.querySelectorAll(".js-edit-user").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    document.getElementById("edit-user-id").value = button.dataset.id || "";
+                    document.getElementById("edit-user-first-name").value = button.dataset.firstName || "";
+                    document.getElementById("edit-user-last-name").value = button.dataset.lastName || "";
+                    document.getElementById("edit-user-email").value = button.dataset.email || "";
+                    document.getElementById("edit-user-phone").value = button.dataset.phone || "";
+                    document.getElementById("edit-user-status").value = (button.dataset.status || "").toLowerCase() === "inactive" ? "inactive" : "active";
+                    document.getElementById("edit-user-role").value = button.dataset.role || "";
+                });
+            });
+
+            document.querySelectorAll(".js-delete-user").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    document.getElementById("delete-user-id").value = button.dataset.id || "";
+                    document.getElementById("delete-user-name").textContent = button.dataset.name || "";
+                });
+            });
+
+            function renderPermissionRows(userId) {
+                var payload = userPermissionsData[userId] || { rows: [] };
+                var rows = payload.rows || [];
+                var body = document.getElementById("user-permission-body");
+                body.innerHTML = "";
+                rows.forEach(function (row) {
+                    var tr = document.createElement("tr");
+                    tr.innerHTML =
+                        "<td class=\"text-dark fw-medium\">" + row.module_label + "</td>" +
+                        "<td><div class=\"form-check form-check-md ps-0\"><input class=\"form-check-input ms-0 user-perm-checkbox\" type=\"checkbox\" name=\"perm\" value=\"" + row.module_key + "|view\" " + (row.view ? "checked" : "") + "></div></td>" +
+                        "<td><div class=\"form-check form-check-md ps-0\"><input class=\"form-check-input ms-0 user-perm-checkbox\" type=\"checkbox\" name=\"perm\" value=\"" + row.module_key + "|add\" " + (row.add ? "checked" : "") + "></div></td>" +
+                        "<td><div class=\"form-check form-check-md ps-0\"><input class=\"form-check-input ms-0 user-perm-checkbox\" type=\"checkbox\" name=\"perm\" value=\"" + row.module_key + "|edit\" " + (row.edit ? "checked" : "") + "></div></td>" +
+                        "<td><div class=\"form-check form-check-md ps-0\"><input class=\"form-check-input ms-0 user-perm-checkbox\" type=\"checkbox\" name=\"perm\" value=\"" + row.module_key + "|delete\" " + (row.delete ? "checked" : "") + "></div></td>" +
+                        "<td><div class=\"form-check form-check-md ps-0\"><input class=\"form-check-input ms-0 user-perm-checkbox\" type=\"checkbox\" name=\"perm\" value=\"" + row.module_key + "|export\" " + (row.export ? "checked" : "") + "></div></td>" +
+                        "<td><div class=\"form-check form-check-md ps-0\"><input class=\"form-check-input ms-0 user-perm-checkbox\" type=\"checkbox\" name=\"perm\" value=\"" + row.module_key + "|approve_void\" " + (row.approve_void ? "checked" : "") + "></div></td>";
+                    body.appendChild(tr);
+                });
+            }
+
+            document.querySelectorAll(".js-user-permission").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    var userId = button.dataset.userId || "";
+                    var userName = button.dataset.userName || "User";
+                    var roleName = button.dataset.roleName || "-";
+                    document.getElementById("permission-user-title").textContent = userName + " (" + roleName + ")";
+                    document.getElementById("permission-user-id").value = userId;
+                    renderPermissionRows(userId);
+                });
+            });
+
+            var selectAll = document.getElementById("user-perm-select-all");
+            if (selectAll) {
+                selectAll.addEventListener("change", function () {
+                    document.querySelectorAll(".user-perm-checkbox").forEach(function (checkbox) {
+                        checkbox.checked = selectAll.checked;
+                    });
+                });
+            }
+        });
+    </script>
+
     <!-- Main JS -->
     <script src="{% static 'assets/js/script.js' %}" type="text/javascript"></script>
 </body>
@@ -1945,6 +1271,8 @@
 
 <!-- Mirrored from dreamspos.dreamstechnologies.com/food-pos/html/users.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 04 Mar 2026 11:21:32 GMT -->
 </html>
+
+
 
 
 

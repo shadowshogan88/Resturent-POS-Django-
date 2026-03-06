@@ -1,0 +1,104 @@
+<!-- Row start -->
+<div class="row">
+    {% for customer in customers_list %}
+    <div class="col-xxl-4 col-xl-4 col-md-6 col-sm-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center">
+                        {% if customer.image %}
+                        <a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details" class="avatar avatar-rounded flex-shrink-0 me-2">
+                            <img src="{{ customer.image.url }}" alt="{{ customer.name }}" class="img-fluid">
+                        </a>
+                        {% else %}
+                        <a href="#" class="avatar avatar-rounded badge bg-light flex-shrink-0 me-2">
+                            <i class="icon-user text-dark fs-16"></i>
+                        </a>
+                        {% endif %}
+                        <span>
+                            <h6 class="fs-14 fw-semibold mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#view_details">{{ customer.name }}</a></h6>
+                            <p class="mb-0">Gender: {{ customer.gender|default:"-" }}</p>
+                        </span>
+                    </div>
+                    <div>
+                        <p class="badge bg-light text-dark fw-medium fs-13 mb-0">#{{ customer.customer_id }}</p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <p class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="d-flex align-items-center"><i class="icon-phone text-dark me-2"></i> Phone Number </span>
+                        <span class="fw-medium text-dark">{{ customer.phone }}</span>
+                    </p>
+                    <p class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="d-flex align-items-center"><i class="icon-mail text-dark me-2"></i> Email </span>
+                        <span class="fw-medium text-dark">{{ customer.email }}</span>
+                    </p>
+                    <p class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="d-flex align-items-center"><i class="icon-calendar-fold text-dark me-2"></i> Created at </span>
+                        <span class="fw-medium text-dark">{{ customer.created_on|date:"d M, Y" }}</span>
+                    </p>
+                </div>
+                <div class="d-flex align-items-center justify-content-between border-top pt-3">
+                    {% if customer.status == "Active" %}
+                    <span class="badge badge-soft-success">{{ customer.status }}</span>
+                    {% else %}
+                    <span class="badge badge-soft-danger">{{ customer.status }}</span>
+                    {% endif %}
+                    <div class="d-flex">
+                        <a
+                            href="#"
+                            class="btn btn-icon btn-sm btn-white rounded-circle me-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#edit_customer"
+                            data-customer-id="{{ customer.id }}"
+                            data-customer-name="{{ customer.name }}"
+                            data-customer-phone="{{ customer.phone }}"
+                            data-customer-email="{{ customer.email }}"
+                            data-customer-dob="{% if customer.date_of_birth %}{{ customer.date_of_birth|date:'d/m/Y' }}{% endif %}"
+                            data-customer-gender="{{ customer.gender }}"
+                            data-customer-status="{{ customer.status }}"
+                            data-customer-image="{% if customer.image %}{{ customer.image.url }}{% endif %}"
+                        >
+                            <i class="icon-pencil-line"></i>
+                        </a>
+                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                            <i class="icon-trash-2 text-danger"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center text-muted">No customer found.</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<!-- Row end -->
+
+<!-- Pagination start -->
+<nav class="pagination-nav">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            <a class="page-link d-flex align-items-center customer-page-link" href="javascript:void(0);" data-page="{% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% else %}{{ page_obj.number }}{% endif %}" aria-label="Previous">
+                <span aria-hidden="true" class="me-1"><i class="icon-chevron-left"></i></span>
+                Pre
+            </a>
+        </li>
+        {% for number in page_numbers %}
+        <li class="page-item {% if page_obj.number == number %}active{% endif %}">
+            <a class="page-link customer-page-link" href="javascript:void(0);" data-page="{{ number }}">{{ number }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            <a class="page-link d-flex align-items-center customer-page-link" href="javascript:void(0);" data-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}{{ page_obj.number }}{% endif %}" aria-label="Next">
+                Next
+                <span aria-hidden="true" class="ms-1"><i class="icon-chevron-right"></i></span>
+            </a>
+        </li>
+    </ul>
+</nav>
+<!-- Pagination end -->
