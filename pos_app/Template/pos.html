@@ -3,7 +3,7 @@
 <html lang="en">
 
 
-<!-- Mirrored from dreamspos.dreamstechnologies.com/food-pos/html/pos.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 04 Mar 2026 11:21:08 GMT -->
+
 <head>
 
 	<!-- Meta Tags -->
@@ -58,8 +58,8 @@
             <div class="container-fluid">
                 <div class="header-menu">
                     <div class="header-logo">
-                        <a href="{% url 'page' 'index-2' %}" class="logo-dark"> <img src="{% static 'assets/img/logo.svg' %}" alt="logo" class="img-fluid"></a>
-                        <a href="{% url 'page' 'index-2' %}" class="logo-light"> <img src="{% static 'assets/img/logo-white.svg' %}" alt="logo" class="img-fluid"></a>
+                        <a href="{% url 'page' 'index-2' %}" class="logo-dark d-inline-flex align-items-center" style="max-width:100%; height:100%;"> <img src="{% static 'assets/img/synckbd_logo.png' %}" alt="logo" class="img-fluid" style="width:135px; height:40px; object-fit:contain;"></a>
+                        <!-- <a href="{% url 'page' 'index-2' %}" class="logo-light d-inline-flex align-items-center" style="max-width:100%; height:100%;"> <img src="{% static 'assets/img/logo-white.svg' %}" alt="logo" class="img-fluid" style="width:135px; height:40px; object-fit:contain;"></a> -->
                     </div>
                     <div class="navbar-header">
                         <a href="{% url 'page' 'index-2' %}" class="toggle-btn me-2"><i class="icon-grip"></i></a>
@@ -747,7 +747,7 @@
                         </div>
                         <div class="d-flex justify-content-between gap-2">
                             <a href="{% url 'page' 'pos' %}" class="btn btn-light w-100">Close</a>
-                            <a href="{% url 'page' 'pos' %}" id="pos-print-token-btn" class="btn btn-primary w-100">Print Token</a>
+                            <a href="#" id="pos-print-token-btn" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#print_reciept">Print Token</a>
                         </div>
                     </div>
                 </div>
@@ -803,7 +803,7 @@
 
                                     <div id="pos-item-details-addon-wrap" class="mb-4 pb-4 border-bottom">
                                         <h6 class="fw-semibold mb-3">Add-ons & Upgrades</h6>
-                                        <div id="pos-item-details-addon-group" class="upgrade-slider"></div>
+                                        <div id="pos-item-details-addon-group" class="row g-2"></div>
                                     </div>
                                     <div>
                                         <h5 class="mb-4 d-flex align-items-center justify-content-between">Total <span id="pos-item-details-total">$274</span></h5>
@@ -1644,7 +1644,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-2 invoice-logo d-flex align-items-center justify-content-md-end justify-content-start">
-                                                    <img src="{% static 'assets/img/logo.svg' %}" width="130" class="img-fluid logo" alt="logo">
+                                                    <img src="{% static 'assets/img/synckbd_logo.png' %}" class="img-fluid logo" alt="logo" style="height:40px; width:auto;">
                                                     <img src="{% static 'assets/img/logo-white.svg' %}" width="130" class="img-fluid logo-white d-none" alt="logo">
                                                 </div>
                                             </div>
@@ -1795,6 +1795,8 @@
     {{ pos_orders_all|json_script:"pos-orders-all-data" }}
     {{ pos_orders_sale|json_script:"pos-orders-sale-data" }}
     {{ pos_orders_draft|json_script:"pos-orders-draft-data" }}
+    {{ pos_print_settings|json_script:"pos-print-settings-data" }}
+    {{ pos_invoice_meta|json_script:"pos-invoice-meta-data" }}
 
     <!-- Main JS -->
     <script src="{% static 'assets/js/script.js' %}" type="text/javascript"></script>
@@ -1811,9 +1813,13 @@
             const ordersAllScript = document.getElementById("pos-orders-all-data");
             const ordersSaleScript = document.getElementById("pos-orders-sale-data");
             const ordersDraftScript = document.getElementById("pos-orders-draft-data");
+            const printSettingsScript = document.getElementById("pos-print-settings-data");
+            const invoiceMetaScript = document.getElementById("pos-invoice-meta-data");
             let posOrdersAll = ordersAllScript ? JSON.parse(ordersAllScript.textContent || "[]") : [];
             let posOrdersSale = ordersSaleScript ? JSON.parse(ordersSaleScript.textContent || "[]") : [];
             let posOrdersDraft = ordersDraftScript ? JSON.parse(ordersDraftScript.textContent || "[]") : [];
+            const posPrintSettings = printSettingsScript ? JSON.parse(printSettingsScript.textContent || "{}") : {};
+            const posInvoiceMeta = invoiceMetaScript ? JSON.parse(invoiceMetaScript.textContent || "{}") : {};
             let currentOrderNote = "";
             const transactionUiState = {
                 search: "",
@@ -1919,6 +1925,7 @@
             let selectedDetailsItemId = "";
             let selectedDetailsItemName = "";
             let selectedDetailsItemPrice = 0;
+            let selectedDetailsBasePrice = 0;
             let selectedDetailsItemVariations = [];
             let selectedDetailsItemAddons = [];
             const selectedDetailsActiveAddons = new Set();
@@ -2027,7 +2034,7 @@
                         addonTotal += parseAmount(addon.price);
                     }
                 });
-                totalEl.textContent = formatMoney((selectedDetailsItemPrice + addonTotal) * safeQty);
+                totalEl.textContent = formatMoney((selectedDetailsBasePrice + addonTotal) * safeQty);
             }
 
             function getSelectedAddonTotal() {
@@ -2057,13 +2064,15 @@
                 selectedDetailsItemVariations = rows;
 
                 if (!rows.length) {
-                    selectedDetailsItemPrice = parseAmount(itemData && itemData.price ? itemData.price : 0);
+                    selectedDetailsBasePrice = parseAmount(itemData && itemData.price ? itemData.price : 0);
+                    selectedDetailsItemPrice = selectedDetailsBasePrice;
                     selectedDetailsActiveVariationIdx = 0;
                     sizeGroup.innerHTML = "";
                     return;
                 }
 
-                selectedDetailsItemPrice = parseAmount(rows[0].price);
+                selectedDetailsBasePrice = parseAmount(rows[0].price);
+                selectedDetailsItemPrice = selectedDetailsBasePrice;
                 selectedDetailsActiveVariationIdx = 0;
                 sizeGroup.innerHTML = rows.map(function (variation, index) {
                     const activeClass = index === 0 ? " active" : "";
@@ -2087,22 +2096,16 @@
                 selectedDetailsActiveAddons.clear();
 
                 if (!selectedDetailsItemAddons.length) {
-                    addonWrap.style.display = "none";
-                    addonGroup.innerHTML = "";
+                    addonWrap.style.display = "";
+                    addonGroup.innerHTML = '<div class="col-12"><p class="mb-0 text-muted">No add-ons available.</p></div>';
                     return;
                 }
 
                 addonWrap.style.display = "";
-                if (window.jQuery && window.jQuery.fn && window.jQuery.fn.slick) {
-                    const $addonGroup = window.jQuery(addonGroup);
-                    if ($addonGroup.hasClass("slick-initialized")) {
-                        $addonGroup.slick("unslick");
-                    }
-                }
                 addonGroup.innerHTML = selectedDetailsItemAddons.map(function (addon, index) {
                     const priceValue = parseAmount(addon.price);
                     return (
-                        '<div class="slider-item">' +
+                        '<div class="col-6">' +
                             '<div class="d-flex align-items-center gap-2 border p-2 rounded addon-item" data-addon-idx="' + index + '" data-addon-price="' + priceValue + '">' +
                                 '<div class="avatar rounded-circle border">' +
                                     '<img src="{% static "assets/img/food/food-1.png" %}" alt="food" class="img-fluid img-1">' +
@@ -2123,7 +2126,8 @@
                 const fullItemData = itemDataById[String(data.id)] || {};
                 selectedDetailsItemId = data.id;
                 selectedDetailsItemName = data.name;
-                selectedDetailsItemPrice = data.price;
+                selectedDetailsBasePrice = parseAmount(fullItemData && fullItemData.price ? fullItemData.price : data.price);
+                selectedDetailsItemPrice = selectedDetailsBasePrice;
 
                 const imageEl = document.getElementById("pos-item-details-image");
                 const nameEl = document.getElementById("pos-item-details-name");
@@ -2453,13 +2457,15 @@
                     const variationBtn = event.target.closest("#pos-item-details-size-group .tag");
                     if (variationBtn) {
                         event.preventDefault();
+                        event.stopPropagation();
                         const variationIdx = parseInt(variationBtn.getAttribute("data-variation-idx"), 10);
                         selectedDetailsActiveVariationIdx = Number.isFinite(variationIdx) ? variationIdx : 0;
                         if (Number.isFinite(variationIdx) && selectedDetailsItemVariations[variationIdx]) {
-                            selectedDetailsItemPrice = parseAmount(selectedDetailsItemVariations[variationIdx].price);
+                            selectedDetailsBasePrice = parseAmount(selectedDetailsItemVariations[variationIdx].price);
                         } else {
-                            selectedDetailsItemPrice = parseAmount(variationBtn.getAttribute("data-variation-price") || 0);
+                            selectedDetailsBasePrice = parseAmount(variationBtn.getAttribute("data-variation-price") || 0);
                         }
+                        selectedDetailsItemPrice = selectedDetailsBasePrice;
                         itemDetailsModal.querySelectorAll("#pos-item-details-size-group .size-tab").forEach(function (tab) {
                             tab.classList.remove("active");
                         });
@@ -2474,6 +2480,7 @@
                     const addonItem = event.target.closest("#pos-item-details-addon-group .addon-item");
                     if (addonItem) {
                         event.preventDefault();
+                        event.stopPropagation();
                         const idx = parseInt(addonItem.getAttribute("data-addon-idx"), 10);
                         if (Number.isFinite(idx)) {
                             if (selectedDetailsActiveAddons.has(idx)) {
@@ -2543,7 +2550,7 @@
                     const activeVariation = selectedDetailsItemVariations[selectedDetailsActiveVariationIdx] || null;
                     const addonNames = getSelectedAddonNames();
                     const addonTotal = getSelectedAddonTotal();
-                    const selectedUnitPrice = Number((selectedDetailsItemPrice + addonTotal).toFixed(2));
+                    const selectedUnitPrice = Number((selectedDetailsBasePrice + addonTotal).toFixed(2));
                     let selectedDisplayName = itemName || "Item";
                     if (activeVariation && activeVariation.size) {
                         selectedDisplayName += " (" + String(activeVariation.size).trim() + ")";
@@ -2703,6 +2710,18 @@
                     return acc + (Number.isFinite(qty) ? qty : 0);
                 }, 0);
                 const orderTypeLabel = order.order_type === "Takeaway" ? "Take Away" : (order.order_type || "-");
+                const receiptHeader = String((posPrintSettings && posPrintSettings.header) || "").trim();
+                const receiptFooter = String((posPrintSettings && posPrintSettings.footer) || "").trim();
+                const receiptLogoUrl = String((posPrintSettings && posPrintSettings.logo_url) || "").trim();
+                const logoHtml = receiptLogoUrl
+                    ? '<div class="mb-3 text-center"><img src="' + escapeHtml(receiptLogoUrl) + '" alt="Store Logo" style="width:160px; height:160px; object-fit:contain;"></div>'
+                    : "";
+                const headerHtml = receiptHeader
+                    ? '<div class="mb-3 pb-3 border-bottom"><h6 class="fs-14 fw-medium text-dark text-center mb-0">' + escapeHtml(receiptHeader) + "</h6></div>"
+                    : "";
+                const footerHtml = receiptFooter
+                    ? '<div class="mt-3 pt-3 border-top"><h6 class="fs-14 fw-medium text-dark text-center mb-0">' + escapeHtml(receiptFooter) + "</h6></div>"
+                    : "";
                 const menuLines = items.length
                     ? items.map(function (item, index) {
                         const marginClass = index === (items.length - 1) ? "mb-0" : "mb-3";
@@ -2713,6 +2732,8 @@
                     : '<h6 class="fs-14 fw-normal mb-0 text-muted">No items found.</h6>';
 
                 body.innerHTML =
+                    logoHtml +
+                    headerHtml +
                     '<div class="mb-3 pb-3 border-bottom">' +
                         '<h5 class="mb-3 fs-16">Order Info</h5>' +
                         '<h6 class="fs-14 fw-normal d-flex align-items-center justify-content-between mb-3">Date & Time <span class="fw-medium text-dark">' + escapeHtml(order.created_at || "-") + "</span></h6>" +
@@ -2729,7 +2750,8 @@
                         '<h6 class="fs-14 fw-normal d-flex align-items-center justify-content-between mb-3">Tax (' + escapeHtml(order.tax_rate) + '%)<span class="fw-medium text-dark">' + formatMoney(order.tax_amount) + "</span></h6>" +
                         '<h6 class="fs-14 fw-normal d-flex align-items-center justify-content-between mb-0">Service Charge <span class="fw-medium text-dark">' + formatMoney(order.service_charge) + "</span></h6>" +
                     "</div>" +
-                    '<h5 class="mb-0 d-flex align-items-center justify-content-between">Total <span>' + formatMoney(order.total) + "</span></h5>";
+                    '<h5 class="mb-0 d-flex align-items-center justify-content-between">Total <span>' + formatMoney(order.total) + "</span></h5>" +
+                    footerHtml;
             }
 
             function openModalById(id) {
@@ -2893,14 +2915,50 @@
                         "</tr>"
                     );
                 }).join("");
+                const invoiceLogo = String((posPrintSettings && posPrintSettings.logo_url) || "").trim() || "{% static 'assets/img/synckbd_logo.png' %}";
+                const storeName = String((posInvoiceMeta && posInvoiceMeta.store_name) || "DreamsPOS");
+                const storeAddress = String((posInvoiceMeta && posInvoiceMeta.address) || "-");
+                const storePhone = String((posInvoiceMeta && posInvoiceMeta.phone) || "-");
+                const billToName = String(order.customer_name || "Walk-in Customer");
+
                 body.innerHTML =
                     '<div class="card mb-3"><div class="card-body">' +
-                        '<div class="mb-4 pb-3 border-bottom">' +
-                            '<h6 class="mb-2">#INV-' + escapeHtml(order.order_no || order.id) + '</h6>' +
-                            '<p class="mb-1">Date: ' + escapeHtml(order.created_at || "-") + '</p>' +
-                            '<p class="mb-0">Customer: ' + escapeHtml(order.customer_name || "Walk-in Customer") + '</p>' +
+                        '<div class="mb-4">' +
+                            '<div class="row g-4 justify-content-between align-items-center border-bottom pb-4">' +
+                                '<div class="col-md-6">' +
+                                    '<h6 class="mb-2">#INV-' + escapeHtml(order.order_no || order.id) + '</h6>' +
+                                    '<h6>' + escapeHtml(storeName) + "</h6>" +
+                                "</div>" +
+                                '<div class="col-md-6">' +
+                                    '<div class="mb-2 invoice-logo d-flex align-items-center justify-content-md-end justify-content-start">' +
+                                        '<img src="' + escapeHtml(invoiceLogo) + '" width="130" class="img-fluid logo" alt="logo">' +
+                                    "</div>" +
+                                "</div>" +
+                            "</div>" +
                         "</div>" +
                         '<div class="mb-4">' +
+                            '<div class="row g-4 justify-content-between align-items-center border-bottom pb-4">' +
+                                '<div class="col-md-4">' +
+                                    '<h6 class="mb-2">Invoice From</h6>' +
+                                    '<p class="text-dark fw-semibold mb-2">' + escapeHtml(storeName) + "</p>" +
+                                    '<p class="mb-2">' + escapeHtml(storeAddress) + "</p>" +
+                                    '<p class="mb-0">Phone : ' + escapeHtml(storePhone) + "</p>" +
+                                "</div>" +
+                                '<div class="col-md-4">' +
+                                    '<h6 class="mb-2">Bill To</h6>' +
+                                    '<p class="text-dark fw-semibold mb-2">' + escapeHtml(billToName) + "</p>" +
+                                    '<p class="mb-2">Date : ' + escapeHtml(order.created_at || "-") + "</p>" +
+                                    '<p class="mb-0">Order No : #' + escapeHtml(order.order_no || ("ORD-" + order.id)) + "</p>" +
+                                "</div>" +
+                                '<div class="col-md-4">' +
+                                    '<div class="d-flex align-items-center justify-content-md-center">' +
+                                        '<img src="{% static "assets/img/invoices/paid-invoices.svg" %}" alt="paid-invoices-img">' +
+                                    "</div>" +
+                                "</div>" +
+                            "</div>" +
+                        "</div>" +
+                        '<div class="mb-4">' +
+                            '<h6 class="mb-3">Items Details</h6>' +
                             '<div class="table-responsive table-nowrap">' +
                                 '<table class="table mb-0 border">' +
                                     "<thead><tr><th>#</th><th>Item Details</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead>" +
@@ -2908,15 +2966,38 @@
                                 "</table>" +
                             "</div>" +
                         "</div>" +
-                        '<div class="d-flex justify-content-end">' +
-                            '<div class="w-100" style="max-width:360px;">' +
-                                '<p class="d-flex justify-content-between mb-2"><span>Subtotal</span><span class="text-dark">' + formatMoney(order.subtotal) + "</span></p>" +
-                                '<p class="d-flex justify-content-between mb-2"><span>Tax (' + escapeHtml(order.tax_rate) + '%)</span><span class="text-dark">' + formatMoney(order.tax_amount) + "</span></p>" +
-                                '<p class="d-flex justify-content-between mb-2"><span>Service Charge</span><span class="text-dark">' + formatMoney(order.service_charge) + "</span></p>" +
-                                '<h6 class="d-flex justify-content-between mb-0"><span>Total</span><span>' + formatMoney(order.total) + "</span></h6>" +
+                        '<div class="mb-0">' +
+                            '<div class="row g-4 justify-content-between align-items-center">' +
+                                '<div class="col-md-6">' +
+                                    '<h6 class="mb-2">Terms and Conditions</h6>' +
+                                    '<div class="mb-4">' +
+                                        '<p class="mb-0">1. Goods once sold cannot be taken back or exchanged.</p>' +
+                                        '<p class="mb-0">2. Payment is final after invoice generation.</p>' +
+                                    "</div>" +
+                                    (order.note ? ('<div class="px-3 py-2 bg-light"><p class="mb-0">Note : ' + escapeHtml(order.note) + "</p></div>") : "") +
+                                "</div>" +
+                                '<div class="col-lg-5 col-md-6">' +
+                                    '<div class="mb-3">' +
+                                        '<div class="row align-items-center pb-3 border-bottom">' +
+                                            '<div class="col-6">' +
+                                                '<p class="text-dark fw-semibold mb-3">Amount</p>' +
+                                                '<p class="text-dark fw-semibold mb-3">Tax (' + escapeHtml(order.tax_rate) + '%)</p>' +
+                                                '<p class="text-dark fw-semibold mb-0">Service Charge</p>' +
+                                            "</div>" +
+                                            '<div class="col-6 text-end">' +
+                                                '<p class="text-dark fw-semibold mb-3">' + formatMoney(order.subtotal) + "</p>" +
+                                                '<p class="text-dark fw-semibold mb-3">' + formatMoney(order.tax_amount) + "</p>" +
+                                                '<p class="text-dark fw-semibold mb-0">' + formatMoney(order.service_charge) + "</p>" +
+                                            "</div>" +
+                                        "</div>" +
+                                    "</div>" +
+                                    '<div class="d-flex justify-content-between algin-item-center">' +
+                                        "<h6>Total</h6>" +
+                                        "<h6>" + formatMoney(order.total) + "</h6>" +
+                                    "</div>" +
+                                "</div>" +
                             "</div>" +
                         "</div>" +
-                        (order.note ? ('<div class="mt-3 px-3 py-2 bg-light"><p class="mb-0">Note: ' + escapeHtml(order.note) + "</p></div>") : "") +
                     "</div></div>" +
                     '<div class="d-flex justify-content-center algin-item-center"><div class="d-flex justify-content-center algin-item-center flex-wrap gap-3">' +
                         '<button type="button" class="btn btn-white d-flex align-items-center js-pos-download-invoice"><i class="icon-download me-1"></i>Download PDF</button>' +
@@ -3012,7 +3093,39 @@
             const printBtn = document.querySelector("#print_reciept .modal-footer .btn.btn-primary.w-100.m-0");
             if (printBtn) {
                 printBtn.addEventListener("click", function () {
-                    window.print();
+                    const printModal = document.getElementById("print_reciept");
+                    const receiptBody = printModal ? printModal.querySelector(".modal-body") : null;
+                    if (!receiptBody) return;
+
+                    const printWindow = window.open("", "_blank", "width=500,height=800");
+                    if (!printWindow) {
+                        alert("Popup blocked. Please allow popups to print receipt.");
+                        return;
+                    }
+
+                    const html = [
+                        "<!DOCTYPE html>",
+                        '<html lang="en"><head><meta charset="utf-8"><title>Print Receipt</title>',
+                        '<link rel="stylesheet" href="{% static "assets/css/bootstrap.min.css" %}">',
+                        "<style>",
+                        "body { padding: 12px; font-family: Arial, sans-serif; }",
+                        ".print-wrap { max-width: 420px; margin: 0 auto; }",
+                        ".d-flex { display: flex !important; }",
+                        ".justify-content-between { justify-content: space-between !important; }",
+                        ".align-items-center { align-items: center !important; }",
+                        "</style></head><body>",
+                        '<div class="print-wrap">' + receiptBody.innerHTML + "</div>",
+                        "</body></html>",
+                    ].join("");
+
+                    printWindow.document.open();
+                    printWindow.document.write(html);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    printWindow.onload = function () {
+                        printWindow.print();
+                        printWindow.close();
+                    };
                 });
             }
 
@@ -3025,6 +3138,55 @@
                     }
                     openModalById("print_reciept");
                 });
+            }
+
+            function printInvoiceCardOnly() {
+                const invoiceModal = document.getElementById("view_invoices");
+                const invoiceCard = invoiceModal ? invoiceModal.querySelector(".modal-body .card.mb-3") : null;
+                if (!invoiceCard) return;
+
+                const printWindow = window.open("", "_blank", "width=900,height=900");
+                if (!printWindow) {
+                    alert("Popup blocked. Please allow popups to print invoice.");
+                    return;
+                }
+
+                const html = [
+                    "<!DOCTYPE html>",
+                    '<html lang="en"><head><meta charset="utf-8"><title>Invoice</title>',
+                    '<link rel="stylesheet" href="{% static "assets/css/bootstrap.min.css" %}">',
+                    '<link rel="stylesheet" href="{% static "assets/css/style.css" %}">',
+                    "<style>",
+                    "@page { size: A4 portrait; margin: 10mm; }",
+                    "html, body { width: 100%; background: #fff !important; }",
+                    "body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }",
+                    ".print-wrap { width: 190mm; margin: 0 auto; }",
+                    ".print-wrap .card { margin: 0 !important; box-shadow: none !important; }",
+                    ".print-wrap .card-body { padding: 0 !important; }",
+                    ".print-wrap .row { display: flex; flex-wrap: wrap; margin-right: -12px; margin-left: -12px; }",
+                    ".print-wrap .row > [class*='col-'] { padding-right: 12px; padding-left: 12px; }",
+                    ".print-wrap .col-md-6 { flex: 0 0 50%; max-width: 50%; }",
+                    ".print-wrap .col-md-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }",
+                    ".print-wrap .col-lg-5 { flex: 0 0 41.666667%; max-width: 41.666667%; }",
+                    ".print-wrap .invoice-logo { display: flex !important; justify-content: flex-end !important; text-align: right !important; }",
+                    ".print-wrap .invoice-logo img { margin-left: auto !important; margin-right: 0 !important; }",
+                    ".print-wrap img { max-width: 100%; height: auto; }",
+                    ".print-wrap .card, .print-wrap .card-body, .print-wrap .mb-4, .print-wrap .row { break-inside: avoid; page-break-inside: avoid; }",
+                    ".table { width: 100%; border-collapse: collapse; }",
+                    ".table th, .table td { border: 1px solid #dee2e6; padding: 8px; }",
+                    "</style></head><body>",
+                    '<div class="print-wrap">' + invoiceCard.outerHTML + "</div>",
+                    "</body></html>",
+                ].join("");
+
+                printWindow.document.open();
+                printWindow.document.write(html);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.onload = function () {
+                    printWindow.print();
+                    printWindow.close();
+                };
             }
 
             const invoiceOpenBtn = document.querySelector('a[data-bs-target="#view_invoices"]');
@@ -3076,7 +3238,7 @@
                 }
                 if (printInvoiceBtn || downloadInvoiceBtn) {
                     event.preventDefault();
-                    window.print();
+                    printInvoiceCardOnly();
                 }
             });
 
@@ -3104,7 +3266,14 @@
             if (printTokenBtn) {
                 printTokenBtn.addEventListener("click", function (event) {
                     event.preventDefault();
-                    window.print();
+                    if (latestOrder) {
+                        updatePrintModal(latestOrder);
+                    }
+                    const orderModal = document.getElementById("order_modal");
+                    if (orderModal && window.bootstrap && window.bootstrap.Modal) {
+                        window.bootstrap.Modal.getOrCreateInstance(orderModal).hide();
+                    }
+                    openModalById("print_reciept");
                 });
             }
 
