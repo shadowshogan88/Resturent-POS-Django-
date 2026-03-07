@@ -50,28 +50,48 @@ class PrintSetting(models.Model):
 
 class StoreSetting(models.Model):
     COUNTRY_CHOICES = [
-        ("United States", "United States"),
-        ("Canada", "Canada"),
-        ("Germany", "Germany"),
-        ("France", "France"),
+        ("Bangladesh", "Bangladesh"),
     ]
     STATE_CHOICES = [
-        ("California", "California"),
-        ("New York", "New York"),
-        ("Texas", "Texas"),
-        ("Florida", "Florida"),
+        ("Dhaka", "Dhaka"),
+        ("Chittagong", "Chittagong"),
+        ("Khulna", "Khulna"),
+        ("Rajshahi", "Rajshahi"),
+        ("Barisal", "Barisal"),
+        ("Sylhet", "Sylhet"),
+        ("Rangpur", "Rangpur"),
+        ("Mymensingh", "Mymensingh"),
+        ("Comilla", "Comilla"),
+        ("Gazipur", "Gazipur"),
+        ("Narail", "Narail"),
+        ("Jessore", "Jessore"),
+        ("Feni", "Feni"),
+        ("Bogra", "Bogra"),
+        ("Pabna", "Pabna"),
     ]
     CITY_CHOICES = [
-        ("Los Angeles", "Los Angeles"),
-        ("San Diego", "San Diego"),
-        ("Fresno", "Fresno"),
-        ("San Francisco", "San Francisco"),
+        ("Dhaka", "Dhaka"),
+        ("Chittagong", "Chittagong"),
+        ("Khulna", "Khulna"),
+        ("Rajshahi", "Rajshahi"),
+        ("Barisal", "Barisal"),
+        ("Sylhet", "Sylhet"),
+        ("Rangpur", "Rangpur"),
+        ("Mymensingh", "Mymensingh"),
+        ("Comilla", "Comilla"),
+        ("Gazipur", "Gazipur"),
+        ("Narail", "Narail"),
+        ("Jessore", "Jessore"),
+        ("Feni", "Feni"),
+        ("Bogra", "Bogra"),
+        ("Pabna", "Pabna"),
     ]
     CURRENCY_CHOICES = [
         ("USD", "USD"),
         ("AED", "AED"),
         ("EUR", "EUR"),
         ("INR", "INR"),
+        ("BDT", "TK"),
     ]
 
     store_image = models.FileField(upload_to="store/", blank=True, null=True)
@@ -85,8 +105,8 @@ class StoreSetting(models.Model):
     email = models.EmailField(default="")
     phone = models.CharField(max_length=30, default="")
     currency = models.CharField(max_length=10, choices=CURRENCY_CHOICES, default="USD")
-    currency_name = models.CharField(max_length=50, default="US Dollar")
-    currency_symbol = models.CharField(max_length=10, default="$")
+    currency_name = models.CharField(max_length=50, default="BDT")
+    currency_symbol = models.CharField(max_length=10, default="TK")
     enable_qr_menu = models.BooleanField(default=True)
     enable_take_away = models.BooleanField(default=True)
     enable_dine_in = models.BooleanField(default=True)
@@ -319,12 +339,80 @@ class UserPermissionOverride(models.Model):
         return f"{self.user.username} - {self.module}"
 
 
+class AuditLog(models.Model):
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_logs",
+    )
+    actor_name = models.CharField(max_length=150, blank=True)
+    actor_role = models.CharField(max_length=80, blank=True)
+    action = models.CharField(max_length=50)
+    module = models.CharField(max_length=80)
+    description = models.TextField()
+    target = models.CharField(max_length=200, blank=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"{self.action} - {self.actor_name or 'System'}"
+
+
+class DiningTable(models.Model):
+    FLOOR_CHOICES = [
+        ("1st", "1st"),
+        ("2nd", "2nd"),
+        ("3rd", "3rd"),
+    ]
+    STATUS_CHOICES = [
+        ("Available", "Available"),
+        ("Booked", "Booked"),
+    ]
+    IMAGE_CHOICES = [
+        ("tables-01.svg", "Table 1"),
+        ("tables-02.svg", "Table 2"),
+        ("tables-04.svg", "Table 4"),
+        ("tables-05.svg", "Table 5"),
+        ("tables-06.svg", "Table 6"),
+        ("tables-14.svg", "Table 14"),
+        ("tables-17.svg", "Table 17"),
+        ("tables-18.svg", "Table 18"),
+        ("tables-19.svg", "Table 19"),
+    ]
+
+    name = models.CharField(max_length=80, unique=True)
+    floor = models.CharField(max_length=10, choices=FLOOR_CHOICES)
+    image_name = models.CharField(max_length=20, choices=IMAGE_CHOICES, default="tables-01.svg")
+    guest_capacity = models.PositiveIntegerField(default=4)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Available")
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["floor", "sort_order", "id"]
+
+    def __str__(self):
+        return self.name
+
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ("Draft", "Draft"),
         ("Placed", "Placed"),
         ("Cancelled", "Cancelled"),
         ("Voided", "Voided"),
+    ]
+    KITCHEN_STATUS_CHOICES = [
+        ("New", "New"),
+        ("In Kitchen", "In Kitchen"),
+        ("Paused", "Paused"),
+        ("Completed", "Completed"),
     ]
     ORDER_TYPE_CHOICES = [
         ("Dine In", "Dine In"),
@@ -344,6 +432,9 @@ class Order(models.Model):
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     service_charge = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    kitchen_status = models.CharField(max_length=20, choices=KITCHEN_STATUS_CHOICES, default="New")
+    kitchen_started_at = models.DateTimeField(blank=True, null=True)
+    kitchen_completed_at = models.DateTimeField(blank=True, null=True)
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

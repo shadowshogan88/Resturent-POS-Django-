@@ -780,9 +780,12 @@
 
                                     </div>
                                     <div class="p-3 border-top">
-                                        <a href="{% url 'login' %}" class="btn btn-white btn-sm w-100">
-                                            <i class="icon-log-in me-1"></i>Logout
-                                        </a>
+                                        <form method="post" action="{% url 'logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-white btn-sm w-100">
+                                                <i class="icon-log-in me-1"></i>Logout
+                                            </button>
+                                        </form>
                                     </div>
                                    
                                 </div>

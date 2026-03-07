@@ -781,9 +781,12 @@
 
                                     </div>
                                     <div class="p-3 border-top">
-                                        <a href="{% url 'login' %}" class="btn btn-white btn-sm w-100">
-                                            <i class="icon-log-in me-1"></i>Logout
-                                        </a>
+                                        <form method="post" action="{% url 'logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-white btn-sm w-100">
+                                                <i class="icon-log-in me-1"></i>Logout
+                                            </button>
+                                        </form>
                                     </div>
                                    
                                 </div>
@@ -918,7 +921,7 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Reports <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Reports <a href="{% url 'page' 'order-report' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="dropdown">
@@ -927,10 +930,10 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end p-3">
                                 <li>
-                                    <a href="#" class="dropdown-item rounded">Export as PDF</a>
+                                    <a href="?{{ order_report_export_pdf_query }}" class="dropdown-item rounded">Export as PDF</a>
                                 </li>
                                 <li>
-                                    <a href="#" class="dropdown-item rounded">Export as Excel</a>
+                                    <a href="?{{ order_report_export_excel_query }}" class="dropdown-item rounded">Export as Excel</a>
                                 </li>
                             </ul>
                         </div>
@@ -963,12 +966,13 @@
                     <div class="card-body">
                         
 
+                        <form method="get" action="{% url 'page' 'order-report' %}">
                         <div class="border-bottom order-report-filter-wrap">
                             <div class="report-filter">
                                 <div class="mb-3">
                                     <label class="form-label">Start Date<span class="text-danger ms-1">*</span></label>
                                     <div class="input-group w-auto input-group-flat">
-                                        <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                        <input type="text" name="start_date" value="{{ order_report_filters.start_date }}" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
                                         <span class="input-group-text">
                                             <i class="icon-calendar-fold"></i>
                                         </span>
@@ -979,7 +983,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">End Date<span class="text-danger ms-1">*</span></label>
                                     <div class="input-group w-auto input-group-flat">
-                                        <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                        <input type="text" name="end_date" value="{{ order_report_filters.end_date }}" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
                                         <span class="input-group-text">
                                             <i class="icon-calendar-fold"></i>
                                         </span>
@@ -991,7 +995,7 @@
                                     <label class="form-label">Customer<span class="text-danger ms-1">*</span></label>
                                     <div class="dropdown">
                                         <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                            Select
+                                            {{ order_report_customer_label }}
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-end p-3 w-100">
                                             <h6 class="fs-14 fw-semibold mb-3">Customer</h6>
@@ -1002,31 +1006,15 @@
                                                 <input type="text" class="form-control form-control-md" placeholder="Search">
                                             </div>  
                                             <div class="vstack gap-2">
+                                                {% for customer_name in order_report_customer_options %}
                                                 <div>
                                                     <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Walk-in Customer
+                                                        <input class="form-check-input m-0 me-2" type="checkbox" name="customer" value="{{ customer_name }}"{% if customer_name in order_report_filters.customers %} checked{% endif %}>{{ customer_name }}
                                                     </label>
                                                 </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Sue Allen
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Frank Barrett
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Kelley Davis
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Jim Vickers
-                                                    </label>
-                                                </div>
+                                                {% empty %}
+                                                <p class="mb-0 text-muted">No customers found</p>
+                                                {% endfor %}
                                             </div>  
                                         </div>
                                     </div>
@@ -1034,10 +1022,11 @@
                             </div>
                             <div class="report-filter">
                                 <div class="mb-3">
-                                    <a href="#" class="btn btn-primary d-inline-flex align-items-center">Submit</a>
+                                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center">Submit</button>
                                 </div>
                             </div> <!-- end col -->
                         </div>
+                        </form>
 
                         <div class="d-flex align-items-center flex-wrap gap-3 justify-content-between mb-4">
 
@@ -1050,20 +1039,20 @@
                                 <!-- sort by -->
                                 <div class="dropdown">
                                     <a href="#" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                                        Sort by : Newest
+                                        Sort by : {{ order_report_sort_label }}
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end p-3">
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Newest</a>
+                                            <a href="?{{ order_report_sort_queries.newest }}" class="dropdown-item">Newest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Oldest</a>
+                                            <a href="?{{ order_report_sort_queries.oldest }}" class="dropdown-item">Oldest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Ascending</a>
+                                            <a href="?{{ order_report_sort_queries.ascending }}" class="dropdown-item">Ascending</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Descending</a>
+                                            <a href="?{{ order_report_sort_queries.descending }}" class="dropdown-item">Descending</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -1087,126 +1076,24 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for row in order_report_rows %}
                                     <tr>
-                                        <td>#23588</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Walk-in Customer</td>
-                                        <td>16</td>
-                                        <td>Dine In</td>
-                                        <td>3</td>
-                                        <td class="fw-medium text-dark">$34.50</td>
+                                        <td>{{ row.order_label }}</td>
+                                        <td>{{ row.date_label }}</td>
+                                        <td>{{ row.customer_name }}</td>
+                                        <td>{{ row.token_no }}</td>
+                                        <td>{{ row.type_label }}</td>
+                                        <td>{{ row.menus_count }}</td>
+                                        <td class="fw-medium text-dark">{{ row.grand_total }}</td>
                                         <td>
-                                            <span class="badge badge-soft-success">Paid</span>
+                                            <span class="badge {{ row.status_class }}">{{ row.status_label }}</span>
                                         </td>
                                     </tr>
+                                    {% empty %}
                                     <tr>
-                                        <td>#23587</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Sue Allen</td>
-                                        <td>15</td>
-                                        <td>Take Away</td>
-                                        <td>7</td>
-                                        <td class="fw-medium text-dark">$78.20</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
+                                        <td colspan="8" class="text-center py-4">No order records found for the selected filters.</td>
                                     </tr>
-                                    <tr>
-                                        <td>#23586</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Frank Barrett</td>
-                                        <td>14</td>
-                                        <td>Dine In</td>
-                                        <td>4</td>
-                                        <td class="fw-medium text-dark">$45.10</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#23585</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Kelley Davis</td>
-                                        <td>13</td>
-                                        <td>Take Away</td>
-                                        <td>9</td>
-                                        <td class="fw-medium text-dark">$92.80</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#23584</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Jim Vickers</td>
-                                        <td>12</td>
-                                        <td>Dine In</td>
-                                        <td>6</td>
-                                        <td class="fw-medium text-dark">$61.40</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#23583</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Nancy Chapman</td>
-                                        <td>11</td>
-                                        <td>Take Away</td>
-                                        <td>5</td>
-                                        <td class="fw-medium text-dark">$57.20</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#23582</td>
-                                        <td>31 Oct 2025</td>
-                                        <td>Ron Jude</td>
-                                        <td>10</td>
-                                        <td>Take Away</td>
-                                        <td>4</td>
-                                        <td class="fw-medium text-dark">$45.30</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#23581</td>
-                                        <td>31 Oct 2025</td>
-                                        <td>Andrea Aponte</td>
-                                        <td>09</td>
-                                        <td>Take Away</td>
-                                        <td>7</td>
-                                        <td class="fw-medium text-dark">$72.60</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#23588</td>
-                                        <td>31 Oct 2025</td>
-                                        <td>David Belcher</td>
-                                        <td>08</td>
-                                        <td>Take Away</td>
-                                        <td>3</td>
-                                        <td class="fw-medium text-dark">$32.10</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#23588</td>
-                                        <td>31 Oct 2025</td>
-                                        <td>Julie Kangas</td>
-                                        <td>07</td>
-                                        <td>Take Away</td>
-                                        <td>4</td>
-                                        <td class="fw-medium text-dark">$40.30</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>

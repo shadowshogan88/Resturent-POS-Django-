@@ -781,9 +781,12 @@
 
                                     </div>
                                     <div class="p-3 border-top">
-                                        <a href="{% url 'login' %}" class="btn btn-white btn-sm w-100">
-                                            <i class="icon-log-in me-1"></i>Logout
-                                        </a>
+                                        <form method="post" action="{% url 'logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-white btn-sm w-100">
+                                                <i class="icon-log-in me-1"></i>Logout
+                                            </button>
+                                        </form>
                                     </div>
                                    
                                 </div>
@@ -918,7 +921,7 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Reports <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Reports <a href="{% url 'page' 'sales-report' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="dropdown">
@@ -927,10 +930,10 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end p-3">
                                 <li>
-                                    <a href="#" class="dropdown-item rounded">Export as PDF</a>
+                                    <a href="?{{ sales_report_export_pdf_query }}" class="dropdown-item rounded">Export as PDF</a>
                                 </li>
                                 <li>
-                                    <a href="#" class="dropdown-item rounded">Export as Excel</a>
+                                    <a href="?{{ sales_report_export_excel_query }}" class="dropdown-item rounded">Export as Excel</a>
                                 </li>
                             </ul>
                         </div>
@@ -963,12 +966,13 @@
                     <div class="card-body">
                         
 
+                        <form method="get" action="{% url 'page' 'sales-report' %}">
                         <div class="border-bottom sales-report-filter-wrap">
                             <div class="report-filter">
                                 <div class="mb-3">
                                     <label class="form-label">Start Date<span class="text-danger ms-1">*</span></label>
                                     <div class="input-group w-auto input-group-flat">
-                                        <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                        <input type="text" name="start_date" value="{{ sales_report_filters.start_date }}" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
                                         <span class="input-group-text">
                                             <i class="icon-calendar-fold"></i>
                                         </span>
@@ -979,7 +983,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">End Date<span class="text-danger ms-1">*</span></label>
                                     <div class="input-group w-auto input-group-flat">
-                                        <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                        <input type="text" name="end_date" value="{{ sales_report_filters.end_date }}" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
                                         <span class="input-group-text">
                                             <i class="icon-calendar-fold"></i>
                                         </span>
@@ -991,7 +995,7 @@
                                     <label class="form-label">Category <span class="text-danger ms-1">*</span></label>
                                     <div class="dropdown">
                                         <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                            Select
+                                            {{ sales_report_category_label }}
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-end p-3 w-100">
                                             <h6 class="fs-14 fw-semibold mb-3">Category </h6>
@@ -1002,31 +1006,15 @@
                                                 <input type="text" class="form-control form-control-md" placeholder="Search">
                                             </div>  
                                             <div class="vstack gap-2">
+                                                {% for category_name in sales_report_category_options %}
                                                 <div>
                                                     <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Sea Food
+                                                        <input class="form-check-input m-0 me-2" type="checkbox" name="category" value="{{ category_name }}"{% if category_name in sales_report_filters.categories %} checked{% endif %}>{{ category_name }}
                                                     </label>
                                                 </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Pizza
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Salads
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Tacos
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Burgers
-                                                    </label>
-                                                </div>
+                                                {% empty %}
+                                                <p class="mb-0 text-muted">No categories found</p>
+                                                {% endfor %}
                                             </div>  
                                         </div>
                                     </div>
@@ -1034,10 +1022,11 @@
                             </div> <!-- end col -->
                             <div class="report-filter">
                                 <div class="mb-3">
-                                    <a href="#" class="btn btn-primary d-inline-flex align-items-center">Submit</a>
+                                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center">Submit</button>
                                 </div>
                             </div> <!-- end col -->
                         </div>
+                        </form>
 
                         <div class="d-flex align-items-center flex-wrap gap-3 justify-content-between mb-4">
 
@@ -1050,20 +1039,20 @@
                                 <!-- sort by -->
                                 <div class="dropdown">
                                     <a href="#" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                                        Sort by : Newest
+                                        Sort by : {{ sales_report_sort_label }}
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end p-3">
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Newest</a>
+                                            <a href="?{{ sales_report_sort_queries.newest }}" class="dropdown-item">Newest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Oldest</a>
+                                            <a href="?{{ sales_report_sort_queries.oldest }}" class="dropdown-item">Oldest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Ascending</a>
+                                            <a href="?{{ sales_report_sort_queries.ascending }}" class="dropdown-item">Ascending</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Descending</a>
+                                            <a href="?{{ sales_report_sort_queries.descending }}" class="dropdown-item">Descending</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -1086,116 +1075,21 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for row in sales_report_rows %}
                                     <tr>
-                                        <td>#SA0016</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Sea Food</td>
-                                        <td>28</td>
-                                        <td>32</td>
-                                        <td>$1000</td>
+                                        <td>{{ row.sales_id }}</td>
+                                        <td>{{ row.date_label }}</td>
+                                        <td>{{ row.category_name }}</td>
+                                        <td>{{ row.items_sold }}</td>
+                                        <td>{{ row.total_orders }}</td>
+                                        <td>{{ row.grand_total }}</td>
                                         <td>
-                                            <span class="badge badge-soft-success">Completed</span>
+                                            <span class="badge {{ row.status_class }}">{{ row.status_label }}</span>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td>#SA0015</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Pizza</td>
-                                        <td>42</td>
-                                        <td>45</td>
-                                        <td>$1500</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#SA0014</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Salads</td>
-                                        <td>66</td>
-                                        <td>70</td>
-                                        <td>$1200</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#SA0013</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Tacos</td>
-                                        <td>48</td>
-                                        <td>53</td>
-                                        <td>$800</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#SA0012</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Burgers</td>
-                                        <td>24</td>
-                                        <td>34</td>
-                                        <td>$750</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#SA0010</td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Ice Cream</td>
-                                        <td>36</td>
-                                        <td>40</td>
-                                        <td>$1300</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#SA0009</td>
-                                        <td>31 Oct 2025</td>
-                                        <td>Pasta</td>
-                                        <td>48</td>
-                                        <td>55</td>
-                                        <td>$1100</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#SA0008</td>
-                                        <td>31 Oct 2025</td>
-                                        <td>Beverages</td>
-                                        <td>32</td>
-                                        <td>35</td>
-                                        <td>$600</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#SA0007</td>
-                                        <td>31 Oct 2025</td>
-                                        <td>Steaks</td>
-                                        <td>22</td>
-                                        <td>27</td>
-                                        <td>$1300</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#SA0006</td>
-                                        <td>31 Oct 2025</td>
-                                        <td>Soups</td>
-                                        <td>18</td>
-                                        <td>22</td>
-                                        <td>$800</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Completed</span>
-                                        </td>
-                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="7" class="text-center py-4">No sales records found for the selected filters.</td></tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>

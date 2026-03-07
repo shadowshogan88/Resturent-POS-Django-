@@ -6,6 +6,106 @@ Template Name: POS - Bootstrap Admin Template
 
 $(document).ready(function(){
 
+	function formatLiveOrderElapsed(totalSeconds) {
+		const minutes = Math.floor(totalSeconds / 60);
+		const seconds = totalSeconds % 60;
+		const hours = Math.floor(minutes / 60);
+		const remMinutes = minutes % 60;
+		if (hours > 0) {
+			return `${String(hours).padStart(2, "0")}:${String(remMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+		}
+		return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+	}
+
+	function renderLiveOrderTimers() {
+		document.querySelectorAll(".js-live-order-time").forEach((card) => {
+			const startedAtRaw = card.getAttribute("data-timer-start") || "";
+			const startedAt = startedAtRaw ? new Date(startedAtRaw) : null;
+			if (!startedAt || Number.isNaN(startedAt.getTime())) {
+				return;
+			}
+
+			const elapsedLabel = card.querySelector(".js-live-elapsed");
+			const progressBar = card.querySelector(".js-live-progress");
+			const elapsedSeconds = Math.max(Math.floor((Date.now() - startedAt.getTime()) / 1000), 0);
+			const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+			const progressWidth = Math.min(Math.floor((elapsedMinutes / 30) * 100), 100);
+			const isLate = elapsedMinutes > 30;
+
+			if (elapsedLabel) {
+				elapsedLabel.textContent = formatLiveOrderElapsed(elapsedSeconds);
+			}
+			if (progressBar) {
+				progressBar.style.width = `${progressWidth}%`;
+				progressBar.classList.toggle("bg-success", !isLate);
+				progressBar.classList.toggle("bg-danger", isLate);
+			}
+		});
+	}
+
+	window.initLiveOrderTimers = function initLiveOrderTimers() {
+		renderLiveOrderTimers();
+		if (window.liveOrderTimerTicker) {
+			window.clearInterval(window.liveOrderTimerTicker);
+		}
+		window.liveOrderTimerTicker = window.setInterval(renderLiveOrderTimers, 1000);
+	};
+
+	window.initLiveOrderTimers();
+
+	function formatKitchenElapsed(totalSeconds) {
+		const minutes = Math.floor(totalSeconds / 60);
+		const seconds = totalSeconds % 60;
+		const hours = Math.floor(minutes / 60);
+		const remMinutes = minutes % 60;
+		if (hours > 0) {
+			return `${String(hours).padStart(2, "0")}:${String(remMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+		}
+		return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+	}
+
+	function renderKitchenTimers() {
+		document.querySelectorAll(".js-kitchen-order-card").forEach((card) => {
+			if (card.getAttribute("data-is-completed") === "1") {
+				return;
+			}
+
+			const baseElapsed = Number(card.getAttribute("data-elapsed-seconds") || "0");
+			const startedAtMs = Number(card.dataset.clientTimerStartedAt || "0");
+			if (!Number.isFinite(baseElapsed) || !Number.isFinite(startedAtMs)) {
+				return;
+			}
+
+			const elapsedSeconds = Math.max(baseElapsed + Math.floor((Date.now() - startedAtMs) / 1000), 0);
+			const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+			const progressWidth = Math.min(Math.floor((elapsedMinutes / 30) * 100), 100);
+			const isLate = elapsedMinutes > 30;
+
+			card.querySelectorAll(".js-kitchen-live-clock").forEach((node) => {
+				node.textContent = formatKitchenElapsed(elapsedSeconds);
+			});
+
+			card.querySelectorAll(".js-kitchen-live-progress").forEach((bar) => {
+				bar.style.width = `${progressWidth}%`;
+				bar.classList.toggle("bg-success", !isLate);
+				bar.classList.toggle("bg-danger", isLate);
+			});
+		});
+	}
+
+	window.initKitchenTimers = function initKitchenTimers() {
+		document.querySelectorAll(".js-kitchen-order-card").forEach((card) => {
+			card.dataset.clientTimerStartedAt = String(Date.now());
+		});
+		renderKitchenTimers();
+		if (window.kitchenTimerTicker) {
+			window.clearInterval(window.kitchenTimerTicker);
+		}
+		window.kitchenTimerTicker = window.setInterval(renderKitchenTimers, 1000);
+	};
+
+	window.initKitchenTimers();
+
 	// Variables declarations
 	const $wrapper = $('.main-wrapper');
 	const $overlay = $('<div class="sidebar-overlay"></div>');

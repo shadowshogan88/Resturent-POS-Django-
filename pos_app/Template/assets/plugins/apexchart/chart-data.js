@@ -4715,81 +4715,164 @@ if ($('#sales-chart').length > 0) {
 
 // Revenue Chart
 if ($('#revenue-chart').length > 0) {
-  var options = {
-    series: [{
-    name: 'Revenue',
-    data: [4, 2, 3.5, 3, 2, 2.8, 3.2]
-  }],
-  chart: {
-    height: 220,
-    type: 'bar',
-    toolbar: {
-      show: false
+  var revenueChartPayload = null;
+  var revenuePayloadNode = document.getElementById('dashboard-revenue-chart-data');
+  if (revenuePayloadNode) {
+    try {
+      revenueChartPayload = JSON.parse(revenuePayloadNode.textContent);
+    } catch (error) {
+      revenueChartPayload = null;
     }
-  },
-  plotOptions: {
-    bar: {
-      borderRadius: 10,
-      dataLabels: {
-        position: 'top', // top, center, bottom
-      },
+  }
+
+  var revenuePeriods = revenueChartPayload && revenueChartPayload.periods ? revenueChartPayload.periods : {
+    weekly: [
+      { label: "Mon", value: 4 },
+      { label: "Tue", value: 2 },
+      { label: "Wed", value: 3.5 },
+      { label: "Thu", value: 3 },
+      { label: "Fri", value: 2 },
+      { label: "Sat", value: 2.8 },
+      { label: "Sun", value: 3.2 }
+    ]
+  };
+  var activeRevenuePeriod = revenueChartPayload && revenueChartPayload.default_period ? revenueChartPayload.default_period : 'weekly';
+  var revenueCurrency = revenueChartPayload && revenueChartPayload.currency_symbol ? revenueChartPayload.currency_symbol : '$';
+  var revenueSummaryLabel = document.getElementById('revenue-summary-label');
+  var revenueSummaryTotal = document.getElementById('revenue-summary-total');
+  var revenueDropdownToggle = document.querySelector('#revenue-period-menu') ? document.querySelector('#revenue-period-menu').previousElementSibling : null;
+
+  function getRevenueSeries(period) {
+    return revenuePeriods[period] || revenuePeriods.weekly || [];
+  }
+
+  function getRevenuePeriodLabel(period) {
+    if (period === 'monthly') return 'Monthly Revenue';
+    if (period === 'yearly') return 'Yearly Revenue';
+    return 'Last 7 Days Revenue';
+  }
+
+  function formatRevenueAmount(value) {
+    return revenueCurrency + Number(value || 0).toFixed(2);
+  }
+
+  function applyRevenueSummary(period) {
+    var rows = getRevenueSeries(period);
+    var total = rows.reduce(function (sum, row) {
+      return sum + Number(row.value || 0);
+    }, 0);
+
+    if (revenueSummaryLabel) {
+      revenueSummaryLabel.textContent = getRevenuePeriodLabel(period);
     }
-  },
-  dataLabels: {
-    enabled: true,
-    formatter: function (val) {
-      return val + "%";
-    },
-    offsetY: -20,
-    style: {
-      fontSize: '12px',
-      colors: ["#304758"]
+    if (revenueSummaryTotal) {
+      revenueSummaryTotal.textContent = formatRevenueAmount(total);
     }
-  },
-  
-  xaxis: {
-    categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    axisBorder: {
-      show: false
-    },
-    axisTicks: {
-      show: false
-    },
-    crosshairs: {
-      fill: {
-        type: 'gradient',
-        gradient: {
-          colorFrom: '#F8F8F8',
-          colorTo: '#F8F8F8',
-          stops: [0, 100],
-          opacityFrom: 0.4,
-          opacityTo: 0.5,
+    if (revenueDropdownToggle) {
+      revenueDropdownToggle.textContent = period.charAt(0).toUpperCase() + period.slice(1);
+    }
+  }
+
+  function buildRevenueChartOptions(period) {
+    var rows = getRevenueSeries(period);
+    return {
+      series: [{
+        name: 'Revenue',
+        data: rows.map(function (row) { return Number(row.value || 0); })
+      }],
+      chart: {
+        height: 220,
+        type: 'bar',
+        toolbar: {
+          show: false
         }
-      }
-    },
-    tooltip: {
-      enabled: true,
-    }
-  },
-  yaxis: {
-    axisBorder: {
-      show: false
-    },
-    axisTicks: {
-      show: true,
-    },
-    labels: {
-      show: true,
-      formatter: function (val) {
-        return val + "k";
-      }
-    },
-    
-  
-  },
-  colors: ['#0D76E1']
+      },
+      plotOptions: {
+        bar: {
+          borderRadius: 10,
+          dataLabels: {
+            position: 'top',
+          },
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function (val) {
+          return formatRevenueAmount(val);
+        },
+        offsetY: -20,
+        style: {
+          fontSize: '12px',
+          colors: ["#304758"]
+        }
+      },
+      xaxis: {
+        categories: rows.map(function (row) { return row.label; }),
+        axisBorder: {
+          show: false
+        },
+        axisTicks: {
+          show: false
+        },
+        crosshairs: {
+          fill: {
+            type: 'gradient',
+            gradient: {
+              colorFrom: '#F8F8F8',
+              colorTo: '#F8F8F8',
+              stops: [0, 100],
+              opacityFrom: 0.4,
+              opacityTo: 0.5,
+            }
+          }
+        },
+        tooltip: {
+          enabled: true,
+        }
+      },
+      yaxis: {
+        axisBorder: {
+          show: false
+        },
+        axisTicks: {
+          show: true,
+        },
+        labels: {
+          show: true,
+          formatter: function (val) {
+            return formatRevenueAmount(val);
+          }
+        },
+      },
+      tooltip: {
+        y: {
+          formatter: function (val) {
+            return formatRevenueAmount(val);
+          }
+        }
+      },
+      colors: ['#0D76E1']
+    };
+  }
+
+  var options = {
+    series: [],
+    chart: {}
   };
 
+  options = buildRevenueChartOptions(activeRevenuePeriod);
   var chart = new ApexCharts(document.querySelector("#revenue-chart"), options);
   chart.render();
+  applyRevenueSummary(activeRevenuePeriod);
+
+  $('[data-revenue-period]').on('click', function () {
+    var selectedPeriod = $(this).data('revenue-period');
+    if (!selectedPeriod || !getRevenueSeries(selectedPeriod).length) {
+      return;
+    }
+
+    activeRevenuePeriod = selectedPeriod;
+    chart.updateOptions(buildRevenueChartOptions(activeRevenuePeriod));
+    applyRevenueSummary(activeRevenuePeriod);
+  });
 }

@@ -499,9 +499,12 @@
 
                                         </div>
                                         <div class="p-3 border-top">
-                                            <a href="{% url 'login' %}" class="btn btn-white btn-sm w-100">
+                                        <form method="post" action="{% url 'logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-white btn-sm w-100">
                                                 <i class="icon-log-in me-1"></i>Logout
-                                            </a>
+                                            </button>
+                                        </form>
                                         </div>
                                     
                                     </div>
@@ -538,25 +541,33 @@
                             <!-- Tabs  -->
                             <div class="item border-bottom">
                                 <!-- Tabs -->
-                                <ul class="nav nav-tabs nav-tabs-solid border-0 mb-3 align-items-center justify-content-between flex-wrap gap-1 pos-tab" role="tablist">
+                                <ul id="pos-order-type-tabs" class="nav nav-tabs nav-tabs-solid border-0 mb-3 align-items-center justify-content-between flex-wrap gap-1 pos-tab" role="tablist" data-default-tab="#{{ pos_default_order_tab }}">
+                                    {% if pos_modes.dine_in %}
                                     <li class="nav-item flex-fill">                                             
-                                        <a href="#order-tab1" class="nav-link active justify-content-center shadow-sm" data-bs-toggle="tab"><i class="icon-wine"></i>Dine In</a>
+                                        <a href="#order-tab1" class="nav-link{% if pos_default_order_tab == 'order-tab1' %} active{% endif %} justify-content-center shadow-sm" data-bs-toggle="tab"><i class="icon-wine"></i>Dine In</a>
                                     </li>
+                                    {% endif %}
+                                    {% if pos_modes.take_away %}
                                     <li class="nav-item flex-fill">
-                                        <a href="#order-tab2" class="nav-link justify-content-center shadow-sm" data-bs-toggle="tab"><i class="icon-shopping-bag"></i>Take Away</a>
+                                        <a href="#order-tab2" class="nav-link{% if pos_default_order_tab == 'order-tab2' %} active{% endif %} justify-content-center shadow-sm" data-bs-toggle="tab"><i class="icon-shopping-bag"></i>Take Away</a>
                                     </li>
+                                    {% endif %}
+                                    {% if pos_modes.delivery %}
                                     <li class="nav-item flex-fill">
-                                        <a href="#order-tab3" class="nav-link flex-fill justify-content-center shadow-sm" data-bs-toggle="tab"><i class="icon-check-check"></i>Delivery</a>
+                                        <a href="#order-tab3" class="nav-link{% if pos_default_order_tab == 'order-tab3' %} active{% endif %} flex-fill justify-content-center shadow-sm" data-bs-toggle="tab"><i class="icon-check-check"></i>Delivery</a>
                                     </li>
+                                    {% endif %}
+                                    {% if pos_modes.table %}
                                     <li class="nav-item flex-fill">
-                                        <a href="#order-tab4" class="nav-link flex-fill justify-content-center shadow-sm" data-bs-toggle="tab"><i class="icon-land-plot"></i>Table</a>
+                                        <a href="#order-tab4" class="nav-link{% if pos_default_order_tab == 'order-tab4' %} active{% endif %} flex-fill justify-content-center shadow-sm" data-bs-toggle="tab"><i class="icon-land-plot"></i>Table</a>
                                     </li>
+                                    {% endif %}
                                 </ul> 
 
                                 <div class="tab-content">
 
                                     <!-- TAb 1 -->
-                                    <div class="tab-pane show active" id="order-tab1">
+                                    <div class="tab-pane show{% if pos_default_order_tab == 'order-tab1' %} active{% endif %}" id="order-tab1">
 
                                         <!-- Start row -->
                                         <div class="row g-2">
@@ -588,7 +599,7 @@
                                     </div>
 
                                     <!-- TAb 2 -->
-                                    <div class="tab-pane show" id="order-tab2">
+                                    <div class="tab-pane show{% if pos_default_order_tab == 'order-tab2' %} active{% endif %}" id="order-tab2">
 
                                         <!-- Start row -->
                                         <div class="row g-2">
@@ -612,7 +623,7 @@
                                     </div>
 
                                     <!-- TAb 3 -->
-                                    <div class="tab-pane show" id="order-tab3">
+                                    <div class="tab-pane show{% if pos_default_order_tab == 'order-tab3' %} active{% endif %}" id="order-tab3">
 
                                         <!-- Start row -->
                                         <div class="row g-2">
@@ -636,7 +647,7 @@
                                     </div>
 
                                     <!-- TAb 4 -->
-                                    <div class="tab-pane show" id="order-tab4">
+                                    <div class="tab-pane show{% if pos_default_order_tab == 'order-tab4' %} active{% endif %}" id="order-tab4">
 
                                         <!-- Start row -->
                                         <div class="row g-2">
@@ -1856,7 +1867,9 @@
 
             function getActiveOrderMeta() {
                 const activeNav = document.querySelector('a.nav-link.active[href^="#order-tab"]');
-                const href = activeNav ? activeNav.getAttribute("href") : "#order-tab1";
+                const tabsRoot = document.getElementById("pos-order-type-tabs");
+                const defaultTabHref = tabsRoot ? (tabsRoot.getAttribute("data-default-tab") || "#order-tab1") : "#order-tab1";
+                const href = activeNav ? activeNav.getAttribute("href") : defaultTabHref;
                 let orderType = "Dine In";
                 if (href === "#order-tab2") orderType = "Takeaway";
                 if (href === "#order-tab3") orderType = "Delivery";
@@ -2409,6 +2422,9 @@
                     }
                     refreshMenuSearchRefs();
                     initLiveMenuSearch();
+                    if (window.initLiveOrderTimers) {
+                        window.initLiveOrderTimers();
+                    }
                     const refreshedMenuSection = posLeftRoot.querySelector("#pos-menu-section") || posLeftRoot;
                     initPosMenuSlick(refreshedMenuSection);
                     applyCartStateSnapshot(snapshot);

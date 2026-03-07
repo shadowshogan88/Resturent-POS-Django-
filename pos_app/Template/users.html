@@ -781,9 +781,12 @@
 
                                     </div>
                                     <div class="p-3 border-top">
-                                        <a href="{% url 'login' %}" class="btn btn-white btn-sm w-100">
-                                            <i class="icon-log-in me-1"></i>Logout
-                                        </a>
+                                        <form method="post" action="{% url 'logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-white btn-sm w-100">
+                                                <i class="icon-log-in me-1"></i>Logout
+                                            </button>
+                                        </form>
                                     </div>
                                    
                                 </div>
@@ -1075,24 +1078,25 @@
                         <h4 class="modal-title">Edit User</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form method="post" action="{% url 'users_update' %}">
+                    <form method="post" action="{% url 'users_update' %}" autocomplete="off">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <input type="hidden" name="user_id" id="edit-user-id">
                         <div class="modal-body p-4 pt-1">
                             <div class="row algin-items-center justify-content-center">
-                                <div class="col-lg-6"><div class="mb-3"><label class="form-label">First Name<span class="text-danger"> *</span></label><input type="text" name="first_name" id="edit-user-first-name" class="form-control" required></div></div>
-                                <div class="col-lg-6"><div class="mb-3"><label class="form-label">Last Name</label><input type="text" name="last_name" id="edit-user-last-name" class="form-control"></div></div>
+                                <div class="col-lg-6"><div class="mb-3"><label class="form-label">First Name<span class="text-danger"> *</span></label><input type="text" name="first_name" id="edit-user-first-name" class="form-control" autocomplete="off" required></div></div>
+                                <div class="col-lg-6"><div class="mb-3"><label class="form-label">Last Name</label><input type="text" name="last_name" id="edit-user-last-name" class="form-control" autocomplete="off"></div></div>
                             </div>
-                            <div class="mb-3"><label class="form-label">Email<span class="text-danger"> *</span></label><input type="email" name="email" id="edit-user-email" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label">Email<span class="text-danger"> *</span></label><input type="email" name="email" id="edit-user-email" class="form-control" autocomplete="off" required></div>
                             <div class="mb-3"><label class="form-label">Role<span class="text-danger"> *</span></label>
                                 <select class="select" name="role" id="edit-user-role" required>
                                     {% for role_name in roles %}<option value="{{ role_name }}">{{ role_name }}</option>{% endfor %}
                                 </select>
                             </div>
-                            <div class="mb-3"><label class="form-label">Phone Number<span class="text-danger"> *</span></label><input type="text" name="phone_number" id="edit-user-phone" class="form-control" required></div>
-                            <div class="mb-3"><label class="form-label">PIN Number</label><input type="text" name="pin_number" id="edit-user-pin" class="form-control"></div>
-                            <div class="mb-3"><label class="form-label">New Password</label><input type="password" name="password" class="form-control" placeholder="Keep empty to keep current"></div>
+                            <div class="mb-3"><label class="form-label">Phone Number<span class="text-danger"> *</span></label><input type="text" name="phone_number" id="edit-user-phone" class="form-control" autocomplete="off" required></div>
+                            <div class="mb-3"><label class="form-label">PIN Number</label><input type="text" name="pin_number" id="edit-user-pin" class="form-control" autocomplete="off"></div>
+                            <div class="mb-3"><label class="form-label">New Password</label><input type="password" name="password" class="form-control" placeholder="Keep empty to keep current" autocomplete="new-password"></div>
+                            <div class="mb-3"><label class="form-label">Confirm Password</label><input type="password" name="confirm_password" class="form-control" placeholder="Repeat new password" autocomplete="new-password"></div>
                             <div class="mb-3"><label class="form-label">Status<span class="text-danger"> *</span></label>
                                 <select class="select" name="status" id="edit-user-status" required>
                                     <option value="active">Active</option>

@@ -7,18 +7,26 @@
                 <li class="nav-item">
                     <a href="#" class="nav-link active shadow-sm" data-bs-toggle="tab" data-bs-target="#all">All Orders</a>
                 </li>
+                {% if pos_modes.dine_in %}
                 <li class="nav-item">
                     <a href="#" class="nav-link shadow-sm" data-bs-toggle="tab" data-bs-target="#dinein">Dine In</a>
                 </li>
+                {% endif %}
+                {% if pos_modes.take_away %}
                 <li class="nav-item">
                     <a href="#" class="nav-link shadow-sm" data-bs-toggle="tab" data-bs-target="#takeaway">Take Away</a>
                 </li>
+                {% endif %}
+                {% if pos_modes.delivery %}
                 <li class="nav-item">
                     <a href="#" class="nav-link shadow-sm" data-bs-toggle="tab" data-bs-target="#delivery">Delivery</a>
                 </li>
+                {% endif %}
+                {% if pos_modes.table %}
                 <li class="nav-item">
                     <a href="#" class="nav-link shadow-sm" data-bs-toggle="tab" data-bs-target="#table">Table</a>
                 </li>
+                {% endif %}
             </ul>
             <div class="d-flex align-items-center gap-2">
                 <button type="button" class="slick-arrow all-prev"><i class="icon-arrow-left"></i></button>
@@ -32,7 +40,7 @@
             <div class="all-slider">
                 {% for order in recent_orders_all %}
                 <div class="slide-item">
-                    <div class="order-item">
+                    <div class="order-item js-live-order-time" data-timer-start="{{ order.timer_started_at_iso }}">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <div>
                                 <p class="fs-12 mb-1">#{{ order.order_label }}</p>
@@ -51,9 +59,9 @@
                         </div>
                         <div class="d-flex align-items-center justify-content-between gap-3">
                             <div class="progress-item">
-                                <div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div>
+                                <div class="progress-bar {{ order.progress_class }} js-live-progress" style="width: {{ order.progress_width }}%;"></div>
                             </div>
-                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i><span class="js-live-elapsed">{{ order.elapsed_clock }}</span></p>
                         </div>
                     </div>
                 </div>
@@ -65,11 +73,12 @@
             </div>
         </div>
 
+        {% if pos_modes.dine_in %}
         <div class="tab-pane fade" id="dinein">
             <div class="dinein-slider">
                 {% for order in recent_orders_dinein %}
                 <div class="slide-item">
-                    <div class="order-item">
+                    <div class="order-item js-live-order-time" data-timer-start="{{ order.timer_started_at_iso }}">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <div>
                                 <p class="fs-12 mb-1">#{{ order.order_label }}</p>
@@ -84,8 +93,8 @@
                             </div>
                         </div>
                         <div class="d-flex align-items-center justify-content-between gap-3">
-                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div></div>
-                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }} js-live-progress" style="width: {{ order.progress_width }}%;"></div></div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i><span class="js-live-elapsed">{{ order.elapsed_clock }}</span></p>
                         </div>
                     </div>
                 </div>
@@ -94,12 +103,14 @@
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
 
+        {% if pos_modes.take_away %}
         <div class="tab-pane fade" id="takeaway">
             <div class="takeaway-slider">
                 {% for order in recent_orders_takeaway %}
                 <div class="slide-item">
-                    <div class="order-item">
+                    <div class="order-item js-live-order-time" data-timer-start="{{ order.timer_started_at_iso }}">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <div>
                                 <p class="fs-12 mb-1">#{{ order.order_label }}</p>
@@ -112,8 +123,8 @@
                             </div>
                         </div>
                         <div class="d-flex align-items-center justify-content-between gap-3">
-                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div></div>
-                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }} js-live-progress" style="width: {{ order.progress_width }}%;"></div></div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i><span class="js-live-elapsed">{{ order.elapsed_clock }}</span></p>
                         </div>
                     </div>
                 </div>
@@ -122,12 +133,14 @@
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
 
+        {% if pos_modes.delivery %}
         <div class="tab-pane fade" id="delivery">
             <div class="delivery-slider">
                 {% for order in recent_orders_delivery %}
                 <div class="slide-item">
-                    <div class="order-item">
+                    <div class="order-item js-live-order-time" data-timer-start="{{ order.timer_started_at_iso }}">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <div>
                                 <p class="fs-12 mb-1">#{{ order.order_label }}</p>
@@ -140,8 +153,8 @@
                             </div>
                         </div>
                         <div class="d-flex align-items-center justify-content-between gap-3">
-                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div></div>
-                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }} js-live-progress" style="width: {{ order.progress_width }}%;"></div></div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i><span class="js-live-elapsed">{{ order.elapsed_clock }}</span></p>
                         </div>
                     </div>
                 </div>
@@ -150,12 +163,14 @@
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
 
+        {% if pos_modes.table %}
         <div class="tab-pane fade" id="table">
             <div class="table-slider">
                 {% for order in recent_orders_table %}
                 <div class="slide-item">
-                    <div class="order-item">
+                    <div class="order-item js-live-order-time" data-timer-start="{{ order.timer_started_at_iso }}">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <div>
                                 <p class="fs-12 mb-1">#{{ order.order_label }}</p>
@@ -168,8 +183,8 @@
                             </div>
                         </div>
                         <div class="d-flex align-items-center justify-content-between gap-3">
-                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }}" style="width: {{ order.progress_width }}%;"></div></div>
-                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i>{{ order.elapsed_clock }}</p>
+                            <div class="progress-item"><div class="progress-bar {{ order.progress_class }} js-live-progress" style="width: {{ order.progress_width }}%;"></div></div>
+                            <p class="mb-0 fs-10 fw-normal d-flex align-items-center"><i class="icon-clock me-1"></i><span class="js-live-elapsed">{{ order.elapsed_clock }}</span></p>
                         </div>
                     </div>
                 </div>
@@ -178,6 +193,7 @@
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 

@@ -781,9 +781,12 @@
 
                                     </div>
                                     <div class="p-3 border-top">
-                                        <a href="{% url 'login' %}" class="btn btn-white btn-sm w-100">
-                                            <i class="icon-log-in me-1"></i>Logout
-                                        </a>
+                                        <form method="post" action="{% url 'logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-white btn-sm w-100">
+                                                <i class="icon-log-in me-1"></i>Logout
+                                            </button>
+                                        </form>
                                     </div>
                                    
                                 </div>
@@ -958,143 +961,115 @@
                 </ul>  
                 <!-- Tabs -->
 
-                <!-- card start -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form method="get" action="{% url 'page' 'audit-report' %}">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-lg-4">
+                                    <label class="form-label">Search</label>
+                                    <input type="text" name="q" value="{{ audit_filters.q }}" class="form-control" placeholder="Actor, target, module or description">
+                                </div>
+                                <div class="col-lg-2">
+                                    <label class="form-label">Action</label>
+                                    <select name="action" class="form-select">
+                                        <option value="">All Actions</option>
+                                        {% for option in audit_action_options %}
+                                        <option value="{{ option.value }}"{% if audit_filters.action == option.value %} selected{% endif %}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-2">
+                                    <label class="form-label">Module</label>
+                                    <select name="module" class="form-select">
+                                        <option value="">All Modules</option>
+                                        {% for module_name in audit_module_options %}
+                                        <option value="{{ module_name }}"{% if audit_filters.module == module_name %} selected{% endif %}>{{ module_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-2">
+                                    <label class="form-label">From</label>
+                                    <input type="date" name="date_from" value="{{ audit_filters.date_from }}" class="form-control">
+                                </div>
+                                <div class="col-lg-2">
+                                    <label class="form-label">To</label>
+                                    <input type="date" name="date_to" value="{{ audit_filters.date_to }}" class="form-control">
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between gap-2 mt-3 flex-wrap">
+                                <p class="mb-0 text-muted">Showing {{ audit_logs|length }} of {{ audit_total_count }} audit logs</p>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <a href="{% url 'page' 'audit-report' %}" class="btn btn-light">Reset</a>
+                                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <div class="card mb-0">
                     <div class="card-body schedule-timeline">
+                        {% for log in audit_logs %}
                         <div class="d-sm-flex align-items-center">
                             <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-badge-dollar-sign text-gray-2 fs-18"></i>
+                                <span class="{% if forloop.last %}timeline-border-none{% else %}timeline-border{% endif %} d-flex align-items-center justify-content-center bg-white">
+                                    <i class="{{ log.icon }} text-gray-2 fs-18"></i>
                                 </span>
                             </div>
-                            <div class="flex-fill">
+                            <div class="flex-fill {% if not forloop.last %}timeline-hrline{% endif %}">
                                 <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Sale Created by David Williams (Cashier) at POS Terminal</p>
-                                    <span>12 Nov 2025 at 09:45 AM</span>
+                                    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                                        <div>
+                                            <p class="fw-medium text-dark mb-1">{{ log.description }}</p>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap text-muted fs-13">
+                                                <span>{{ log.created_display }}</span>
+                                                <span class="badge bg-light text-dark">{{ log.action_label }}</span>
+                                                <span class="badge badge-soft-info">{{ log.module }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-sm-end">
+                                            <p class="mb-1 fs-13"><span class="text-dark">Actor:</span> {{ log.actor_name }} ({{ log.actor_role }})</p>
+                                            <p class="mb-1 fs-13"><span class="text-dark">Target:</span> {{ log.target }}</p>
+                                            <p class="mb-0 fs-13"><span class="text-dark">IP:</span> {{ log.ip_address }}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-box text-gray-2 fs-18"></i>
-                                </span>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <div class="avatar avatar-xl bg-light text-dark rounded-circle mx-auto mb-3">
+                                <i class="icon-hourglass fs-30"></i>
                             </div>
-                            <div class="flex-fill">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Product Updated by Emily Johnson (Supervisor) in Inventory</p>
-                                    <span>12 Nov 2025 at 10:15 AM</span>
-                                </div>
-                            </div>
+                            <h5 class="mb-1">No audit logs found</h5>
+                            <p class="mb-0 text-muted">Run some actions in the app or clear the current filters.</p>
                         </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-user-round text-gray-2 fs-18"></i>
-                                </span>
-                            </div>
-                            <div class="flex-fill">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">User Added by John Smith (Admin) in Settings</p>
-                                    <span>12 Nov 2025 at 11:00 AM</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-diamond-percent text-gray-2 fs-18"></i>
-                                </span>
-                            </div>
-                            <div class="flex-fill">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Discount Applied by Alex Martinez (Cashier) in POS Terminal</p>
-                                    <span>12 Nov 2025 at 11:25 AM</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-trash-2 text-gray-2 fs-18"></i>
-                                </span>
-                            </div>
-                            <div class="flex-fill timeline-hrline">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Product Deleted by Emily Johnson (Supervisor) in Inventory</p>
-                                    <span>12 Nov 2025 at 12:20 PM</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-badge-x text-gray-2 fs-18"></i>
-                                </span>
-                            </div>
-                            <div class="flex-fill timeline-hrline">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Sale Voided by  Alex Martinez (Cashier) at POS Terminal</p>
-                                    <span>12 Nov 2025 at 01:45 PM</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-badge-dollar-sign text-gray-2 fs-18"></i>
-                                </span>
-                            </div>
-                            <div class="flex-fill timeline-hrline">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Refund Issued by Emily Johnson (Supervisor) in Sales</p>
-                                    <span>12 Nov 2025 at 02:00 PM</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-log-in text-gray-2 fs-18"></i>
-                                </span>
-                            </div>
-                            <div class="flex-fill timeline-hrline">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Login Attempt (Failed) by John Smith (Admin) at Dashboard</p>
-                                    <span>12 Nov 2025 at 02:20 PM</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-badge-dollar-sign text-gray-2 fs-18"></i>
-                                </span>
-                            </div>
-                            <div class="flex-fill timeline-hrline">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Sale Deleted by David Williams (Cashier) in POS Terminal</p>
-                                    <span>12 Nov 2025 at 02:30 PM</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-sm-flex align-items-center">
-                            <div class="d-flex align-items-center active-time">
-                                <span class="timeline-border-none d-flex align-items-center justify-content-center bg-white">
-                                    <i class="icon-badge-dollar-sign text-gray-2 fs-18"></i>
-                                </span>
-                            </div>
-                            <div class="flex-fill timeline-hrline">
-                                <div class="p-3">
-                                    <p class="fw-medium text-dark mb-1">Sale Created by David Williams (Cashier) at POS Terminal</p>
-                                    <span>12 Nov 2025 at 02:35 PM</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div> <!-- end card body -->
-
+                        {% endfor %}
+                    </div>
                 </div>
-                <!-- card start -->
+
+                {% if audit_page_obj.has_other_pages %}
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4">
+                    <p class="mb-0 text-muted">Page {{ audit_page_obj.number }} of {{ audit_page_obj.paginator.num_pages }}</p>
+                    <ul class="pagination mb-0">
+                        {% if audit_page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ audit_filters.q }}&action={{ audit_filters.action }}&module={{ audit_filters.module }}&date_from={{ audit_filters.date_from }}&date_to={{ audit_filters.date_to }}&page={{ audit_page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        {% for number in audit_page_numbers %}
+                        <li class="page-item {% if audit_page_obj.number == number %}active{% endif %}">
+                            <a class="page-link" href="?q={{ audit_filters.q }}&action={{ audit_filters.action }}&module={{ audit_filters.module }}&date_from={{ audit_filters.date_from }}&date_to={{ audit_filters.date_to }}&page={{ number }}">{{ number }}</a>
+                        </li>
+                        {% endfor %}
+                        {% if audit_page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ audit_filters.q }}&action={{ audit_filters.action }}&module={{ audit_filters.module }}&date_from={{ audit_filters.date_from }}&date_to={{ audit_filters.date_to }}&page={{ audit_page_obj.next_page_number }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
                                 
             </div>
             <!-- End Content -->  

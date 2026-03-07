@@ -2,13 +2,14 @@ import csv
 import json
 from io import StringIO
 from decimal import Decimal, InvalidOperation
-from datetime import datetime
-from django.db import transaction
-from django.db.models import Count, Q
+from datetime import datetime, timedelta
+from collections import defaultdict
+from django.db import models, transaction
+from django.db.models import Count, Q, Sum
 from django.db.utils import IntegrityError
 from django.core.paginator import Paginator
 from django.contrib import messages
-from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth import authenticate, get_user_model, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -18,9 +19,11 @@ from django.utils import timezone
 from urllib.parse import urlencode
 
 from .models import (
+    AuditLog,
     Addon,
     Category,
     Customer,
+    DiningTable,
     Item,
     ItemAddon,
     ItemVariation,
@@ -72,6 +75,92 @@ CURRENCY_META = {
     "EUR": ("Euro", "EUR"),
     "INR": ("Indian Rupee", "Rs"),
 }
+AUDIT_ACTION_LABELS = {
+    "system_enabled": "System Enabled",
+    "login_success": "Login Success",
+    "login_failed": "Login Failed",
+    "logout": "Logout",
+    "item_created": "Product Created",
+    "item_updated": "Product Updated",
+    "item_deleted": "Product Deleted",
+    "order_placed": "Order Placed",
+    "order_drafted": "Order Drafted",
+    "order_cancelled": "Order Cancelled",
+    "print_settings_updated": "Print Settings Updated",
+    "store_settings_updated": "Store Settings Updated",
+    "table_created": "Table Created",
+    "table_updated": "Table Updated",
+    "table_deleted": "Table Deleted",
+    "user_created": "User Created",
+    "user_updated": "User Updated",
+    "user_deleted": "User Deleted",
+    "user_permissions_updated": "User Permissions Updated",
+    "role_created": "Role Created",
+    "role_permissions_updated": "Role Permissions Updated",
+    "category_created": "Category Created",
+    "category_updated": "Category Updated",
+    "category_deleted": "Category Deleted",
+    "customer_created": "Customer Created",
+    "customer_updated": "Customer Updated",
+    "kitchen_started": "Kitchen Started",
+    "kitchen_paused": "Kitchen Paused",
+    "kitchen_completed": "Kitchen Completed",
+}
+AUDIT_ACTION_ICONS = {
+    "system_enabled": "icon-settings",
+    "login_success": "icon-log-in",
+    "login_failed": "icon-circle-alert",
+    "logout": "icon-log-out",
+    "item_created": "icon-chef-hat",
+    "item_updated": "icon-square-pen",
+    "item_deleted": "icon-trash-2",
+    "order_placed": "icon-shopping-bag",
+    "order_drafted": "icon-file-stack",
+    "order_cancelled": "icon-ban",
+    "print_settings_updated": "icon-printer",
+    "store_settings_updated": "icon-warehouse",
+    "table_created": "icon-concierge-bell",
+    "table_updated": "icon-pencil-line",
+    "table_deleted": "icon-trash-2",
+    "user_created": "icon-user-round-plus",
+    "user_updated": "icon-user-pen",
+    "user_deleted": "icon-user-x",
+    "user_permissions_updated": "icon-shield-check",
+    "role_created": "icon-badge-plus",
+    "role_permissions_updated": "icon-shield",
+    "category_created": "icon-layers-2",
+    "category_updated": "icon-square-pen",
+    "category_deleted": "icon-trash-2",
+    "customer_created": "icon-user-round-plus",
+    "customer_updated": "icon-user-round-cog",
+    "kitchen_started": "icon-chef-hat",
+    "kitchen_paused": "icon-pause",
+    "kitchen_completed": "icon-check-check",
+}
+
+
+def _get_client_ip(request):
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR") or None
+
+
+def _log_audit_event(request, action, module, description, target="", actor=None):
+    actor_user = actor
+    if actor_user is None and getattr(request, "user", None) is not None and request.user.is_authenticated:
+        actor_user = request.user
+
+    AuditLog.objects.create(
+        actor=actor_user,
+        actor_name=(actor_user.full_name if actor_user and actor_user.full_name else actor_user.username) if actor_user else "",
+        actor_role=getattr(actor_user, "role", "") if actor_user else "",
+        action=action,
+        module=module,
+        description=description,
+        target=target,
+        ip_address=_get_client_ip(request) if request is not None else None,
+    )
 
 
 def _escape_pdf_text(value):
@@ -196,9 +285,24 @@ def login_view(request):
         else:
             user = authenticate(request, username=username, password=password)
             if user is None:
+                _log_audit_event(
+                    request,
+                    action="login_failed",
+                    module="Authentication",
+                    description=f"Failed login attempt for username '{username or 'Unknown'}'.",
+                    target=username or "Unknown",
+                )
                 messages.error(request, "Invalid username or password.")
             else:
                 login(request, user)
+                _log_audit_event(
+                    request,
+                    action="login_success",
+                    module="Authentication",
+                    description=f"User {user.full_name or user.username} signed in successfully.",
+                    target=user.username,
+                    actor=user,
+                )
                 if not remember_me:
                     request.session.set_expiry(0)
                 messages.success(request, "Login successful.")
@@ -360,12 +464,19 @@ def category_add_view(request):
         messages.error(request, "Items count must be a non-negative number.")
         return redirect("categories")
 
-    Category.objects.create(
+    category = Category.objects.create(
         name=name,
         image=image,
         items_count=items_count_value,
         status=status,
         created_on=timezone.now().date(),
+    )
+    _log_audit_event(
+        request,
+        action="category_created",
+        module="Categories",
+        description=f"Category '{category.name}' created with status {category.status}.",
+        target=category.name,
     )
     messages.success(request, "Category added successfully.")
     return redirect("categories")
@@ -409,6 +520,13 @@ def category_update_view(request):
     if image:
         category.image = image
     category.save()
+    _log_audit_event(
+        request,
+        action="category_updated",
+        module="Categories",
+        description=f"Category '{category.name}' updated to status {category.status}.",
+        target=category.name,
+    )
 
     messages.success(request, "Category updated successfully.")
     return redirect("categories")
@@ -426,7 +544,15 @@ def category_delete_view(request):
         messages.error(request, "Category not found.")
         return redirect("categories")
 
+    category_name = category.name
     category.delete()
+    _log_audit_event(
+        request,
+        action="category_deleted",
+        module="Categories",
+        description=f"Category '{category_name}' was deleted.",
+        target=category_name,
+    )
     messages.success(request, "Category deleted successfully.")
     return redirect("categories")
 
@@ -568,7 +694,7 @@ def addon_add_view(request):
         messages.error(request, str(exc))
         return redirect("addons")
 
-    Addon.objects.create(
+    addon = Addon.objects.create(
         item=item,
         name=name,
         image=image,
@@ -576,6 +702,13 @@ def addon_add_view(request):
         description=description,
         status=status,
         created_on=timezone.now().date(),
+    )
+    _log_audit_event(
+        request,
+        action="item_created",
+        module="Addons",
+        description=f"Addon '{addon.name}' created for category '{item.name}'.",
+        target=addon.name,
     )
     messages.success(request, "Addon added successfully.")
     return redirect("addons")
@@ -626,6 +759,13 @@ def addon_update_view(request):
     if image:
         addon.image = image
     addon.save()
+    _log_audit_event(
+        request,
+        action="item_updated",
+        module="Addons",
+        description=f"Addon '{addon.name}' updated for category '{item.name}'.",
+        target=addon.name,
+    )
     messages.success(request, "Addon updated successfully.")
     return redirect("addons")
 
@@ -641,7 +781,15 @@ def addon_delete_view(request):
     except (Addon.DoesNotExist, TypeError, ValueError):
         messages.error(request, "Addon not found.")
         return redirect("addons")
+    addon_name = addon.name
     addon.delete()
+    _log_audit_event(
+        request,
+        action="item_deleted",
+        module="Addons",
+        description=f"Addon '{addon_name}' was deleted.",
+        target=addon_name,
+    )
     messages.success(request, "Addon deleted successfully.")
     return redirect("addons")
 
@@ -700,7 +848,7 @@ def _parse_positive_decimal(raw_value, field_label):
         raise ValueError(f"{field_label} must be a valid number.")
     if decimal_value <= 0:
         raise ValueError(f"{field_label} must be greater than 0.")
-    return decimal_value
+    return _quantize_money(decimal_value)
 
 
 def _valid_customer_status(value):
@@ -750,6 +898,99 @@ def _safe_file_url(field_file):
         return ""
 
 
+def _format_relative_time(value):
+    if not value:
+        return ""
+    now = timezone.localtime(timezone.now())
+    local_value = timezone.localtime(value)
+    seconds = max(int((now - local_value).total_seconds()), 0)
+    if seconds < 60:
+        return "Just now"
+    if seconds < 3600:
+        minutes = seconds // 60
+        return f"{minutes} Min Ago"
+    if seconds < 86400:
+        hours = seconds // 3600
+        return f"{hours} Hrs Ago"
+    days = seconds // 86400
+    return f"{days} Days Ago"
+
+
+def _build_shell_context(request):
+    current_user = request.user
+    profile_name = (
+        getattr(current_user, "full_name", "").strip()
+        or current_user.get_full_name().strip()
+        or current_user.username
+    )
+    name_parts = [part for part in profile_name.split() if part]
+    profile_initials = "".join(part[0].upper() for part in name_parts[:2]) or profile_name[:1].upper() or "U"
+
+    customer_results = [
+        {
+            "name": customer.name,
+            "gender": customer.gender or "Customer",
+            "customer_id": customer.customer_id,
+            "image_url": _safe_file_url(customer.image),
+            "initials": "".join(part[0].upper() for part in customer.name.split()[:2]) or "C",
+        }
+        for customer in Customer.objects.filter(status="Active").order_by("name", "id")[:4]
+    ]
+
+    recent_orders = list(
+        Order.objects.exclude(status__in=["Cancelled", "Voided"])
+        .order_by("-id")[:4]
+    )
+    order_results = [
+        {
+            "order_label": order.order_no or f"#{order.id:05d}",
+            "type_label": "Take Away" if order.order_type == "Takeaway" else order.order_type,
+            "table_name": order.table_name,
+            "token_no": order.token_no,
+        }
+        for order in recent_orders
+    ]
+
+    kitchen_results = [
+        {
+            "customer_name": order.customer_name or "Walk-in Customer",
+            "order_label": order.order_no or f"#{order.id:05d}",
+            "service_label": "Take Away" if order.order_type == "Takeaway" else order.order_type,
+        }
+        for order in Order.objects.filter(status__in=["Placed", "Draft"]).order_by("-updated_at", "-id")[:4]
+    ]
+
+    notification_rows = []
+    for order in Order.objects.filter(status__in=["Placed", "Draft"]).order_by("-updated_at", "-id")[:3]:
+        notification_rows.append(
+            {
+                "icon_class": "icon-shopping-cart" if order.status == "Placed" else "icon-file-stack",
+                "badge_class": "badge-soft-orange border border-orange" if order.status == "Placed" else "badge-soft-secondary border border-secondary",
+                "text": f"{order.order_no or f'Order #{order.id}'} for {order.customer_name or 'Walk-in Customer'} is {order.status.lower()}.",
+                "time_label": _format_relative_time(order.updated_at),
+            }
+        )
+    for log in AuditLog.objects.select_related("actor").order_by("-created_at", "-id")[:3]:
+        notification_rows.append(
+            {
+                "icon_class": AUDIT_ACTION_ICONS.get(log.action, "icon-info"),
+                "badge_class": "badge-soft-success border border-success",
+                "text": log.description or AUDIT_ACTION_LABELS.get(log.action, "Activity updated"),
+                "time_label": _format_relative_time(log.created_at),
+            }
+        )
+
+    return {
+        "shell_profile_name": profile_name,
+        "shell_profile_role": getattr(current_user, "role", "") or "User",
+        "shell_profile_initials": profile_initials,
+        "shell_customer_results": customer_results,
+        "shell_order_results": order_results,
+        "shell_kitchen_results": kitchen_results,
+        "shell_notifications": notification_rows[:6],
+    }
+
+
 def _serialize_pos_item(item):
     variations = [
         {
@@ -788,16 +1029,15 @@ def _serialize_pos_item(item):
 
 def _serialize_recent_order(order, now):
     created_local = timezone.localtime(order.created_at)
-    elapsed_minutes = int(max((now - created_local).total_seconds(), 0) // 60)
-    target_minutes = 30
-    remaining = target_minutes - elapsed_minutes
+    timer_started_at = order.kitchen_started_at or order.created_at
+    elapsed_seconds = _get_kitchen_elapsed_seconds(order)
+    elapsed_minutes = elapsed_seconds // 60
+    remaining = 30 - elapsed_minutes
     badge_class = "bg-success" if remaining >= 0 else "bg-danger"
     progress_class = "bg-success" if remaining >= 0 else "bg-danger"
-    progress_width = min(int((elapsed_minutes / target_minutes) * 100), 100) if target_minutes > 0 else 0
+    progress_width = min(int((elapsed_minutes / 30) * 100), 100) if elapsed_minutes else 0
 
-    hours, remainder = divmod(elapsed_minutes * 60, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    elapsed_clock = f"{hours:02d}:{minutes:02d}:{seconds:02d}" if hours else f"{minutes:02d}:{seconds:02d}"
+    elapsed_clock = _format_duration_clock(elapsed_seconds)
 
     order_label = order.order_no or f"ORD-{order.id:06d}"
     badge_icon = "icon-check-check"
@@ -820,6 +1060,7 @@ def _serialize_recent_order(order, now):
         "progress_width": progress_width,
         "elapsed_clock": elapsed_clock,
         "table_name": order.table_name,
+        "timer_started_at_iso": timezone.localtime(timer_started_at).isoformat(),
     }
 
 
@@ -874,6 +1115,285 @@ def _build_menu_sections_context(request):
         "pos_all_items": all_items,
         "pos_menu_query": query,
     }
+
+
+def _percentage_change(current, previous):
+    if previous in (None, 0):
+        return 100 if current else 0
+    try:
+        return round(((current - previous) / previous) * 100, 1)
+    except (ZeroDivisionError, TypeError):
+        return 0
+
+
+def _build_revenue_chart_context(base_orders, currency_symbol):
+    today = timezone.localdate()
+
+    def month_start_shift(base_date, months_back):
+        month_index = (base_date.year * 12 + base_date.month - 1) - months_back
+        year = month_index // 12
+        month = month_index % 12 + 1
+        return base_date.replace(year=year, month=month, day=1)
+
+    weekly_points = []
+    for offset in range(6, -1, -1):
+        point_date = today - timedelta(days=offset)
+        total = (
+            base_orders.filter(created_at__date=point_date).aggregate(total=Sum("total"))["total"]
+            or Decimal("0.00")
+        )
+        weekly_points.append({
+            "label": point_date.strftime("%a"),
+            "value": float(_quantize_money(total)),
+        })
+
+    monthly_points = []
+    for offset in range(5, -1, -1):
+        month_anchor = month_start_shift(today, offset)
+        next_month = (month_anchor + timedelta(days=32)).replace(day=1)
+        total = (
+            base_orders.filter(created_at__date__gte=month_anchor, created_at__date__lt=next_month)
+            .aggregate(total=Sum("total"))["total"]
+            or Decimal("0.00")
+        )
+        monthly_points.append({
+            "label": month_anchor.strftime("%b"),
+            "value": float(_quantize_money(total)),
+        })
+
+    current_year = today.year
+    yearly_points = []
+    for year in range(current_year - 4, current_year + 1):
+        total = (
+            base_orders.filter(created_at__year=year).aggregate(total=Sum("total"))["total"]
+            or Decimal("0.00")
+        )
+        yearly_points.append({
+            "label": str(year),
+            "value": float(_quantize_money(total)),
+        })
+
+    weekly_total = sum(Decimal(str(point["value"])) for point in weekly_points)
+    weekly_total = _quantize_money(weekly_total)
+
+    return {
+        "default_period": "weekly",
+        "summary_label": "Last 7 Days Revenue",
+        "summary_total": weekly_total,
+        "currency_symbol": currency_symbol,
+        "periods": {
+            "weekly": weekly_points,
+            "monthly": monthly_points,
+            "yearly": yearly_points,
+        },
+    }
+
+
+def _get_kitchen_elapsed_seconds(order):
+    start_time = order.kitchen_started_at or order.created_at
+    end_time = order.kitchen_completed_at or timezone.now()
+    return max(int((end_time - start_time).total_seconds()), 0)
+
+
+def _format_duration_clock(total_seconds):
+    minutes, seconds = divmod(max(total_seconds, 0), 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes:02d}:{seconds:02d}"
+
+
+def _build_kitchen_order_card(order, currency_symbol):
+    elapsed_seconds = _get_kitchen_elapsed_seconds(order)
+    elapsed_minutes = elapsed_seconds // 60
+    is_delayed = order.kitchen_status != "Completed" and elapsed_minutes > 30
+    timer_started_at = order.kitchen_started_at or order.created_at
+
+    header_class_map = {
+        "New": "bg-gray",
+        "In Kitchen": "bg-secondary",
+        "Paused": "bg-warning",
+        "Completed": "bg-success",
+    }
+    dot_class_map = {
+        "Dine In": "success",
+        "Takeaway": "",
+        "Delivery": "Chicken",
+    }
+    progress_percent = min(int((elapsed_minutes / 30) * 100), 100) if elapsed_minutes else 5
+    if order.kitchen_status == "Completed":
+        progress_percent = 100
+
+    header_class = "bg-danger" if is_delayed else header_class_map.get(order.kitchen_status, "bg-gray")
+    service_label = "Take Away" if order.order_type == "Takeaway" else order.order_type
+    order_label = order.order_no or f"ORD-{order.id:06d}"
+    action_state = "start"
+    action_label = "Play"
+    action_icon = "icon-play"
+    action_btn_class = "btn-light"
+    if order.kitchen_status == "In Kitchen":
+        action_state = "pause"
+        action_label = "Pause"
+        action_icon = "icon-pause"
+    elif order.kitchen_status == "Paused":
+        action_state = "start"
+        action_label = "Play"
+        action_icon = "icon-play"
+
+    return {
+        "id": order.id,
+        "order_label": order_label,
+        "customer_name": order.customer_name or "Walk-in Customer",
+        "service_label": service_label,
+        "token_no": order.token_no,
+        "created_label": timezone.localtime(order.created_at).strftime("%d %b %Y, %I:%M %p"),
+        "header_class": header_class,
+        "status_label": "Delayed" if is_delayed else order.kitchen_status,
+        "is_delayed": is_delayed,
+        "delay_label": f"Delayed By {max(elapsed_minutes - 30, 0)} Mins" if is_delayed else "",
+        "progress_percent": progress_percent,
+        "elapsed_seconds": elapsed_seconds,
+        "elapsed_clock": _format_duration_clock(elapsed_seconds),
+        "timer_started_at_iso": timezone.localtime(timer_started_at).isoformat(),
+        "note": (order.note or "").strip(),
+        "items": list(order.items.all()),
+        "dot_class": dot_class_map.get(order.order_type, ""),
+        "primary_action": {
+            "value": action_state,
+            "label": action_label,
+            "icon": action_icon,
+            "button_class": action_btn_class,
+        },
+        "can_mark_done": order.kitchen_status != "Completed",
+        "is_completed": order.kitchen_status == "Completed",
+        "currency_symbol": currency_symbol,
+        "subtotal_display": _quantize_money(order.subtotal),
+        "tax_amount_display": _quantize_money(order.tax_amount),
+        "service_charge_display": _quantize_money(order.service_charge),
+        "total_display": _quantize_money(order.total),
+    }
+
+
+def _build_kitchen_context(request):
+    search_query = request.GET.get("q", "").strip()
+    Order.objects.filter(status="Placed", kitchen_status="New").update(kitchen_status="In Kitchen")
+    Order.objects.filter(
+        status="Placed",
+        kitchen_started_at__isnull=True,
+    ).exclude(kitchen_status="Completed").update(kitchen_started_at=timezone.now())
+    base_qs = (
+        Order.objects.exclude(status__in=["Draft", "Cancelled", "Voided"])
+        .prefetch_related("items")
+        .order_by(
+            models.Case(
+                models.When(kitchen_status="Completed", then=1),
+                default=0,
+                output_field=models.IntegerField(),
+            ),
+            "-updated_at",
+            "-id",
+        )
+    )
+    if search_query:
+        base_qs = base_qs.filter(
+            Q(order_no__icontains=search_query)
+            | Q(customer_name__icontains=search_query)
+            | Q(token_no__icontains=search_query)
+            | Q(items__item_name__icontains=search_query)
+        ).distinct()
+
+    currency_symbol = StoreSetting.objects.filter(pk=1).values_list("currency_symbol", flat=True).first() or "$"
+    orders = list(base_qs)
+    cards = [_build_kitchen_order_card(order, currency_symbol) for order in orders]
+    print_order_id = request.GET.get("print_order_id", "").strip()
+    selected_print_order = None
+    if print_order_id.isdigit():
+        selected_print_order = next((card for card in cards if card["id"] == int(print_order_id)), None)
+
+    delayed_count = sum(1 for card in cards if card["is_delayed"])
+    context = {
+        "kitchen_search_query": search_query,
+        "kitchen_orders": cards,
+        "kitchen_next_url": request.get_full_path(),
+        "kitchen_counts": {
+            "new": sum(1 for order in orders if order.kitchen_status == "New"),
+            "in_kitchen": sum(1 for order in orders if order.kitchen_status == "In Kitchen"),
+            "delayed": delayed_count,
+            "completed": sum(1 for order in orders if order.kitchen_status == "Completed"),
+        },
+        "kitchen_selected_print_order": selected_print_order,
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
+def _build_dashboard_context(request):
+    today = timezone.localdate()
+    last_week_start = today - timedelta(days=6)
+    prev_week_start = today - timedelta(days=13)
+    prev_week_end = today - timedelta(days=7)
+
+    base_orders = Order.objects.exclude(status__in=["Cancelled", "Voided"])
+    recent_orders = base_orders.filter(created_at__date__gte=last_week_start)
+    prev_orders = base_orders.filter(created_at__date__range=(prev_week_start, prev_week_end))
+
+    total_orders = base_orders.count()
+    total_sales = recent_orders.aggregate(total=Sum("total"))["total"] or Decimal("0.00")
+    total_sales = _quantize_money(total_sales)
+    avg_value = (total_sales / total_orders) if total_orders else Decimal("0.00")
+    avg_value = _quantize_money(avg_value)
+    reservation_count = DiningTable.objects.filter(status="Booked").count()
+
+    change_orders = _percentage_change(recent_orders.count(), prev_orders.count())
+    prev_sales_total = prev_orders.aggregate(total=Sum("total"))["total"] or Decimal("0.00")
+    prev_sales_total = _quantize_money(prev_sales_total)
+    change_sales = _percentage_change(float(total_sales), float(prev_sales_total))
+    prev_avg = (prev_sales_total / prev_orders.count()) if prev_orders else Decimal("0.00")
+    prev_avg = _quantize_money(prev_avg)
+    change_avg = _percentage_change(float(avg_value), float(prev_avg))
+    change_reservation = _percentage_change(
+        reservation_count,
+        DiningTable.objects.filter(status="Booked", updated_at__date__range=(prev_week_start, prev_week_end)).count(),
+    )
+
+    top_items = list(
+        OrderItem.objects.values("item_name")
+        .annotate(qty=Sum("quantity"), amount=Sum("line_total"))
+        .order_by("-qty")[:6]
+    )
+    highlighted_item = top_items[0] if top_items else None
+
+    recent_orders_table = list(
+        base_orders.select_related("created_by").order_by("-id")[:8]
+    )
+
+    tables_available = list(DiningTable.objects.filter(status="Available").order_by("floor", "sort_order", "id")[:12])
+    reservations = list(DiningTable.objects.filter(status="Booked").order_by("-updated_at", "-id")[:6])
+
+    currency_symbol = StoreSetting.objects.filter(pk=1).values_list("currency_symbol", flat=True).first() or "$"
+    revenue_chart = _build_revenue_chart_context(base_orders, currency_symbol)
+
+    shell = _build_shell_context(request)
+    shell.update({
+        "dashboard_totals": {
+            "orders": total_orders,
+            "sales": total_sales,
+            "average": avg_value,
+            "reservations": reservation_count,
+            "orders_change": change_orders,
+            "sales_change": change_sales,
+            "average_change": change_avg,
+            "reservations_change": change_reservation,
+            "currency_symbol": currency_symbol,
+        },
+        "dashboard_top_items": top_items,
+        "dashboard_top_item": highlighted_item,
+        "dashboard_recent_orders": recent_orders_table,
+        "dashboard_tables_available": tables_available,
+        "dashboard_reservations": reservations,
+        "dashboard_revenue_chart": revenue_chart,
+    })
+    return shell
 
 
 def _build_customers_context(request):
@@ -989,7 +1509,7 @@ def _build_users_context(request):
     role_filter = request.GET.get("role", "").strip()
     page_number = request.GET.get("page", "1")
 
-    users_qs = User.objects.all().order_by("full_name", "id")
+    users_qs = User.objects.filter(is_superuser=False).order_by("full_name", "id")
     if query:
         users_qs = users_qs.filter(
             Q(full_name__icontains=query)
@@ -1116,6 +1636,672 @@ def _build_users_context(request):
     }
 
 
+def _build_audit_logs_context(request):
+    query = request.GET.get("q", "").strip()
+    action_filter = request.GET.get("action", "").strip()
+    module_filter = request.GET.get("module", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    page_number = request.GET.get("page", "1")
+
+    logs_qs = AuditLog.objects.select_related("actor").all()
+    if query:
+        logs_qs = logs_qs.filter(
+            Q(description__icontains=query)
+            | Q(actor_name__icontains=query)
+            | Q(actor_role__icontains=query)
+            | Q(target__icontains=query)
+            | Q(module__icontains=query)
+        )
+    if action_filter:
+        logs_qs = logs_qs.filter(action=action_filter)
+    if module_filter:
+        logs_qs = logs_qs.filter(module=module_filter)
+    if date_from:
+        try:
+            logs_qs = logs_qs.filter(created_at__date__gte=datetime.strptime(date_from, "%Y-%m-%d").date())
+        except ValueError:
+            date_from = ""
+    if date_to:
+        try:
+            logs_qs = logs_qs.filter(created_at__date__lte=datetime.strptime(date_to, "%Y-%m-%d").date())
+        except ValueError:
+            date_to = ""
+
+    paginator = Paginator(logs_qs, 12)
+    page_obj = paginator.get_page(page_number)
+    page_start = max(page_obj.number - 1, 1)
+    page_end = min(page_start + 2, paginator.num_pages)
+    if (page_end - page_start) < 2:
+        page_start = max(page_end - 2, 1)
+
+    audit_logs = []
+    for log in page_obj:
+        audit_logs.append(
+            {
+                "id": log.id,
+                "description": log.description,
+                "actor_name": log.actor_name or "System",
+                "actor_role": log.actor_role or "-",
+                "target": log.target or "-",
+                "module": log.module,
+                "action": log.action,
+                "action_label": AUDIT_ACTION_LABELS.get(log.action, log.action.replace("_", " ").title()),
+                "icon": AUDIT_ACTION_ICONS.get(log.action, "icon-history"),
+                "created_display": timezone.localtime(log.created_at).strftime("%d %b %Y at %I:%M %p"),
+                "ip_address": log.ip_address or "-",
+            }
+        )
+
+    return {
+        "audit_logs": audit_logs,
+        "audit_page_obj": page_obj,
+        "audit_page_numbers": list(range(page_start, page_end + 1)) if paginator.num_pages else [],
+        "audit_total_count": logs_qs.count(),
+        "audit_action_options": [{"value": key, "label": label} for key, label in AUDIT_ACTION_LABELS.items()],
+        "audit_module_options": sorted(set(AuditLog.objects.exclude(module="").values_list("module", flat=True))),
+        "audit_filters": {
+            "q": query,
+            "action": action_filter,
+            "module": module_filter,
+            "date_from": date_from,
+            "date_to": date_to,
+        },
+    }
+
+
+def _build_tables_context(request):
+    query = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+    floor_filter = request.GET.get("floor", "").strip()
+    page_number = request.GET.get("page", "1")
+
+    tables_qs = DiningTable.objects.all().order_by("floor", "sort_order", "id")
+    if query:
+        tables_qs = tables_qs.filter(
+            Q(name__icontains=query)
+            | Q(floor__icontains=query)
+            | Q(status__icontains=query)
+        )
+    if status_filter in dict(DiningTable.STATUS_CHOICES):
+        tables_qs = tables_qs.filter(status=status_filter)
+    if floor_filter in dict(DiningTable.FLOOR_CHOICES):
+        tables_qs = tables_qs.filter(floor=floor_filter)
+
+    paginator = Paginator(tables_qs, 16)
+    page_obj = paginator.get_page(page_number)
+    page_start = max(page_obj.number - 1, 1)
+    page_end = min(page_start + 2, paginator.num_pages)
+    if (page_end - page_start) < 2:
+        page_start = max(page_end - 2, 1)
+
+    table_rows = []
+    for table in page_obj.object_list:
+        table_rows.append(
+            {
+                "id": table.id,
+                "name": table.name,
+                "floor": table.floor,
+                "guest_capacity": table.guest_capacity,
+                "status": table.status,
+                "status_class": "badge-soft-success" if table.status == "Available" else "badge-soft-danger",
+                "image_name": table.image_name,
+                "toggle_to": "Booked" if table.status == "Available" else "Available",
+                "toggle_label": "Mark Booked" if table.status == "Available" else "Mark Available",
+                "toggle_btn_class": "btn-outline-danger" if table.status == "Available" else "btn-outline-success",
+                "sort_order": table.sort_order,
+            }
+        )
+
+    grouped_tables = []
+    for floor in [choice[0] for choice in DiningTable.FLOOR_CHOICES]:
+        floor_rows = [row for row in table_rows if row["floor"] == floor]
+        if floor_rows:
+            grouped_tables.append({"floor": floor, "rows": floor_rows})
+
+    context = {
+        "tables_rows": table_rows,
+        "tables_grouped_rows": grouped_tables,
+        "tables_query": query,
+        "tables_status_filter": status_filter,
+        "tables_floor_filter": floor_filter,
+        "tables_page_obj": page_obj,
+        "tables_page_numbers": list(range(page_start, page_end + 1)) if paginator.num_pages else [],
+        "tables_total_count": DiningTable.objects.count(),
+        "tables_available_count": DiningTable.objects.filter(status="Available").count(),
+        "tables_booked_count": DiningTable.objects.filter(status="Booked").count(),
+        "tables_floor_counts": [
+            {
+                "floor": floor,
+                "count": DiningTable.objects.filter(floor=floor).count(),
+                "available_count": DiningTable.objects.filter(floor=floor, status="Available").count(),
+                "booked_count": DiningTable.objects.filter(floor=floor, status="Booked").count(),
+            }
+            for floor in [choice[0] for choice in DiningTable.FLOOR_CHOICES]
+        ],
+        "table_floor_choices": [choice[0] for choice in DiningTable.FLOOR_CHOICES],
+        "table_status_choices": [choice[0] for choice in DiningTable.STATUS_CHOICES],
+        "table_image_choices": [
+            {"value": choice[0], "label": choice[1]}
+            for choice in DiningTable.IMAGE_CHOICES
+        ],
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
+def _parse_report_date(value):
+    value = (value or "").strip()
+    if not value:
+        return None
+    for date_format in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, date_format).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _build_earning_report_context(request):
+    query = request.GET.get("q", "").strip()
+    start_date_raw = request.GET.get("start_date", "").strip()
+    end_date_raw = request.GET.get("end_date", "").strip()
+    customer_filters = [value.strip() for value in request.GET.getlist("customer") if value.strip()]
+    payment_filters = [value.strip() for value in request.GET.getlist("payment_method") if value.strip()]
+    sort_by = request.GET.get("sort", "newest").strip() or "newest"
+    export_format = request.GET.get("export", "").strip().lower()
+
+    start_date = _parse_report_date(start_date_raw)
+    end_date = _parse_report_date(end_date_raw)
+
+    earnings_qs = Order.objects.filter(status="Placed")
+    if query:
+        earnings_qs = earnings_qs.filter(
+            Q(order_no__icontains=query)
+            | Q(customer_name__icontains=query)
+            | Q(order_type__icontains=query)
+            | Q(table_name__icontains=query)
+        )
+    if start_date:
+        earnings_qs = earnings_qs.filter(created_at__date__gte=start_date)
+    if end_date:
+        earnings_qs = earnings_qs.filter(created_at__date__lte=end_date)
+    if customer_filters:
+        earnings_qs = earnings_qs.filter(customer_name__in=customer_filters)
+
+    available_payment_methods = ["Not Recorded"]
+    if payment_filters:
+        normalized_payments = [value for value in payment_filters if value in available_payment_methods]
+        if not normalized_payments:
+            earnings_qs = earnings_qs.none()
+
+    sort_label_map = {
+        "newest": "Newest",
+        "oldest": "Oldest",
+        "ascending": "Ascending",
+        "descending": "Descending",
+    }
+    if sort_by == "oldest":
+        earnings_qs = earnings_qs.order_by("created_at", "id")
+    elif sort_by == "ascending":
+        earnings_qs = earnings_qs.order_by("total", "id")
+    elif sort_by == "descending":
+        earnings_qs = earnings_qs.order_by("-total", "-id")
+    else:
+        sort_by = "newest"
+        earnings_qs = earnings_qs.order_by("-created_at", "-id")
+
+    earning_rows = []
+    for order in earnings_qs:
+        created_local = timezone.localtime(order.created_at)
+        order_label = order.order_no or f"#{order.id:05d}"
+        earning_rows.append(
+            {
+                "earning_id": f"#ERN{order.id:04d}",
+                "date_label": created_local.strftime("%d %b %Y"),
+                "order_label": order_label,
+                "customer_name": order.customer_name or "Walk-in Customer",
+                "type_label": "Take Away" if order.order_type == "Takeaway" else order.order_type,
+                "payment_method": "Not Recorded",
+                "grand_total": str(order.total),
+                "status_label": "Completed",
+                "status_class": "badge-soft-success",
+            }
+        )
+
+    if export_format in {"excel", "pdf"}:
+        if export_format == "excel":
+            output = StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["Earning ID", "Date", "Order ID", "Customer", "Type", "Payment Method", "Grand Total", "Status"])
+            for row in earning_rows:
+                writer.writerow([
+                    row["earning_id"],
+                    row["date_label"],
+                    row["order_label"],
+                    row["customer_name"],
+                    row["type_label"],
+                    row["payment_method"],
+                    row["grand_total"],
+                    row["status_label"],
+                ])
+            response = HttpResponse(output.getvalue(), content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = 'attachment; filename="earning_report.csv"'
+            return response
+
+        pdf_lines = [
+            f"{row['earning_id']} | {row['date_label']} | {row['order_label']} | {row['customer_name']} | "
+            f"{row['type_label']} | {row['payment_method']} | {row['grand_total']} | {row['status_label']}"
+            for row in earning_rows
+        ] or ["No earning records found for the selected filters."]
+        response = HttpResponse(_build_simple_pdf(pdf_lines, title="Earning Report"), content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="earning_report.pdf"'
+        return response
+
+    customer_options = sorted(
+        set(
+            value
+            for value in Order.objects.exclude(customer_name="").values_list("customer_name", flat=True)
+        )
+    )
+
+    base_query = request.GET.copy()
+    if "export" in base_query:
+        del base_query["export"]
+    base_query_items = []
+    for key, values in base_query.lists():
+        for value in values:
+            base_query_items.append((key, value))
+
+    def _with_query(extra_items):
+        return urlencode(base_query_items + extra_items, doseq=True)
+
+    context = {
+        "earning_rows": earning_rows,
+        "earning_total_count": len(earning_rows),
+        "earning_filters": {
+            "q": query,
+            "start_date": start_date_raw,
+            "end_date": end_date_raw,
+            "customers": set(customer_filters),
+            "payment_methods": set(payment_filters),
+            "sort": sort_by,
+        },
+        "earning_customer_options": customer_options,
+        "earning_payment_options": available_payment_methods,
+        "earning_sort_label": sort_label_map[sort_by],
+        "earning_customer_label": ", ".join(customer_filters[:2]) + (" +" + str(len(customer_filters) - 2) if len(customer_filters) > 2 else "") if customer_filters else "Select",
+        "earning_payment_label": ", ".join(payment_filters[:2]) + (" +" + str(len(payment_filters) - 2) if len(payment_filters) > 2 else "") if payment_filters else "Select",
+        "earning_export_excel_query": _with_query([("export", "excel")]),
+        "earning_export_pdf_query": _with_query([("export", "pdf")]),
+        "earning_sort_queries": {
+            "newest": _with_query([("sort", "newest")]),
+            "oldest": _with_query([("sort", "oldest")]),
+            "ascending": _with_query([("sort", "ascending")]),
+            "descending": _with_query([("sort", "descending")]),
+        },
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
+def _build_order_report_context(request):
+    query = request.GET.get("q", "").strip()
+    start_date_raw = request.GET.get("start_date", "").strip()
+    end_date_raw = request.GET.get("end_date", "").strip()
+    customer_filters = [value.strip() for value in request.GET.getlist("customer") if value.strip()]
+    sort_by = request.GET.get("sort", "newest").strip() or "newest"
+    export_format = request.GET.get("export", "").strip().lower()
+
+    start_date = _parse_report_date(start_date_raw)
+    end_date = _parse_report_date(end_date_raw)
+
+    orders_qs = Order.objects.prefetch_related("items").all()
+    if query:
+        orders_qs = orders_qs.filter(
+            Q(order_no__icontains=query)
+            | Q(customer_name__icontains=query)
+            | Q(order_type__icontains=query)
+            | Q(status__icontains=query)
+        )
+    if start_date:
+        orders_qs = orders_qs.filter(created_at__date__gte=start_date)
+    if end_date:
+        orders_qs = orders_qs.filter(created_at__date__lte=end_date)
+    if customer_filters:
+        orders_qs = orders_qs.filter(customer_name__in=customer_filters)
+
+    sort_label_map = {
+        "newest": "Newest",
+        "oldest": "Oldest",
+        "ascending": "Ascending",
+        "descending": "Descending",
+    }
+    if sort_by == "oldest":
+        orders_qs = orders_qs.order_by("created_at", "id")
+    elif sort_by == "ascending":
+        orders_qs = orders_qs.order_by("total", "id")
+    elif sort_by == "descending":
+        orders_qs = orders_qs.order_by("-total", "-id")
+    else:
+        sort_by = "newest"
+        orders_qs = orders_qs.order_by("-created_at", "-id")
+
+    order_rows = []
+    for order in orders_qs:
+        created_local = timezone.localtime(order.created_at)
+        order_rows.append(
+            {
+                "order_label": order.order_no or f"#{order.id:05d}",
+                "date_label": created_local.strftime("%d %b %Y"),
+                "customer_name": order.customer_name or "Walk-in Customer",
+                "token_no": order.token_no,
+                "type_label": "Take Away" if order.order_type == "Takeaway" else order.order_type,
+                "menus_count": sum(item.quantity for item in order.items.all()),
+                "grand_total": str(order.total),
+                "status_label": "Paid" if order.status == "Placed" else order.status,
+                "status_class": "badge-soft-success" if order.status == "Placed" else "badge-soft-danger",
+            }
+        )
+
+    if export_format in {"excel", "pdf"}:
+        if export_format == "excel":
+            output = StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["Order ID", "Date", "Customer", "Token No", "Type", "Menus", "Grand Total", "Status"])
+            for row in order_rows:
+                writer.writerow([
+                    row["order_label"],
+                    row["date_label"],
+                    row["customer_name"],
+                    row["token_no"],
+                    row["type_label"],
+                    row["menus_count"],
+                    row["grand_total"],
+                    row["status_label"],
+                ])
+            response = HttpResponse(output.getvalue(), content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = 'attachment; filename="order_report.csv"'
+            return response
+
+        pdf_lines = [
+            f"{row['order_label']} | {row['date_label']} | {row['customer_name']} | Token {row['token_no']} | "
+            f"{row['type_label']} | Menus {row['menus_count']} | {row['grand_total']} | {row['status_label']}"
+            for row in order_rows
+        ] or ["No order records found for the selected filters."]
+        response = HttpResponse(_build_simple_pdf(pdf_lines, title="Order Report"), content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="order_report.pdf"'
+        return response
+
+    customer_options = sorted(set(Order.objects.exclude(customer_name="").values_list("customer_name", flat=True)))
+    base_query = request.GET.copy()
+    if "export" in base_query:
+        del base_query["export"]
+    base_query_items = [(key, value) for key, values in base_query.lists() for value in values]
+
+    def _with_query(extra_items):
+        return urlencode(base_query_items + extra_items, doseq=True)
+
+    context = {
+        "order_report_rows": order_rows,
+        "order_report_filters": {
+            "q": query,
+            "start_date": start_date_raw,
+            "end_date": end_date_raw,
+            "customers": set(customer_filters),
+            "sort": sort_by,
+        },
+        "order_report_customer_options": customer_options,
+        "order_report_customer_label": ", ".join(customer_filters[:2]) + (" +" + str(len(customer_filters) - 2) if len(customer_filters) > 2 else "") if customer_filters else "Select",
+        "order_report_sort_label": sort_label_map[sort_by],
+        "order_report_export_excel_query": _with_query([("export", "excel")]),
+        "order_report_export_pdf_query": _with_query([("export", "pdf")]),
+        "order_report_sort_queries": {
+            "newest": _with_query([("sort", "newest")]),
+            "oldest": _with_query([("sort", "oldest")]),
+            "ascending": _with_query([("sort", "ascending")]),
+            "descending": _with_query([("sort", "descending")]),
+        },
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
+def _build_sales_report_context(request):
+    start_date_raw = request.GET.get("start_date", "").strip()
+    end_date_raw = request.GET.get("end_date", "").strip()
+    category_filters = [value.strip() for value in request.GET.getlist("category") if value.strip()]
+    sort_by = request.GET.get("sort", "newest").strip() or "newest"
+    export_format = request.GET.get("export", "").strip().lower()
+
+    start_date = _parse_report_date(start_date_raw)
+    end_date = _parse_report_date(end_date_raw)
+
+    items_by_name = {item.name: item for item in Item.objects.select_related("category")}
+    orders_qs = Order.objects.filter(status="Placed").prefetch_related("items").all()
+    if start_date:
+        orders_qs = orders_qs.filter(created_at__date__gte=start_date)
+    if end_date:
+        orders_qs = orders_qs.filter(created_at__date__lte=end_date)
+
+    sales_map = {}
+    for order in orders_qs:
+        created_local = timezone.localtime(order.created_at)
+        for order_item in order.items.all():
+            item_obj = items_by_name.get(order_item.item_name)
+            category_name = item_obj.category.name if item_obj else "Uncategorized"
+            if category_filters and category_name not in category_filters:
+                continue
+            row = sales_map.setdefault(
+                category_name,
+                {
+                    "category_name": category_name,
+                    "items_sold": 0,
+                    "total_orders": set(),
+                    "grand_total": Decimal("0.00"),
+                    "latest_date": created_local.date(),
+                },
+            )
+            row["items_sold"] += order_item.quantity
+            row["total_orders"].add(order.id)
+            row["grand_total"] += order_item.line_total
+            if created_local.date() > row["latest_date"]:
+                row["latest_date"] = created_local.date()
+
+    sales_rows = []
+    for idx, row in enumerate(sales_map.values(), start=1):
+        sales_rows.append(
+            {
+                "sales_id": f"#SA{idx:04d}",
+                "date_label": row["latest_date"].strftime("%d %b %Y"),
+                "category_name": row["category_name"],
+                "items_sold": row["items_sold"],
+                "total_orders": len(row["total_orders"]),
+                "grand_total": str(row["grand_total"].quantize(Decimal('0.01'))),
+                "status_label": "Completed",
+                "status_class": "badge-soft-success",
+                "sort_date": row["latest_date"],
+                "sort_total": row["grand_total"],
+            }
+        )
+
+    if sort_by == "oldest":
+        sales_rows.sort(key=lambda row: (row["sort_date"], row["category_name"]))
+    elif sort_by == "ascending":
+        sales_rows.sort(key=lambda row: (row["sort_total"], row["category_name"]))
+    elif sort_by == "descending":
+        sales_rows.sort(key=lambda row: (-row["sort_total"], row["category_name"]))
+    else:
+        sort_by = "newest"
+        sales_rows.sort(key=lambda row: (row["sort_date"], row["category_name"]), reverse=True)
+
+    for row in sales_rows:
+        row.pop("sort_date", None)
+        row.pop("sort_total", None)
+
+    if export_format in {"excel", "pdf"}:
+        if export_format == "excel":
+            output = StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["Sales ID", "Date", "Category", "Items Sold", "Total Orders", "Grand Total", "Status"])
+            for row in sales_rows:
+                writer.writerow([row["sales_id"], row["date_label"], row["category_name"], row["items_sold"], row["total_orders"], row["grand_total"], row["status_label"]])
+            response = HttpResponse(output.getvalue(), content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = 'attachment; filename="sales_report.csv"'
+            return response
+
+        pdf_lines = [
+            f"{row['sales_id']} | {row['date_label']} | {row['category_name']} | Items {row['items_sold']} | "
+            f"Orders {row['total_orders']} | {row['grand_total']} | {row['status_label']}"
+            for row in sales_rows
+        ] or ["No sales records found for the selected filters."]
+        response = HttpResponse(_build_simple_pdf(pdf_lines, title="Sales Report"), content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="sales_report.pdf"'
+        return response
+
+    category_options = list(Category.objects.order_by("name").values_list("name", flat=True))
+    base_query = request.GET.copy()
+    if "export" in base_query:
+        del base_query["export"]
+    base_query_items = [(key, value) for key, values in base_query.lists() for value in values]
+
+    def _with_query(extra_items):
+        return urlencode(base_query_items + extra_items, doseq=True)
+
+    context = {
+        "sales_report_rows": sales_rows,
+        "sales_report_filters": {
+            "start_date": start_date_raw,
+            "end_date": end_date_raw,
+            "categories": set(category_filters),
+            "sort": sort_by,
+        },
+        "sales_report_category_options": category_options,
+        "sales_report_category_label": ", ".join(category_filters[:2]) + (" +" + str(len(category_filters) - 2) if len(category_filters) > 2 else "") if category_filters else "Select",
+        "sales_report_sort_label": {"newest": "Newest", "oldest": "Oldest", "ascending": "Ascending", "descending": "Descending"}[sort_by],
+        "sales_report_export_excel_query": _with_query([("export", "excel")]),
+        "sales_report_export_pdf_query": _with_query([("export", "pdf")]),
+        "sales_report_sort_queries": {
+            "newest": _with_query([("sort", "newest")]),
+            "oldest": _with_query([("sort", "oldest")]),
+            "ascending": _with_query([("sort", "ascending")]),
+            "descending": _with_query([("sort", "descending")]),
+        },
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
+def _build_customer_report_context(request):
+    start_date_raw = request.GET.get("start_date", "").strip()
+    end_date_raw = request.GET.get("end_date", "").strip()
+    customer_filters = [value.strip() for value in request.GET.getlist("customer") if value.strip()]
+    sort_by = request.GET.get("sort", "newest").strip() or "newest"
+    export_format = request.GET.get("export", "").strip().lower()
+
+    start_date = _parse_report_date(start_date_raw)
+    end_date = _parse_report_date(end_date_raw)
+
+    customer_lookup = {customer.name: customer for customer in Customer.objects.all()}
+    orders_qs = Order.objects.filter(status="Placed").order_by("-created_at", "-id")
+    if start_date:
+        orders_qs = orders_qs.filter(created_at__date__gte=start_date)
+    if end_date:
+        orders_qs = orders_qs.filter(created_at__date__lte=end_date)
+    if customer_filters:
+        orders_qs = orders_qs.filter(customer_name__in=customer_filters)
+
+    totals = defaultdict(lambda: {"orders": 0, "grand_total": Decimal("0.00"), "latest_date": None})
+    for order in orders_qs:
+        created_local = timezone.localtime(order.created_at)
+        key = order.customer_name or "Walk-in Customer"
+        totals[key]["orders"] += 1
+        totals[key]["grand_total"] += order.total
+        if totals[key]["latest_date"] is None or created_local.date() > totals[key]["latest_date"]:
+            totals[key]["latest_date"] = created_local.date()
+
+    customer_rows = []
+    for idx, (customer_name, stats) in enumerate(totals.items(), start=1):
+        customer_obj = customer_lookup.get(customer_name)
+        customer_rows.append(
+            {
+                "customer_id": customer_obj.customer_id if customer_obj else f"#CUS{idx:04d}",
+                "customer_name": customer_name,
+                "image_url": _safe_file_url(customer_obj.image) if customer_obj else "",
+                "initials": "".join(part[0].upper() for part in customer_name.split()[:2]) or "C",
+                "total_orders": stats["orders"],
+                "grand_total": str(stats["grand_total"].quantize(Decimal('0.01'))),
+                "sort_date": stats["latest_date"] or datetime.now().date(),
+                "sort_total": stats["grand_total"],
+            }
+        )
+
+    if sort_by == "oldest":
+        customer_rows.sort(key=lambda row: (row["sort_date"], row["customer_name"]))
+    elif sort_by == "ascending":
+        customer_rows.sort(key=lambda row: (row["sort_total"], row["customer_name"]))
+    elif sort_by == "descending":
+        customer_rows.sort(key=lambda row: (-row["sort_total"], row["customer_name"]))
+    else:
+        sort_by = "newest"
+        customer_rows.sort(key=lambda row: (row["sort_date"], row["customer_name"]), reverse=True)
+
+    for row in customer_rows:
+        row.pop("sort_date", None)
+        row.pop("sort_total", None)
+
+    if export_format in {"excel", "pdf"}:
+        if export_format == "excel":
+            output = StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["Customer ID", "Customer", "Total Orders", "Grand Total"])
+            for row in customer_rows:
+                writer.writerow([row["customer_id"], row["customer_name"], row["total_orders"], row["grand_total"]])
+            response = HttpResponse(output.getvalue(), content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = 'attachment; filename="customer_report.csv"'
+            return response
+
+        pdf_lines = [
+            f"{row['customer_id']} | {row['customer_name']} | Orders {row['total_orders']} | {row['grand_total']}"
+            for row in customer_rows
+        ] or ["No customer records found for the selected filters."]
+        response = HttpResponse(_build_simple_pdf(pdf_lines, title="Customer Report"), content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="customer_report.pdf"'
+        return response
+
+    customer_options = sorted(set(Order.objects.exclude(customer_name="").values_list("customer_name", flat=True)))
+    base_query = request.GET.copy()
+    if "export" in base_query:
+        del base_query["export"]
+    base_query_items = [(key, value) for key, values in base_query.lists() for value in values]
+
+    def _with_query(extra_items):
+        return urlencode(base_query_items + extra_items, doseq=True)
+
+    context = {
+        "customer_report_rows": customer_rows,
+        "customer_report_filters": {
+            "start_date": start_date_raw,
+            "end_date": end_date_raw,
+            "customers": set(customer_filters),
+            "sort": sort_by,
+        },
+        "customer_report_customer_options": customer_options,
+        "customer_report_customer_label": ", ".join(customer_filters[:2]) + (" +" + str(len(customer_filters) - 2) if len(customer_filters) > 2 else "") if customer_filters else "Select",
+        "customer_report_sort_label": {"newest": "Newest", "oldest": "Oldest", "ascending": "Ascending", "descending": "Descending"}[sort_by],
+        "customer_report_export_excel_query": _with_query([("export", "excel")]),
+        "customer_report_export_pdf_query": _with_query([("export", "pdf")]),
+        "customer_report_sort_queries": {
+            "newest": _with_query([("sort", "newest")]),
+            "oldest": _with_query([("sort", "oldest")]),
+            "ascending": _with_query([("sort", "ascending")]),
+            "descending": _with_query([("sort", "descending")]),
+        },
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
 def _serialize_order(order):
     created_local = timezone.localtime(order.created_at)
     return {
@@ -1132,6 +2318,9 @@ def _serialize_order(order):
         "tax_amount": str(order.tax_amount),
         "service_charge": str(order.service_charge),
         "total": str(order.total),
+        "kitchen_status": order.kitchen_status,
+        "kitchen_started_at": timezone.localtime(order.kitchen_started_at).isoformat() if order.kitchen_started_at else "",
+        "kitchen_completed_at": timezone.localtime(order.kitchen_completed_at).isoformat() if order.kitchen_completed_at else "",
         "created_at": created_local.strftime("%Y-%m-%d %I:%M %p"),
         "created_at_iso": created_local.isoformat(),
         "items": [
@@ -1153,6 +2342,25 @@ def _get_latest_user_order(user):
         .order_by("-id")
         .first()
     )
+
+
+def _sync_table_status_for_order(order, status="Booked"):
+    table_name = (order.table_name or "").strip()
+    if not table_name:
+        return
+    DiningTable.objects.filter(name__iexact=table_name).update(status=status)
+
+
+def _release_table_if_unused(table_name):
+    normalized_name = (table_name or "").strip()
+    if not normalized_name:
+        return
+    has_active_order = Order.objects.filter(
+        table_name__iexact=normalized_name,
+        status__in=["Draft", "Placed"],
+    ).exists()
+    if not has_active_order:
+        DiningTable.objects.filter(name__iexact=normalized_name).update(status="Available")
 
 
 def _extract_pos_payload(request):
@@ -1226,6 +2434,7 @@ def _create_pos_order(request, status):
     tax_amount = _quantize_money((subtotal * POS_TAX_RATE) / Decimal("100"))
     service_charge = POS_SERVICE_CHARGE
     total = _quantize_money(subtotal + tax_amount + service_charge)
+    is_placed = status == "Placed"
 
     order = Order.objects.create(
         status=status,
@@ -1238,6 +2447,8 @@ def _create_pos_order(request, status):
         tax_amount=tax_amount,
         service_charge=service_charge,
         total=total,
+        kitchen_status="In Kitchen" if is_placed else "Paused",
+        kitchen_started_at=timezone.now() if is_placed else None,
         created_by=request.user,
     )
     order.order_no = f"ORD-{order.id:06d}"
@@ -1256,7 +2467,19 @@ def _create_pos_order(request, status):
             for item in items
         ]
     )
-    return Order.objects.prefetch_related("items").get(id=order.id)
+    order = Order.objects.prefetch_related("items").get(id=order.id)
+    _sync_table_status_for_order(order, status="Booked")
+    _log_audit_event(
+        request,
+        action="order_placed" if status == "Placed" else "order_drafted",
+        module="POS",
+        description=(
+            f"Order {order.order_no} {('placed' if status == 'Placed' else 'saved as draft')} "
+            f"for {order.customer_name} with total {order.total}."
+        ),
+        target=order.order_no,
+    )
+    return order
 
 
 @login_required(login_url="login")
@@ -1350,6 +2573,13 @@ def item_add_view(request):
     for addon_name, addon_price in addon_rows:
         ItemAddon.objects.create(item=item, name=addon_name, price=addon_price)
 
+    _log_audit_event(
+        request,
+        action="item_created",
+        module="Products",
+        description=f"Product '{item.name}' created in category '{item.category.name}'.",
+        target=item.name,
+    )
     messages.success(request, "Item added successfully.")
     return redirect("items")
 
@@ -1420,6 +2650,13 @@ def item_update_view(request):
     for addon_name, addon_price in addon_rows:
         ItemAddon.objects.create(item=item, name=addon_name, price=addon_price)
 
+    _log_audit_event(
+        request,
+        action="item_updated",
+        module="Products",
+        description=f"Product '{item.name}' updated in category '{item.category.name}'.",
+        target=item.name,
+    )
     messages.success(request, "Item updated successfully.")
     return redirect("items")
 
@@ -1436,9 +2673,264 @@ def item_delete_view(request):
         messages.error(request, "Item not found.")
         return redirect("items")
 
+    item_name = item.name
     item.delete()
+    _log_audit_event(
+        request,
+        action="item_deleted",
+        module="Products",
+        description=f"Product '{item_name}' was deleted.",
+        target=item_name,
+    )
     messages.success(request, "Item deleted successfully.")
     return redirect("items")
+
+
+@login_required(login_url="login")
+def tables_add_view(request):
+    if request.method != "POST":
+        return redirect("page", page="table")
+
+    next_url = request.POST.get("next", "").strip() or reverse("page", kwargs={"page": "table"})
+    name = request.POST.get("name", "").strip()
+    floor = request.POST.get("floor", "").strip()
+    image_name = request.POST.get("image_name", "").strip()
+    guest_capacity_raw = request.POST.get("guest_capacity", "").strip()
+    status = request.POST.get("status", "").strip()
+
+    if not name:
+        messages.error(request, "Table name is required.")
+        return redirect(next_url)
+    if DiningTable.objects.filter(name__iexact=name).exists():
+        messages.error(request, "Table name already exists.")
+        return redirect(next_url)
+    if floor not in dict(DiningTable.FLOOR_CHOICES):
+        messages.error(request, "Please select a valid floor.")
+        return redirect(next_url)
+    if image_name not in dict(DiningTable.IMAGE_CHOICES):
+        messages.error(request, "Please select a valid table image.")
+        return redirect(next_url)
+    if status not in dict(DiningTable.STATUS_CHOICES):
+        messages.error(request, "Please select a valid status.")
+        return redirect(next_url)
+    try:
+        guest_capacity = int(guest_capacity_raw)
+        if guest_capacity <= 0:
+            raise ValueError
+    except ValueError:
+        messages.error(request, "Guest capacity must be a positive number.")
+        return redirect(next_url)
+
+    table = DiningTable.objects.create(
+        name=name,
+        floor=floor,
+        image_name=image_name,
+        guest_capacity=guest_capacity,
+        status=status,
+        sort_order=DiningTable.objects.filter(floor=floor).count() + 1,
+    )
+    _log_audit_event(
+        request,
+        action="table_created",
+        module="Tables",
+        description=f"Table '{table.name}' created on floor {table.floor}.",
+        target=table.name,
+    )
+    messages.success(request, "Table added successfully.")
+    return redirect(next_url)
+
+
+@login_required(login_url="login")
+def tables_update_view(request):
+    if request.method != "POST":
+        return redirect("page", page="table")
+
+    next_url = request.POST.get("next", "").strip() or reverse("page", kwargs={"page": "table"})
+    table_id = request.POST.get("table_id", "").strip()
+    try:
+        table = DiningTable.objects.get(id=int(table_id))
+    except (DiningTable.DoesNotExist, TypeError, ValueError):
+        messages.error(request, "Table not found.")
+        return redirect(next_url)
+
+    name = request.POST.get("name", "").strip()
+    floor = request.POST.get("floor", "").strip()
+    image_name = request.POST.get("image_name", "").strip()
+    guest_capacity_raw = request.POST.get("guest_capacity", "").strip()
+    status = request.POST.get("status", "").strip()
+
+    if not name:
+        messages.error(request, "Table name is required.")
+        return redirect(next_url)
+    if DiningTable.objects.filter(name__iexact=name).exclude(id=table.id).exists():
+        messages.error(request, "Table name already exists.")
+        return redirect(next_url)
+    if floor not in dict(DiningTable.FLOOR_CHOICES):
+        messages.error(request, "Please select a valid floor.")
+        return redirect(next_url)
+    if image_name not in dict(DiningTable.IMAGE_CHOICES):
+        messages.error(request, "Please select a valid table image.")
+        return redirect(next_url)
+    if status not in dict(DiningTable.STATUS_CHOICES):
+        messages.error(request, "Please select a valid status.")
+        return redirect(next_url)
+    try:
+        guest_capacity = int(guest_capacity_raw)
+        if guest_capacity <= 0:
+            raise ValueError
+    except ValueError:
+        messages.error(request, "Guest capacity must be a positive number.")
+        return redirect(next_url)
+
+    table.name = name
+    table.floor = floor
+    table.image_name = image_name
+    table.guest_capacity = guest_capacity
+    table.status = status
+    table.save()
+    _log_audit_event(
+        request,
+        action="table_updated",
+        module="Tables",
+        description=f"Table '{table.name}' updated.",
+        target=table.name,
+    )
+    messages.success(request, "Table updated successfully.")
+    return redirect(next_url)
+
+
+@login_required(login_url="login")
+def tables_delete_view(request):
+    if request.method != "POST":
+        return redirect("page", page="table")
+
+    next_url = request.POST.get("next", "").strip() or reverse("page", kwargs={"page": "table"})
+    table_id = request.POST.get("table_id", "").strip()
+    try:
+        table = DiningTable.objects.get(id=int(table_id))
+    except (DiningTable.DoesNotExist, TypeError, ValueError):
+        messages.error(request, "Table not found.")
+        return redirect(next_url)
+
+    table_name = table.name
+    table.delete()
+    _log_audit_event(
+        request,
+        action="table_deleted",
+        module="Tables",
+        description=f"Table '{table_name}' was deleted.",
+        target=table_name,
+    )
+    messages.success(request, "Table deleted successfully.")
+    return redirect(next_url)
+
+
+@login_required(login_url="login")
+def tables_toggle_status_view(request):
+    if request.method != "POST":
+        return redirect("page", page="table")
+
+    next_url = request.POST.get("next", "").strip() or reverse("page", kwargs={"page": "table"})
+    table_id = request.POST.get("table_id", "").strip()
+    try:
+        table = DiningTable.objects.get(id=int(table_id))
+    except (DiningTable.DoesNotExist, TypeError, ValueError):
+        messages.error(request, "Table not found.")
+        return redirect(next_url)
+
+    next_status = request.POST.get("status", "").strip()
+    if next_status not in dict(DiningTable.STATUS_CHOICES):
+        messages.error(request, "Invalid status.")
+        return redirect(next_url)
+
+    table.status = next_status
+    table.save(update_fields=["status", "updated_at"])
+    _log_audit_event(
+        request,
+        action="table_updated",
+        module="Tables",
+        description=f"Table '{table.name}' status changed to {table.status}.",
+        target=table.name,
+    )
+    messages.success(request, f"{table.name} marked as {table.status}.")
+    return redirect(next_url)
+
+
+@login_required(login_url="login")
+def tables_reorder_view(request):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "Method not allowed."}, status=405)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"ok": False, "error": "Invalid payload."}, status=400)
+
+    source_floor = str(payload.get("source_floor", "")).strip()
+    target_floor = str(payload.get("target_floor", "")).strip()
+    source_ordered_ids = payload.get("source_ordered_ids", [])
+    target_ordered_ids = payload.get("target_ordered_ids", [])
+    moved_table_id = payload.get("moved_table_id")
+
+    valid_floors = dict(DiningTable.FLOOR_CHOICES)
+    if source_floor not in valid_floors or target_floor not in valid_floors:
+        return JsonResponse({"ok": False, "error": "Invalid floor."}, status=400)
+    if not isinstance(source_ordered_ids, list) or not isinstance(target_ordered_ids, list):
+        return JsonResponse({"ok": False, "error": "Invalid order payload."}, status=400)
+
+    source_tables = list(DiningTable.objects.filter(floor=source_floor).order_by("sort_order", "id"))
+    target_tables = list(DiningTable.objects.filter(floor=target_floor).order_by("sort_order", "id"))
+    source_ids_before = {table.id for table in source_tables}
+    target_ids_before = {table.id for table in target_tables}
+    try:
+        moved_table_id = int(moved_table_id)
+        source_ids_after = [int(value) for value in source_ordered_ids]
+        target_ids_after = [int(value) for value in target_ordered_ids]
+    except (TypeError, ValueError):
+        return JsonResponse({"ok": False, "error": "Invalid table identifiers."}, status=400)
+
+    if source_floor == target_floor:
+        if set(target_ids_after) != source_ids_before or source_ids_after:
+            return JsonResponse({"ok": False, "error": "Table list mismatch."}, status=400)
+    else:
+        expected_source_after = source_ids_before - {moved_table_id}
+        expected_target_after = target_ids_before | {moved_table_id}
+        if set(source_ids_after) != expected_source_after or set(target_ids_after) != expected_target_after:
+            return JsonResponse({"ok": False, "error": "Table list mismatch."}, status=400)
+
+    table_by_id = {table.id: table for table in source_tables + target_tables}
+    to_update = []
+    if source_floor != target_floor:
+        moved_table = table_by_id.get(moved_table_id)
+        if moved_table is None:
+            return JsonResponse({"ok": False, "error": "Moved table not found."}, status=400)
+        moved_table.floor = target_floor
+
+    for index, table_id in enumerate(source_ids_after, start=1):
+        table = table_by_id[table_id]
+        table.floor = source_floor
+        table.sort_order = index
+        to_update.append(table)
+    for index, table_id in enumerate(target_ids_after, start=1):
+        table = table_by_id[table_id]
+        table.floor = target_floor
+        table.sort_order = index
+        to_update.append(table)
+    if to_update:
+        unique_updates = {table.id: table for table in to_update}
+        DiningTable.objects.bulk_update(unique_updates.values(), ["floor", "sort_order"])
+    _log_audit_event(
+        request,
+        action="table_updated",
+        module="Tables",
+        description=(
+            f"Table layout rearranged from {source_floor} floor to {target_floor} floor."
+            if source_floor != target_floor
+            else f"Table order rearranged for {target_floor} floor."
+        ),
+        target=target_floor,
+    )
+    return JsonResponse({"ok": True})
 
 
 @login_required(login_url="login")
@@ -1485,6 +2977,13 @@ def customer_add_view(request):
         gender=gender,
         status=status,
         created_on=timezone.now().date(),
+    )
+    _log_audit_event(
+        request,
+        action="customer_created",
+        module="Customers",
+        description=f"Customer '{name}' created with status {status}.",
+        target=name,
     )
     messages.success(request, "Customer added successfully.")
     return redirect(next_url)
@@ -1547,6 +3046,13 @@ def customer_update_view(request):
         customer.image = image
 
     customer.save()
+    _log_audit_event(
+        request,
+        action="customer_updated",
+        module="Customers",
+        description=f"Customer '{customer.name}' updated.",
+        target=customer.name,
+    )
     messages.success(request, "Customer updated successfully.")
     return redirect(next_url)
 
@@ -1584,7 +3090,7 @@ def users_add_view(request):
     is_active = status_value != "inactive"
 
     try:
-        User.objects.create_user(
+        created_user = User.objects.create_user(
             username=username,
             full_name=full_name,
             email=email,
@@ -1598,6 +3104,13 @@ def users_add_view(request):
         messages.error(request, "Unable to create user with provided information.")
         return redirect(next_url)
 
+    _log_audit_event(
+        request,
+        action="user_created",
+        module="Users",
+        description=f"User '{created_user.full_name or created_user.username}' created with role {created_user.role}.",
+        target=created_user.username,
+    )
     messages.success(request, "User added successfully.")
     return redirect(next_url)
 
@@ -1624,6 +3137,7 @@ def users_update_view(request):
     status_value = request.POST.get("status", "").strip().lower()
     pin_number = request.POST.get("pin_number", "").strip()
     password = request.POST.get("password", "").strip()
+    confirm_password = request.POST.get("confirm_password", "").strip()
 
     if not full_name:
         messages.error(request, "User name is required.")
@@ -1637,6 +3151,9 @@ def users_update_view(request):
     if not phone_number:
         messages.error(request, "Phone number is required.")
         return redirect(next_url)
+    if password and password != confirm_password:
+        messages.error(request, "Password and confirm password do not match.")
+        return redirect(next_url)
 
     user.full_name = full_name
     user.email = email
@@ -1644,9 +3161,20 @@ def users_update_view(request):
     user.role = role_name
     user.pin_number = pin_number or None
     user.is_active = status_value != "inactive"
+    password_changed = False
     if password:
         user.set_password(password)
+        password_changed = True
     user.save()
+    if password_changed and request.user.id == user.id:
+        update_session_auth_hash(request, user)
+    _log_audit_event(
+        request,
+        action="user_updated",
+        module="Users",
+        description=f"User '{user.full_name or user.username}' updated with role {user.role}.",
+        target=user.username,
+    )
 
     messages.success(request, "User updated successfully.")
     return redirect(next_url)
@@ -1669,7 +3197,16 @@ def users_delete_view(request):
         messages.error(request, "নিজের account delete করা যাবে না.")
         return redirect(next_url)
 
+    deleted_username = user.username
+    deleted_name = user.full_name or user.username
     user.delete()
+    _log_audit_event(
+        request,
+        action="user_deleted",
+        module="Users",
+        description=f"User '{deleted_name}' was deleted.",
+        target=deleted_username,
+    )
     messages.success(request, "User deleted successfully.")
     return redirect(next_url)
 
@@ -1689,6 +3226,13 @@ def users_permissions_update_view(request):
 
     if request.POST.get("reset_to_role") == "1":
         UserPermissionOverride.objects.filter(user=user).delete()
+        _log_audit_event(
+            request,
+            action="user_permissions_updated",
+            module="Users",
+            description=f"Permission overrides reset for '{user.full_name or user.username}'.",
+            target=user.username,
+        )
         messages.success(request, f"Permission override cleared for {user.full_name or user.username}.")
         return redirect(next_url)
 
@@ -1708,6 +3252,13 @@ def users_permissions_update_view(request):
             update_rows,
             [action[1] for action in ROLE_PERMISSION_ACTIONS],
         )
+    _log_audit_event(
+        request,
+        action="user_permissions_updated",
+        module="Users",
+        description=f"Permission overrides updated for '{user.full_name or user.username}'.",
+        target=user.username,
+    )
     messages.success(request, f"Permission override saved for {user.full_name or user.username}.")
     return redirect(next_url)
 
@@ -1729,6 +3280,13 @@ def role_add_view(request):
 
     role = Role.objects.create(name=role_name, is_active=True, created_on=timezone.now().date())
     _ensure_role_permissions(role)
+    _log_audit_event(
+        request,
+        action="role_created",
+        module="Roles",
+        description=f"Role '{role.name}' created.",
+        target=role.name,
+    )
     messages.success(request, "Role added successfully.")
     return redirect(next_url)
 
@@ -1760,6 +3318,13 @@ def role_permissions_update_view(request):
             to_update,
             [action[1] for action in ROLE_PERMISSION_ACTIONS],
         )
+    _log_audit_event(
+        request,
+        action="role_permissions_updated",
+        module="Roles",
+        description=f"Permissions updated for role '{role.name}'.",
+        target=role.name,
+    )
     messages.success(request, f"Permissions updated for {role.name}.")
     return redirect(next_url)
 
@@ -1799,9 +3364,19 @@ def pos_order_cancel_view(request):
     if latest_order is None:
         return JsonResponse({"ok": False, "error": "No order found to cancel."}, status=404)
 
+    order_no = latest_order.order_no or f"ORD-{latest_order.id:06d}"
+    table_name = latest_order.table_name
     latest_order.status = "Cancelled"
     latest_order.save(update_fields=["status", "updated_at"])
+    _release_table_if_unused(table_name)
     latest_order = Order.objects.prefetch_related("items").get(id=latest_order.id)
+    _log_audit_event(
+        request,
+        action="order_cancelled",
+        module="POS",
+        description=f"Order {order_no} was cancelled.",
+        target=order_no,
+    )
     return JsonResponse({"ok": True, "order": _serialize_order(latest_order)})
 
 
@@ -1816,8 +3391,72 @@ def pos_order_latest_view(request):
     return JsonResponse({"ok": True, "order": _serialize_order(order)})
 
 
+@login_required(login_url="login")
+def kitchen_order_action_view(request, order_id, action):
+    if request.method != "POST":
+        return redirect("page", page="kitchen")
+
+    next_url = request.POST.get("next", "").strip() or reverse("page", kwargs={"page": "kitchen"})
+    try:
+        order = Order.objects.prefetch_related("items").get(id=order_id)
+    except Order.DoesNotExist:
+        messages.error(request, "Kitchen order not found.")
+        return redirect(next_url)
+
+    if order.status in {"Draft", "Cancelled", "Voided"}:
+        messages.error(request, "This order is not available in kitchen.")
+        return redirect(next_url)
+
+    update_fields = ["kitchen_status", "updated_at"]
+    audit_action = ""
+    audit_description = ""
+
+    if action == "start":
+        order.kitchen_status = "In Kitchen"
+        if not order.kitchen_started_at:
+            order.kitchen_started_at = timezone.now()
+            update_fields.append("kitchen_started_at")
+        audit_action = "kitchen_started"
+        audit_description = f"Kitchen started order {order.order_no or f'ORD-{order.id:06d}'}."
+    elif action == "pause":
+        order.kitchen_status = "Paused"
+        audit_action = "kitchen_paused"
+        audit_description = f"Kitchen paused order {order.order_no or f'ORD-{order.id:06d}'}."
+    elif action == "complete":
+        order.kitchen_status = "Completed"
+        if not order.kitchen_started_at:
+            order.kitchen_started_at = timezone.now()
+            update_fields.append("kitchen_started_at")
+        order.kitchen_completed_at = timezone.now()
+        update_fields.append("kitchen_completed_at")
+        audit_action = "kitchen_completed"
+        audit_description = f"Kitchen completed order {order.order_no or f'ORD-{order.id:06d}'}."
+    else:
+        messages.error(request, "Invalid kitchen action.")
+        return redirect(next_url)
+
+    order.save(update_fields=update_fields)
+    _log_audit_event(
+        request,
+        action=audit_action,
+        module="Kitchen",
+        description=audit_description,
+        target=order.order_no or f"ORD-{order.id:06d}",
+    )
+    messages.success(request, f"Kitchen action '{action}' applied for {order.order_no or f'ORD-{order.id:06d}'}.")
+    return redirect(next_url)
+
+
 def _build_pos_context(request):
     latest_order = _get_latest_user_order(request.user)
+    print_setting, _ = PrintSetting.objects.get_or_create(pk=1)
+    store_setting, _ = StoreSetting.objects.get_or_create(pk=1)
+    store_logo_url = ""
+    if store_setting.store_image:
+        try:
+            store_logo_url = store_setting.store_image.url
+        except ValueError:
+            store_logo_url = ""
     modal_orders_qs = (
         Order.objects.filter(created_by=request.user)
         .prefetch_related("items")
@@ -1826,6 +3465,23 @@ def _build_pos_context(request):
     modal_orders = list(modal_orders_qs)
     sale_orders = [order for order in modal_orders if order.status == "Placed"]
     draft_orders = [order for order in modal_orders if order.status == "Draft"]
+    pos_modes = {
+        "dine_in": bool(store_setting.enable_dine_in),
+        "take_away": bool(store_setting.enable_take_away),
+        "delivery": bool(store_setting.enable_delivery),
+        "table": bool(store_setting.enable_table),
+    }
+    tab_order = [
+        ("order-tab1", pos_modes["dine_in"]),
+        ("order-tab2", pos_modes["take_away"]),
+        ("order-tab3", pos_modes["delivery"]),
+        ("order-tab4", pos_modes["table"]),
+    ]
+    default_order_tab = "order-tab1"
+    for tab_id, enabled in tab_order:
+        if enabled:
+            default_order_tab = tab_id
+            break
 
     context = {
         "pos_api_urls": {
@@ -1838,6 +3494,27 @@ def _build_pos_context(request):
         "pos_orders_all": [_serialize_order(order) for order in modal_orders],
         "pos_orders_sale": [_serialize_order(order) for order in sale_orders],
         "pos_orders_draft": [_serialize_order(order) for order in draft_orders],
+        "pos_modes": pos_modes,
+        "pos_default_order_tab": default_order_tab,
+        "pos_print_settings": {
+            "header": (print_setting.header or "").strip(),
+            "footer": (print_setting.footer or "").strip(),
+            "logo_url": store_logo_url,
+        },
+        "pos_invoice_meta": {
+            "store_name": (store_setting.store_name or "").strip() or "DreamsPOS",
+            "address": " ".join(
+                part for part in [
+                    (store_setting.address_1 or "").strip(),
+                    (store_setting.address_2 or "").strip(),
+                    (store_setting.city or "").strip(),
+                    (store_setting.state or "").strip(),
+                    (store_setting.country or "").strip(),
+                    (store_setting.pincode or "").strip(),
+                ] if part
+            ),
+            "phone": (store_setting.phone or "").strip(),
+        },
         "customers": Customer.objects.filter(status="Active").order_by("name", "id"),
     }
     context.update(_build_recent_orders_context())
@@ -1869,6 +3546,13 @@ def print_settings_view(request):
         setting.show_notes = "show_notes" in request.POST
         setting.print_tokens = "print_tokens" in request.POST
         setting.save()
+        _log_audit_event(
+            request,
+            action="print_settings_updated",
+            module="Print Settings",
+            description=f"Print settings updated with page size {setting.page_size}.",
+            target="Print Settings",
+        )
 
         messages.success(request, "Print settings updated successfully.")
         return redirect("print_settings")
@@ -1975,6 +3659,13 @@ def store_settings_view(request):
             setting.store_image = uploaded_image
 
         setting.save()
+        _log_audit_event(
+            request,
+            action="store_settings_updated",
+            module="Store Settings",
+            description=f"Store settings updated for '{setting.store_name}'.",
+            target=setting.store_name,
+        )
         messages.success(request, "Store settings updated successfully.")
         return redirect("store_settings")
 
@@ -1999,20 +3690,48 @@ def page_view(request, page):
 
     template_name = f"{page}.html"
     try:
+        if page in {"index", "index-2"}:
+            return render(request, template_name, _build_dashboard_context(request))
         if page == "pos":
             context = _build_pos_context(request)
             if request.GET.get("partial") == "pos-left":
                 return render(request, "partials/pos_left_panel.html", context)
             return render(request, template_name, context)
+        if page == "kitchen":
+            return render(request, template_name, _build_kitchen_context(request))
         if page == "customer":
             context = _build_customers_context(request)
             if request.GET.get("partial") == "1":
                 return render(request, "partials/customers_grid.html", context)
             return render(request, template_name, context)
+        if page == "table":
+            return render(request, template_name, _build_tables_context(request))
+        if page == "earning-report":
+            earning_context = _build_earning_report_context(request)
+            if isinstance(earning_context, HttpResponse):
+                return earning_context
+            return render(request, template_name, earning_context)
+        if page == "order-report":
+            order_context = _build_order_report_context(request)
+            if isinstance(order_context, HttpResponse):
+                return order_context
+            return render(request, template_name, order_context)
+        if page == "sales-report":
+            sales_context = _build_sales_report_context(request)
+            if isinstance(sales_context, HttpResponse):
+                return sales_context
+            return render(request, template_name, sales_context)
+        if page == "customer-report":
+            customer_context = _build_customer_report_context(request)
+            if isinstance(customer_context, HttpResponse):
+                return customer_context
+            return render(request, template_name, customer_context)
         if page == "users":
             return render(request, template_name, _build_users_context(request))
         if page == "role-permission":
             return render(request, template_name, _build_role_permissions_context())
+        if page == "audit-report":
+            return render(request, template_name, _build_audit_logs_context(request))
         return render(request, template_name)
     except TemplateDoesNotExist as exc:
         raise Http404("Page not found") from exc
@@ -2020,11 +3739,22 @@ def page_view(request, page):
 
 @login_required(login_url="login")
 def dashboard_view(request):
-    return render(request, "index.html")
+    return render(request, "index-2.html", _build_dashboard_context(request))
 
 
 @login_required(login_url="login")
 def logout_view(request):
+    if request.method != "POST":
+        return redirect("dashboard")
+    current_user = request.user
+    _log_audit_event(
+        request,
+        action="logout",
+        module="Authentication",
+        description=f"User {current_user.full_name or current_user.username} signed out.",
+        target=current_user.username,
+        actor=current_user,
+    )
     logout(request)
     messages.success(request, "You have been logged out.")
     return redirect("login")

@@ -781,9 +781,12 @@
 
                                     </div>
                                     <div class="p-3 border-top">
-                                        <a href="{% url 'login' %}" class="btn btn-white btn-sm w-100">
-                                            <i class="icon-log-in me-1"></i>Logout
-                                        </a>
+                                        <form method="post" action="{% url 'logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-white btn-sm w-100">
+                                                <i class="icon-log-in me-1"></i>Logout
+                                            </button>
+                                        </form>
                                     </div>
                                    
                                 </div>
@@ -918,7 +921,7 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Reports <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Reports <a href="{% url 'page' 'customer-report' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="dropdown">
@@ -927,10 +930,10 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end p-3">
                                 <li>
-                                    <a href="#" class="dropdown-item rounded">Export as PDF</a>
+                                    <a href="?{{ customer_report_export_pdf_query }}" class="dropdown-item rounded">Export as PDF</a>
                                 </li>
                                 <li>
-                                    <a href="#" class="dropdown-item rounded">Export as Excel</a>
+                                    <a href="?{{ customer_report_export_excel_query }}" class="dropdown-item rounded">Export as Excel</a>
                                 </li>
                             </ul>
                         </div>
@@ -963,12 +966,13 @@
                     <div class="card-body">
                         
 
+                        <form method="get" action="{% url 'page' 'customer-report' %}">
                         <div class="border-bottom sales-report-filter-wrap">
                             <div class="report-filter">
                                 <div class="mb-3">
                                     <label class="form-label">Start Date<span class="text-danger ms-1">*</span></label>
                                     <div class="input-group w-auto input-group-flat">
-                                        <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                        <input type="text" name="start_date" value="{{ customer_report_filters.start_date }}" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
                                         <span class="input-group-text">
                                             <i class="icon-calendar-fold"></i>
                                         </span>
@@ -979,7 +983,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">End Date<span class="text-danger ms-1">*</span></label>
                                     <div class="input-group w-auto input-group-flat">
-                                        <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                        <input type="text" name="end_date" value="{{ customer_report_filters.end_date }}" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
                                         <span class="input-group-text">
                                             <i class="icon-calendar-fold"></i>
                                         </span>
@@ -991,7 +995,7 @@
                                     <label class="form-label">Customer<span class="text-danger ms-1">*</span></label>
                                     <div class="dropdown">
                                         <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                            Select
+                                            {{ customer_report_customer_label }}
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-end p-3 w-100">
                                             <h6 class="fs-14 fw-semibold mb-3">Customer</h6>
@@ -1002,31 +1006,15 @@
                                                 <input type="text" class="form-control form-control-md" placeholder="Search">
                                             </div>  
                                             <div class="vstack gap-2">
+                                                {% for customer_name in customer_report_customer_options %}
                                                 <div>
                                                     <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Walk-in Customer
+                                                        <input class="form-check-input m-0 me-2" type="checkbox" name="customer" value="{{ customer_name }}"{% if customer_name in customer_report_filters.customers %} checked{% endif %}>{{ customer_name }}
                                                     </label>
                                                 </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Sue Allen
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Frank Barrett
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Kelley Davis
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    <label class="d-flex align-items-center">
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">Jim Vickers
-                                                    </label>
-                                                </div>
+                                                {% empty %}
+                                                <p class="mb-0 text-muted">No customers found</p>
+                                                {% endfor %}
                                             </div>  
                                         </div>
                                     </div>
@@ -1034,10 +1022,11 @@
                             </div> <!-- end col -->
                             <div class="report-filter">
                                 <div class="mb-3">
-                                    <a href="#" class="btn btn-primary d-inline-flex align-items-center">Submit</a>
+                                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center">Submit</button>
                                 </div>
                             </div> <!-- end col -->
                         </div>
+                        </form>
 
                         <div class="d-flex align-items-center flex-wrap gap-3 justify-content-between mb-4">
 
@@ -1050,20 +1039,20 @@
                                 <!-- sort by -->
                                 <div class="dropdown">
                                     <a href="#" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                                        Sort by : Newest
+                                        Sort by : {{ customer_report_sort_label }}
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end p-3">
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Newest</a>
+                                            <a href="?{{ customer_report_sort_queries.newest }}" class="dropdown-item">Newest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Oldest</a>
+                                            <a href="?{{ customer_report_sort_queries.oldest }}" class="dropdown-item">Oldest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Ascending</a>
+                                            <a href="?{{ customer_report_sort_queries.ascending }}" class="dropdown-item">Ascending</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Descending</a>
+                                            <a href="?{{ customer_report_sort_queries.descending }}" class="dropdown-item">Descending</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -1083,156 +1072,29 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for row in customer_report_rows %}
                                     <tr>
-                                        <td>#CUS0016</td>
+                                        <td>{{ row.customer_id }}</td>
                                         <td>
                                             <div class="d-flex align-items-center">
+                                                {% if row.image_url %}
                                                 <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <i class="icon-user fs-16 text-dark"></i>
+                                                    <img src="{{ row.image_url }}" alt="{{ row.customer_name }}" class="img-fluid">
                                                 </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Walk-in Customer</a></h6>
+                                                {% else %}
+                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border d-inline-flex align-items-center justify-content-center">
+                                                    <span class="text-dark fw-semibold">{{ row.initials }}</span>
+                                                </a>
+                                                {% endif %}
+                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">{{ row.customer_name }}</a></h6>
                                             </div>
                                         </td>
-                                        <td>32</td>
-                                        <td>
-                                            $1000
-                                        </td>
+                                        <td>{{ row.total_orders }}</td>
+                                        <td>{{ row.grand_total }}</td>
                                     </tr>
-                                    <tr>
-                                        <td>#CUS0015</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-33.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Sue Allen</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>45</td>
-                                        <td>
-                                            $1500
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#CUS0014</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-34.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Frank Barrett</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>70</td>
-                                        <td>
-                                            $1200
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#CUS0013</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-35.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Kelley Davis</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>53</td>
-                                        <td>
-                                            $800
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#CUS0012</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-36.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Jim Vickers</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>34</td>
-                                        <td>
-                                            $750
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#CUS0011</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-37.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Nancy Chapman</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>40</td>
-                                        <td>
-                                            $1300
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#CUS0010</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-38.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Ron Jude</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>55</td>
-                                        <td>
-                                            $1100
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#CUS0009</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-39.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Andrea Aponte</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>35</td>
-                                        <td>
-                                            $600
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#CUS0008</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-40.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">David Belcher</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>27</td>
-                                        <td>
-                                            $1300
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#CUS0007</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2 bg-light border">
-                                                <img src="{% static 'assets/img/profiles/avatar-41.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Julie Kangas</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>22</td>
-                                        <td>
-                                            $800
-                                        </td>
-                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="4" class="text-center py-4">No customer records found for the selected filters.</td></tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
