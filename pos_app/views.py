@@ -943,7 +943,7 @@ def _build_shell_context(request):
     )
     order_results = [
         {
-            "order_label": order.order_no or f"#{order.id:05d}",
+            "order_label": _format_order_label(order),
             "type_label": "Take Away" if order.order_type == "Takeaway" else order.order_type,
             "table_name": order.table_name,
             "token_no": order.token_no,
@@ -954,7 +954,7 @@ def _build_shell_context(request):
     kitchen_results = [
         {
             "customer_name": order.customer_name or "Walk-in Customer",
-            "order_label": order.order_no or f"#{order.id:05d}",
+            "order_label": _format_order_label(order),
             "service_label": "Take Away" if order.order_type == "Takeaway" else order.order_type,
         }
         for order in Order.objects.filter(status__in=["Placed", "Draft"]).order_by("-updated_at", "-id")[:4]
@@ -966,7 +966,7 @@ def _build_shell_context(request):
             {
                 "icon_class": "icon-shopping-cart" if order.status == "Placed" else "icon-file-stack",
                 "badge_class": "badge-soft-orange border border-orange" if order.status == "Placed" else "badge-soft-secondary border border-secondary",
-                "text": f"{order.order_no or f'Order #{order.id}'} for {order.customer_name or 'Walk-in Customer'} is {order.status.lower()}.",
+                "text": f"{_format_order_label(order)} for {order.customer_name or 'Walk-in Customer'} is {order.status.lower()}.",
                 "time_label": _format_relative_time(order.updated_at),
             }
         )
@@ -1039,7 +1039,7 @@ def _serialize_recent_order(order, now):
 
     elapsed_clock = _format_duration_clock(elapsed_seconds)
 
-    order_label = order.order_no or f"ORD-{order.id:06d}"
+    order_label = _format_order_label(order)
     badge_icon = "icon-check-check"
     type_label = order.order_type
     if order.order_type == "Dine In":
@@ -1203,10 +1203,44 @@ def _format_duration_clock(total_seconds):
     return f"{minutes:02d}:{seconds:02d}"
 
 
+def _format_order_label(order):
+    created_local = timezone.localtime(order.created_at)
+    month_start = created_local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if created_local.month == 12:
+        next_month_start = created_local.replace(
+            year=created_local.year + 1,
+            month=1,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+    else:
+        next_month_start = created_local.replace(
+            month=created_local.month + 1,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+    monthly_sequence = (
+        Order.objects.filter(
+            created_at__gte=month_start,
+            created_at__lt=next_month_start,
+            id__lte=order.id,
+        ).count()
+        or order.id
+    )
+    return f"ORD-{monthly_sequence:05d}/{created_local.strftime('%m-%y')}"
+
+
 def _build_kitchen_order_card(order, currency_symbol):
     elapsed_seconds = _get_kitchen_elapsed_seconds(order)
     elapsed_minutes = elapsed_seconds // 60
-    is_delayed = order.kitchen_status != "Completed" and elapsed_minutes > 30
+    target_minutes = 30
+    is_delayed = elapsed_minutes > target_minutes
     timer_started_at = order.kitchen_started_at or order.created_at
 
     header_class_map = {
@@ -1226,7 +1260,7 @@ def _build_kitchen_order_card(order, currency_symbol):
 
     header_class = "bg-danger" if is_delayed else header_class_map.get(order.kitchen_status, "bg-gray")
     service_label = "Take Away" if order.order_type == "Takeaway" else order.order_type
-    order_label = order.order_no or f"ORD-{order.id:06d}"
+    order_label = _format_order_label(order)
     action_state = "start"
     action_label = "Play"
     action_icon = "icon-play"
@@ -1240,6 +1274,25 @@ def _build_kitchen_order_card(order, currency_symbol):
         action_label = "Play"
         action_icon = "icon-play"
 
+    timing_message = ""
+    timing_message_class = "text-muted"
+    if order.kitchen_status == "Completed":
+        if elapsed_minutes < target_minutes:
+            timing_message = (
+                f"{_format_duration_clock(elapsed_seconds)} Mins - "
+                f"Served Before {target_minutes - elapsed_minutes} Mins"
+            )
+            timing_message_class = "text-success"
+        elif elapsed_minutes > target_minutes:
+            timing_message = f"Delayed By {elapsed_minutes - target_minutes} Mins"
+            timing_message_class = "text-danger"
+        else:
+            timing_message = f"{_format_duration_clock(elapsed_seconds)} Mins - Served On Time"
+            timing_message_class = "text-success"
+    elif is_delayed:
+        timing_message = f"Delayed By {elapsed_minutes - target_minutes} Mins"
+        timing_message_class = "text-danger"
+
     return {
         "id": order.id,
         "order_label": order_label,
@@ -1251,6 +1304,8 @@ def _build_kitchen_order_card(order, currency_symbol):
         "status_label": "Delayed" if is_delayed else order.kitchen_status,
         "is_delayed": is_delayed,
         "delay_label": f"Delayed By {max(elapsed_minutes - 30, 0)} Mins" if is_delayed else "",
+        "timing_message": timing_message,
+        "timing_message_class": timing_message_class,
         "progress_percent": progress_percent,
         "elapsed_seconds": elapsed_seconds,
         "elapsed_clock": _format_duration_clock(elapsed_seconds),
@@ -1854,7 +1909,7 @@ def _build_earning_report_context(request):
     earning_rows = []
     for order in earnings_qs:
         created_local = timezone.localtime(order.created_at)
-        order_label = order.order_no or f"#{order.id:05d}"
+        order_label = _format_order_label(order)
         earning_rows.append(
             {
                 "earning_id": f"#ERN{order.id:04d}",
@@ -1992,7 +2047,7 @@ def _build_order_report_context(request):
         created_local = timezone.localtime(order.created_at)
         order_rows.append(
             {
-                "order_label": order.order_no or f"#{order.id:05d}",
+                "order_label": _format_order_label(order),
                 "date_label": created_local.strftime("%d %b %Y"),
                 "customer_name": order.customer_name or "Walk-in Customer",
                 "token_no": order.token_no,
@@ -2306,7 +2361,7 @@ def _serialize_order(order):
     created_local = timezone.localtime(order.created_at)
     return {
         "id": order.id,
-        "order_no": order.order_no,
+        "order_no": _format_order_label(order),
         "token_no": order.token_no,
         "status": order.status,
         "order_type": order.order_type,
@@ -2451,8 +2506,8 @@ def _create_pos_order(request, status):
         kitchen_started_at=timezone.now() if is_placed else None,
         created_by=request.user,
     )
-    order.order_no = f"ORD-{order.id:06d}"
-    order.token_no = order.id
+    order.order_no = _format_order_label(order)
+    order.token_no = Order.next_daily_token_no()
     order.save(update_fields=["order_no", "token_no"])
 
     OrderItem.objects.bulk_create(
@@ -2474,10 +2529,10 @@ def _create_pos_order(request, status):
         action="order_placed" if status == "Placed" else "order_drafted",
         module="POS",
         description=(
-            f"Order {order.order_no} {('placed' if status == 'Placed' else 'saved as draft')} "
+            f"Order {_format_order_label(order)} {('placed' if status == 'Placed' else 'saved as draft')} "
             f"for {order.customer_name} with total {order.total}."
         ),
-        target=order.order_no,
+        target=_format_order_label(order),
     )
     return order
 
@@ -3364,7 +3419,7 @@ def pos_order_cancel_view(request):
     if latest_order is None:
         return JsonResponse({"ok": False, "error": "No order found to cancel."}, status=404)
 
-    order_no = latest_order.order_no or f"ORD-{latest_order.id:06d}"
+    order_no = _format_order_label(latest_order)
     table_name = latest_order.table_name
     latest_order.status = "Cancelled"
     latest_order.save(update_fields=["status", "updated_at"])
@@ -3417,11 +3472,11 @@ def kitchen_order_action_view(request, order_id, action):
             order.kitchen_started_at = timezone.now()
             update_fields.append("kitchen_started_at")
         audit_action = "kitchen_started"
-        audit_description = f"Kitchen started order {order.order_no or f'ORD-{order.id:06d}'}."
+        audit_description = f"Kitchen started order {_format_order_label(order)}."
     elif action == "pause":
         order.kitchen_status = "Paused"
         audit_action = "kitchen_paused"
-        audit_description = f"Kitchen paused order {order.order_no or f'ORD-{order.id:06d}'}."
+        audit_description = f"Kitchen paused order {_format_order_label(order)}."
     elif action == "complete":
         order.kitchen_status = "Completed"
         if not order.kitchen_started_at:
@@ -3430,7 +3485,7 @@ def kitchen_order_action_view(request, order_id, action):
         order.kitchen_completed_at = timezone.now()
         update_fields.append("kitchen_completed_at")
         audit_action = "kitchen_completed"
-        audit_description = f"Kitchen completed order {order.order_no or f'ORD-{order.id:06d}'}."
+        audit_description = f"Kitchen completed order {_format_order_label(order)}."
     else:
         messages.error(request, "Invalid kitchen action.")
         return redirect(next_url)
@@ -3441,9 +3496,9 @@ def kitchen_order_action_view(request, order_id, action):
         action=audit_action,
         module="Kitchen",
         description=audit_description,
-        target=order.order_no or f"ORD-{order.id:06d}",
+        target=_format_order_label(order),
     )
-    messages.success(request, f"Kitchen action '{action}' applied for {order.order_no or f'ORD-{order.id:06d}'}.")
+    messages.success(request, f"Kitchen action '{action}' applied for {_format_order_label(order)}.")
     return redirect(next_url)
 
 

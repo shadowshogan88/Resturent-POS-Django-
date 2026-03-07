@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import AuditLog, DiningTable, Order, User
 
@@ -35,6 +36,61 @@ class PosOrderApiTests(TestCase):
         order = Order.objects.first()
         self.assertEqual(order.status, "Placed")
         self.assertEqual(order.items.count(), 2)
+        self.assertEqual(order.token_no, 1)
+
+    def test_place_order_increments_token_within_same_day(self):
+        payload = {
+            "items": [{"item_name": "Grilled Chicken", "quantity": 1, "unit_price": 33}],
+            "order_type": "Dine In",
+            "customer_name": "Walk-in Customer",
+        }
+
+        self.client.post(
+            reverse("pos_order_place"),
+            data=payload,
+            content_type="application/json",
+        )
+        second_response = self.client.post(
+            reverse("pos_order_place"),
+            data=payload,
+            content_type="application/json",
+        )
+
+        self.assertEqual(second_response.status_code, 200)
+        tokens = list(Order.objects.order_by("id").values_list("token_no", flat=True))
+        self.assertEqual(tokens, [1, 2])
+
+    def test_place_order_resets_token_on_new_day(self):
+        yesterday = timezone.now() - timezone.timedelta(days=1)
+        old_order = Order.objects.create(
+            order_no="ORD-OLD",
+            token_no=7,
+            status="Placed",
+            order_type="Dine In",
+            customer_name="Walk-in Customer",
+            subtotal="10.00",
+            tax_rate="18.00",
+            tax_amount="1.80",
+            service_charge="0.00",
+            total="11.80",
+            kitchen_status="In Kitchen",
+            created_by=self.user,
+        )
+        Order.objects.filter(id=old_order.id).update(created_at=yesterday, updated_at=yesterday)
+
+        response = self.client.post(
+            reverse("pos_order_place"),
+            data={
+                "items": [{"item_name": "Chicken Taco", "quantity": 1, "unit_price": 45}],
+                "order_type": "Dine In",
+                "customer_name": "Walk-in Customer",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        new_order = Order.objects.order_by("-id").first()
+        self.assertEqual(new_order.token_no, 1)
 
     def test_place_order_rejects_empty_cart(self):
         response = self.client.post(

@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Max
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.contrib.auth.models import AbstractUser
@@ -447,6 +448,17 @@ class Order(models.Model):
 
     class Meta:
         ordering = ["-id"]
+
+    @classmethod
+    def next_daily_token_no(cls, for_date=None):
+        local_date = for_date or timezone.localdate()
+        last_token = (
+            cls.objects.filter(created_at__date=local_date)
+            .aggregate(max_token=Max("token_no"))
+            .get("max_token")
+            or 0
+        )
+        return last_token + 1
 
     def __str__(self):
         return self.order_no or f"Order {self.pk}"
