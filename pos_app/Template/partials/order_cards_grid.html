@@ -1,0 +1,85 @@
+<div class="row">
+    {% for order in orders %}
+    <div class="col-xxl-4 col-xl-6 col-md-6 d-flex">
+        <div class="card flex-fill js-order-card" data-order-json="{{ order.detail_payload|escapejs }}">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="avatar avatar-lg bg-primary rounded-circle">
+                            <i class="icon-shopping-bag"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 fs-14 fw-semibold">
+                                <a href="#" class="js-order-detail-trigger" data-bs-toggle="offcanvas" data-bs-target="#view_details">{{ order.order_label }}</a>
+                            </h6>
+                            <p class="mb-0 d-flex align-items-center gap-2">
+                                {{ order.type_label }}
+                                {% if order.table_name %}
+                                <span class="text-light">|</span> Table No : {{ order.table_name }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="dropstart">
+                        <button class="btn btn-sm btn-icon btn-white rounded-circle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Actions">
+                            <i class="icon-ellipsis-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu p-3">
+                            <li>
+                                <a href="#" class="dropdown-item rounded d-flex align-items-center js-order-detail-trigger" data-bs-toggle="offcanvas" data-bs-target="#view_details"><i class="icon-eye me-2"></i>View Details</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" class="dropdown-item rounded d-flex align-items-center js-order-pay-trigger" data-bs-toggle="modal" data-bs-target="#pay_complete_order"><i class="icon-pointer me-2"></i>Pay & Complete</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" class="dropdown-item rounded d-flex align-items-center js-order-print-trigger" data-bs-toggle="modal" data-bs-target="#print_reciept"><i class="icon-printer me-2"></i>Print Receipt</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" class="dropdown-item rounded d-flex align-items-center js-order-cancel-trigger" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-x me-2"></i>Cancel</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <p class="mb-0 fs-14 fw-semibold text-dark"><span class="fw-normal">Token No :</span> {{ order.token_no }}</p>
+                    <h6 class="mb-0 fw-semibold d-flex align-items-center gap-1"><i class="icon-clock fs-14"></i> {{ order.created_time }}</h6>
+                </div>
+                <div class="mb-3 pb-3 border-bottom">
+                    <div class="orders-list">
+                        {% for item in order.visible_items %}
+                        <div class="orders text-dark {% if not forloop.last or order.note or order.hidden_items_count %}mb-3{% else %}mb-0{% endif %}">
+                            <p><span class="dot {{ order.dot_class }}"></span>{{ item.item_name }}</p>
+                            <span class="line"></span>
+                            <p class="text-dark">&times;{{ item.quantity }}</p>
+                        </div>
+                        {% endfor %}
+                        {% if order.note %}
+                        <div class="bg-light rounded py-1 px-2 {% if order.hidden_items_count %}mb-3{% else %}mb-0{% endif %}">
+                            <p class="mb-0 fw-medium d-flex align-items-center text-dark"><i class="icon-badge-info me-1"></i> Notes : {{ order.note }}</p>
+                        </div>
+                        {% endif %}
+                        {% if order.hidden_items_count %}
+                        <div class="view-all mt-1">
+                            <button type="button" class="fw-semibold fs-14 mb-0 text-primary bg-transparent border-0 p-0 js-order-detail-trigger" data-bs-toggle="offcanvas" data-bs-target="#view_details">+{{ order.hidden_items_count }} More Items</button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <p class="badge {{ order.status_class }} mb-0">{{ order.billing_label }}</p>
+                    <span class="btn btn-white d-inline-flex align-items-center">{{ order.status_label }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <h5 class="mb-1">{{ empty_title|default:"No orders found" }}</h5>
+                <p class="mb-0">{{ empty_message|default:"Orders will appear here once they are created." }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

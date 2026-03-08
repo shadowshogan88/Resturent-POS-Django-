@@ -2779,10 +2779,59 @@ $(document).ready(function () {
 
   // Statistic Chart
   if ($('#statistic-chart').length > 0) {
+    var userStatisticsScript = document.getElementById('dashboard-user-statistics-data');
+    var userStatisticsData = null;
+
+    if (userStatisticsScript) {
+      try {
+        userStatisticsData = JSON.parse(userStatisticsScript.textContent);
+      } catch (error) {
+        userStatisticsData = null;
+      }
+    }
+
+    var userPeriods = userStatisticsData && userStatisticsData.periods ? userStatisticsData.periods : {
+      weekly: {
+        points: [
+          { label: 'Mon', value: 40 },
+          { label: 'Tue', value: 35 },
+          { label: 'Wed', value: 45 },
+          { label: 'Thu', value: 44 },
+          { label: 'Fri', value: 63 },
+          { label: 'Sat', value: 50 },
+          { label: 'Sun', value: 84 }
+        ],
+        grand_total: 361,
+        top_user: { name: 'No recent user', total: 0 }
+      }
+    };
+    var userDefaultPeriod = userStatisticsData && userStatisticsData.default_period ? userStatisticsData.default_period : 'weekly';
+    var userTotalCount = document.getElementById('user-total-count');
+    var userTopName = document.getElementById('user-top-name');
+    var userGrandTotal = document.getElementById('user-grand-total');
+    var userChangePercentage = document.getElementById('user-change-percentage');
+    var userPeriodMenu = document.getElementById('user-period-menu');
+    var userPeriodButton = userPeriodMenu ? userPeriodMenu.previousElementSibling : null;
+    var userPeriodLabelMap = {
+      weekly: 'Weekly',
+      monthly: 'Monthly',
+      yearly: 'Yearly'
+    };
+
+    function getUserPeriod(periodKey) {
+      return userPeriods[periodKey] || userPeriods.weekly;
+    }
+
+    function getUserSeries(periodKey) {
+      return getUserPeriod(periodKey).points.map(function (point) {
+        return Number(point.value) || 0;
+      });
+    }
+
     const options = {
       series: [{
         labels: ['Orders'],
-        data: [40, 35, 45, 44, 63,  50, 84]
+        data: getUserSeries(userDefaultPeriod)
       }],
       chart: {
         height: 260,
@@ -2855,7 +2904,9 @@ $(document).ready(function () {
           }
       },
       xaxis: {
-        categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        categories: getUserPeriod(userDefaultPeriod).points.map(function (point) {
+          return point.label;
+        }),
         labels: {
           style: {
             fontSize: '12px',
@@ -2873,6 +2924,54 @@ $(document).ready(function () {
     };
     const chart = new ApexCharts(document.querySelector("#statistic-chart"), options);
     chart.render();
+
+    function setUserPeriod(periodKey) {
+      var activePeriod = userPeriods[periodKey] ? periodKey : userDefaultPeriod;
+      var period = getUserPeriod(activePeriod);
+
+      chart.updateOptions({
+        xaxis: {
+          categories: period.points.map(function (point) {
+            return point.label;
+          })
+        }
+      });
+      chart.updateSeries([{
+        labels: ['Orders'],
+        data: getUserSeries(activePeriod)
+      }]);
+
+      if (userTopName) {
+        userTopName.textContent = period.top_user && period.top_user.name ? period.top_user.name : 'No recent user';
+      }
+      if (userGrandTotal) {
+        userGrandTotal.textContent = Number(period.grand_total) || 0;
+      }
+      if (userTotalCount && userStatisticsData) {
+        userTotalCount.textContent = Number(userStatisticsData.total_users) || 0;
+      }
+      if (userChangePercentage && userStatisticsData) {
+        userChangePercentage.textContent = userStatisticsData.change_percentage;
+      }
+      if (userPeriodButton) {
+        userPeriodButton.textContent = userPeriodLabelMap[activePeriod] || 'Weekly';
+      }
+      if (userPeriodMenu) {
+        userPeriodMenu.querySelectorAll('[data-user-period]').forEach(function (item) {
+          item.classList.toggle('active', item.getAttribute('data-user-period') === activePeriod);
+        });
+      }
+    }
+
+    setUserPeriod(userDefaultPeriod);
+
+    if (userPeriodMenu) {
+      userPeriodMenu.querySelectorAll('[data-user-period]').forEach(function (item) {
+        item.addEventListener('click', function () {
+          setUserPeriod(item.getAttribute('data-user-period'));
+        });
+      });
+    }
   }
 
 });
@@ -4592,68 +4691,287 @@ if ($('#production-statistics').length > 0) {
 
 
 if ($('#category-chart').length > 0) {
-    var options = {
-      series: [30, 20, 15, 35], // Percentages for each section
-      chart: {
-          type: 'donut',
-          height: 175,
-      },
-      labels: [ 'Delivery', 'Reservation', 'Take Away', 'Dine'], // Labels for the data
-      colors: ['#14B51D', '#FFA80B', '#0D76E1', '#A91CFF'], // Colors from the image
-      stroke: {
-        width: 0, // Explicitly set stroke width to zero
-      },
-      plotOptions: {
-          pie: {
-              donut: {
-                  size: '60%',
-                  labels: {
-                      show: true, // Enable donut labels
-                      name: {
-                        show: true,
-                        offsetY: -10, // Position the label name
-                        fontSize: '14px',
-                      },
-                      value: {
-                        show: true,
-                        offsetY: 10, // Position the series value
-                        color: '#333',
-                        fontSize: '24px', // Make the value prominent
-                        formatter: function (value) {
-                                    // Format the value (e.g., add the '%' sign)
-                          return value + '%'; 
-                        }
-                      },
-                      total: {
-                          show: false,
-                          label: 'Leads',
-                          formatter: function (w) {
-                              return '589';
-                          }
-                      }
-                  }
-              }
-          }
-      },
-      dataLabels: {
-        enabled: false
-      },
-      legend: {
-        show: false,
-      },
-      label: {
-        show: false,
-      }
+  var categoryDataScript = document.getElementById('dashboard-category-chart-data');
+  var categoryChartData = null;
+
+  if (categoryDataScript) {
+    try {
+      categoryChartData = JSON.parse(categoryDataScript.textContent);
+    } catch (error) {
+      categoryChartData = null;
+    }
+  }
+
+  var categoryPeriods = categoryChartData && categoryChartData.periods ? categoryChartData.periods : {
+    weekly: { delivery: 0, reservation: 0, takeaway: 0, dine_in: 0 }
   };
-  
+  var categoryDefaultPeriod = categoryChartData && categoryChartData.default_period ? categoryChartData.default_period : 'weekly';
+  var categoryPeriodMenu = document.getElementById('category-period-menu');
+  var categoryPeriodButton = categoryPeriodMenu ? categoryPeriodMenu.previousElementSibling : null;
+  var categoryTakeawayCount = document.getElementById('category-takeaway-count');
+  var categoryReservationCount = document.getElementById('category-reservation-count');
+  var categoryDeliveryCount = document.getElementById('category-delivery-count');
+  var categoryPeriodLabelMap = {
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+    yearly: 'Yearly'
+  };
+
+  function getCategoryPeriod(periodKey) {
+    return categoryPeriods[periodKey] || categoryPeriods.weekly || { delivery: 0, reservation: 0, takeaway: 0, dine_in: 0 };
+  }
+
+  function getCategorySeries(periodKey) {
+    var period = getCategoryPeriod(periodKey);
+    return [
+      Number(period.delivery) || 0,
+      Number(period.reservation) || 0,
+      Number(period.takeaway) || 0,
+      Number(period.dine_in) || 0
+    ];
+  }
+
+  var options = {
+    series: getCategorySeries(categoryDefaultPeriod),
+    chart: {
+      type: 'donut',
+      height: 175,
+    },
+    labels: ['Delivery', 'Reservation', 'Take Away', 'Dine In'],
+    colors: ['#14B51D', '#FFA80B', '#0D76E1', '#A91CFF'],
+    stroke: {
+      width: 0,
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '60%',
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              offsetY: -10,
+              fontSize: '14px',
+            },
+            value: {
+              show: true,
+              offsetY: 10,
+              color: '#333',
+              fontSize: '24px',
+              formatter: function (value) {
+                return Math.round(value);
+              }
+            },
+            total: {
+              show: false,
+            }
+          }
+        }
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    legend: {
+      show: false,
+    },
+    label: {
+      show: false,
+    }
+  };
+
   var chart = new ApexCharts(document.querySelector("#category-chart"), options);
   chart.render();
+
+  function setCategoryPeriod(periodKey) {
+    var activePeriod = categoryPeriods[periodKey] ? periodKey : categoryDefaultPeriod;
+    var period = getCategoryPeriod(activePeriod);
+
+    chart.updateSeries(getCategorySeries(activePeriod));
+
+    if (categoryTakeawayCount) {
+      categoryTakeawayCount.textContent = (Number(period.takeaway) || 0) + ' Orders';
+    }
+    if (categoryReservationCount) {
+      categoryReservationCount.textContent = (Number(period.reservation) || 0) + ' Orders';
+    }
+    if (categoryDeliveryCount) {
+      categoryDeliveryCount.textContent = (Number(period.delivery) || 0) + ' Orders';
+    }
+    if (categoryPeriodButton) {
+      categoryPeriodButton.textContent = categoryPeriodLabelMap[activePeriod] || 'Weekly';
+    }
+    if (categoryPeriodMenu) {
+      categoryPeriodMenu.querySelectorAll('[data-category-period]').forEach(function (item) {
+        item.classList.toggle('active', item.getAttribute('data-category-period') === activePeriod);
+      });
+    }
+  }
+
+  setCategoryPeriod(categoryDefaultPeriod);
+
+  if (categoryPeriodMenu) {
+    categoryPeriodMenu.querySelectorAll('[data-category-period]').forEach(function (item) {
+      item.addEventListener('click', function () {
+        setCategoryPeriod(item.getAttribute('data-category-period'));
+      });
+    });
+  }
+}
+
+
+if ($('#top-selling-ranked-list').length > 0) {
+  var topSellingDataScript = document.getElementById('dashboard-top-selling-items-data');
+  var topSellingData = null;
+
+  if (topSellingDataScript) {
+    try {
+      topSellingData = JSON.parse(topSellingDataScript.textContent);
+    } catch (error) {
+      topSellingData = null;
+    }
+  }
+
+  var topSellingGroups = topSellingData && topSellingData.groups ? topSellingData.groups : {};
+  var topSellingDefaultFilter = topSellingData && topSellingData.default_filter ? topSellingData.default_filter : 'all';
+  var topSellingMenu = document.getElementById('top-selling-filter-menu');
+  var topSellingButton = document.getElementById('top-selling-filter-button');
+  var topSellingHighlightText = document.getElementById('top-selling-highlight-text');
+  var topSellingFeaturedCard = document.getElementById('top-selling-featured-card');
+  var topSellingFeaturedLink = document.getElementById('top-selling-featured-image-link');
+  var topSellingFeaturedName = document.getElementById('top-selling-featured-name');
+  var topSellingFeaturedOrders = document.getElementById('top-selling-featured-orders');
+  var topSellingRankedList = document.getElementById('top-selling-ranked-list');
+
+  function getTopSellingGroup(filterKey) {
+    return topSellingGroups[filterKey] || topSellingGroups.all || {
+      label: 'All',
+      highlight_text: 'No sales data yet',
+      featured: null,
+      items: []
+    };
+  }
+
+  function renderTopSellingFeatured(group) {
+    if (topSellingHighlightText) {
+      topSellingHighlightText.textContent = group.highlight_text || 'No sales data yet';
+    }
+    if (!topSellingFeaturedCard || !topSellingFeaturedLink || !topSellingFeaturedName || !topSellingFeaturedOrders) {
+      return;
+    }
+
+    if (!group.featured) {
+      topSellingFeaturedLink.innerHTML = '<span class="d-flex align-items-center justify-content-center bg-light text-dark w-100 h-100 fs-12 px-2 text-center" id="top-selling-featured-image-fallback">No Image</span>';
+      topSellingFeaturedName.textContent = 'No items yet';
+      topSellingFeaturedOrders.textContent = 'No of Orders : 0';
+      return;
+    }
+
+    if (group.featured.image_url) {
+      topSellingFeaturedLink.innerHTML = '';
+      var image = document.createElement('img');
+      image.src = group.featured.image_url;
+      image.alt = group.featured.name;
+      image.className = 'img-fluid';
+      image.id = 'top-selling-featured-image';
+      topSellingFeaturedLink.appendChild(image);
+    } else {
+      topSellingFeaturedLink.innerHTML = '<span class="d-flex align-items-center justify-content-center bg-light text-dark w-100 h-100 fs-12 px-2 text-center" id="top-selling-featured-image-fallback">No Image</span>';
+    }
+
+    topSellingFeaturedName.textContent = group.featured.name || 'No items yet';
+    topSellingFeaturedOrders.textContent = 'No of Orders : ' + (Number(group.featured.orders) || 0);
+  }
+
+  function renderTopSellingRankedItems(group) {
+    if (!topSellingRankedList) {
+      return;
+    }
+
+    topSellingRankedList.innerHTML = '';
+
+    if (!group.items || !group.items.length) {
+      var emptyState = document.createElement('p');
+      emptyState.className = 'mb-0';
+      emptyState.id = 'top-selling-empty-state';
+      emptyState.textContent = 'No ranked items found for this filter.';
+      topSellingRankedList.appendChild(emptyState);
+      return;
+    }
+
+    group.items.forEach(function (item, index) {
+      var row = document.createElement('div');
+      row.className = 'd-flex align-items-center justify-content-between' + (index < group.items.length - 1 ? ' mb-3' : '');
+
+      var title = document.createElement('h6');
+      title.className = 'fs-14 fw-semibold mb-0';
+      var rank = document.createElement('span');
+      rank.className = 'text-body';
+      rank.textContent = '#' + item.rank;
+      title.appendChild(rank);
+      title.appendChild(document.createTextNode(' ' + item.name));
+
+      var meta = document.createElement('div');
+      meta.className = 'd-flex align-items-center gap-4 w-50';
+
+      var progressStacked = document.createElement('div');
+      progressStacked.className = 'progress-stacked progress-sm w-100';
+
+      var progressBar = document.createElement('div');
+      progressBar.className = 'progress-bar ' + (item.bar_class || 'bg-primary');
+      progressBar.setAttribute('role', 'progressbar');
+      progressBar.style.width = (Number(item.progress) || 0) + '%';
+      progressBar.setAttribute('aria-valuenow', Number(item.progress) || 0);
+      progressBar.setAttribute('aria-valuemin', '0');
+      progressBar.setAttribute('aria-valuemax', '100');
+
+      var count = document.createElement('p');
+      count.className = 'fs-14 text-dark fw-medium mb-0';
+      count.textContent = Number(item.orders) || 0;
+
+      progressStacked.appendChild(progressBar);
+      meta.appendChild(progressStacked);
+      meta.appendChild(count);
+      row.appendChild(title);
+      row.appendChild(meta);
+      topSellingRankedList.appendChild(row);
+    });
+  }
+
+  function setTopSellingFilter(filterKey) {
+    var activeFilter = topSellingGroups[filterKey] ? filterKey : topSellingDefaultFilter;
+    var group = getTopSellingGroup(activeFilter);
+
+    if (topSellingButton) {
+      topSellingButton.textContent = group.label || 'All';
+    }
+    if (topSellingMenu) {
+      topSellingMenu.querySelectorAll('[data-top-selling-filter]').forEach(function (item) {
+        item.classList.toggle('active', item.getAttribute('data-top-selling-filter') === activeFilter);
+      });
+    }
+
+    renderTopSellingFeatured(group);
+    renderTopSellingRankedItems(group);
+  }
+
+  setTopSellingFilter(topSellingDefaultFilter);
+
+  if (topSellingMenu) {
+    topSellingMenu.querySelectorAll('[data-top-selling-filter]').forEach(function (item) {
+      item.addEventListener('click', function () {
+        setTopSellingFilter(item.getAttribute('data-top-selling-filter'));
+      });
+    });
+  }
 }
 
 
 if ($('#sales-chart').length > 0) {
+    var salesChartEl = document.querySelector("#sales-chart");
+    var performanceRate = Number(salesChartEl && salesChartEl.getAttribute("data-performance-rate")) || 0;
     var options = {
-      series: [40],
+      series: [performanceRate],
       lebels: ['Sales'],
       chart: {
         height: 340,
@@ -4708,88 +5026,200 @@ if ($('#sales-chart').length > 0) {
     colors: ["#FFA80B"],
     };       
 
-    var chart = new ApexCharts(document.querySelector("#sales-chart"), options);
+    var chart = new ApexCharts(salesChartEl, options);
     chart.render();
 
 }
 
 // Revenue Chart
 if ($('#revenue-chart').length > 0) {
+  var revenueDataScript = document.getElementById('dashboard-revenue-chart-data');
+  var revenueChartData = null;
+
+  if (revenueDataScript) {
+    try {
+      revenueChartData = JSON.parse(revenueDataScript.textContent);
+    } catch (error) {
+      revenueChartData = null;
+    }
+  }
+
+  var revenuePeriods = revenueChartData && revenueChartData.periods ? revenueChartData.periods : {
+    weekly: [
+      { label: 'Mon', value: 4 },
+      { label: 'Tue', value: 2 },
+      { label: 'Wed', value: 3.5 },
+      { label: 'Thu', value: 3 },
+      { label: 'Fri', value: 2 },
+      { label: 'Sat', value: 2.8 },
+      { label: 'Sun', value: 3.2 }
+    ]
+  };
+  var revenueCurrency = revenueChartData && revenueChartData.currency_symbol ? revenueChartData.currency_symbol : '$';
+  var revenueDefaultPeriod = revenueChartData && revenueChartData.default_period ? revenueChartData.default_period : 'weekly';
+  var revenueSummaryLabel = document.getElementById('revenue-summary-label');
+  var revenueSummaryTotal = document.getElementById('revenue-summary-total');
+  var revenuePeriodMenu = document.getElementById('revenue-period-menu');
+  var revenuePeriodButton = revenuePeriodMenu ? revenuePeriodMenu.previousElementSibling : null;
+  var revenuePeriodLabelMap = {
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+    yearly: 'Yearly'
+  };
+  var revenueSummaryTextMap = {
+    weekly: 'Last 7 Days Revenue',
+    monthly: 'Last 6 Months Revenue',
+    yearly: 'Last 5 Years Revenue'
+  };
+
+  function getRevenueSeries(periodKey) {
+    return revenuePeriods[periodKey] || revenuePeriods.weekly || [];
+  }
+
+  function getRevenueTotal(points) {
+    var total = 0;
+    points.forEach(function (point) {
+      total += Number(point.value) || 0;
+    });
+    return total;
+  }
+
+  function formatRevenueAmount(amount) {
+    return Number(amount || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  var initialRevenuePoints = getRevenueSeries(revenueDefaultPeriod);
   var options = {
     series: [{
-    name: 'Revenue',
-    data: [4, 2, 3.5, 3, 2, 2.8, 3.2]
-  }],
-  chart: {
-    height: 220,
-    type: 'bar',
-    toolbar: {
-      show: false
-    }
-  },
-  plotOptions: {
-    bar: {
-      borderRadius: 10,
-      dataLabels: {
-        position: 'top', // top, center, bottom
+      name: 'Revenue',
+      data: initialRevenuePoints.map(function (point) {
+        return Number(point.value) || 0;
+      })
+    }],
+    chart: {
+      height: 220,
+      type: 'bar',
+      toolbar: {
+        show: false
+      }
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 10,
+        dataLabels: {
+          position: 'top',
+        },
+      }
+    },
+    dataLabels: {
+      enabled: true,
+      formatter: function (val) {
+        return revenueCurrency + formatRevenueAmount(val);
       },
-    }
-  },
-  dataLabels: {
-    enabled: true,
-    formatter: function (val) {
-      return val + "%";
+      offsetY: -20,
+      style: {
+        fontSize: '12px',
+        colors: ['#304758']
+      }
     },
-    offsetY: -20,
-    style: {
-      fontSize: '12px',
-      colors: ["#304758"]
-    }
-  },
-  
-  xaxis: {
-    categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    axisBorder: {
-      show: false
+    xaxis: {
+      categories: initialRevenuePoints.map(function (point) {
+        return point.label;
+      }),
+      axisBorder: {
+        show: false
+      },
+      axisTicks: {
+        show: false
+      },
+      crosshairs: {
+        fill: {
+          type: 'gradient',
+          gradient: {
+            colorFrom: '#F8F8F8',
+            colorTo: '#F8F8F8',
+            stops: [0, 100],
+            opacityFrom: 0.4,
+            opacityTo: 0.5,
+          }
+        }
+      },
+      tooltip: {
+        enabled: true,
+      }
     },
-    axisTicks: {
-      show: false
+    yaxis: {
+      axisBorder: {
+        show: false
+      },
+      axisTicks: {
+        show: true,
+      },
+      labels: {
+        show: true,
+        formatter: function (val) {
+          return revenueCurrency + formatRevenueAmount(val);
+        }
+      },
     },
-    crosshairs: {
-      fill: {
-        type: 'gradient',
-        gradient: {
-          colorFrom: '#F8F8F8',
-          colorTo: '#F8F8F8',
-          stops: [0, 100],
-          opacityFrom: 0.4,
-          opacityTo: 0.5,
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return revenueCurrency + formatRevenueAmount(val);
         }
       }
     },
-    tooltip: {
-      enabled: true,
-    }
-  },
-  yaxis: {
-    axisBorder: {
-      show: false
-    },
-    axisTicks: {
-      show: true,
-    },
-    labels: {
-      show: true,
-      formatter: function (val) {
-        return val + "k";
-      }
-    },
-    
-  
-  },
-  colors: ['#0D76E1']
+    colors: ['#0D76E1']
   };
 
   var chart = new ApexCharts(document.querySelector("#revenue-chart"), options);
   chart.render();
+
+  function setRevenuePeriod(periodKey) {
+    var points = getRevenueSeries(periodKey);
+    var activePeriod = revenuePeriods[periodKey] ? periodKey : revenueDefaultPeriod;
+    var total = getRevenueTotal(points);
+
+    chart.updateOptions({
+      xaxis: {
+        categories: points.map(function (point) {
+          return point.label;
+        })
+      }
+    });
+    chart.updateSeries([{
+      name: 'Revenue',
+      data: points.map(function (point) {
+        return Number(point.value) || 0;
+      })
+    }]);
+
+    if (revenueSummaryLabel) {
+      revenueSummaryLabel.textContent = revenueSummaryTextMap[activePeriod] || 'Revenue';
+    }
+    if (revenueSummaryTotal) {
+      revenueSummaryTotal.textContent = revenueCurrency + formatRevenueAmount(total);
+    }
+    if (revenuePeriodButton) {
+      revenuePeriodButton.textContent = revenuePeriodLabelMap[activePeriod] || 'Weekly';
+    }
+    if (revenuePeriodMenu) {
+      revenuePeriodMenu.querySelectorAll('[data-revenue-period]').forEach(function (item) {
+        item.classList.toggle('active', item.getAttribute('data-revenue-period') === activePeriod);
+      });
+    }
+  }
+
+  setRevenuePeriod(revenueDefaultPeriod);
+
+  if (revenuePeriodMenu) {
+    revenuePeriodMenu.querySelectorAll('[data-revenue-period]').forEach(function (item) {
+      item.addEventListener('click', function () {
+        setRevenuePeriod(item.getAttribute('data-revenue-period'));
+      });
+    });
+  }
 }

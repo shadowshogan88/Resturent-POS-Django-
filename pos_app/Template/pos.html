@@ -69,8 +69,12 @@
                             <a href="{% url 'page' 'pos' %}" class="d-inline-flex align-items-center active"><i class="icon-hand-platter me-1"></i>POS</a>
                             <a href="{% url 'page' 'orders' %}" class="d-inline-flex align-items-center"><i class="icon-list-todo me-1"></i>Orders</a>
                             <a href="{% url 'page' 'kitchen' %}" class="d-inline-flex align-items-center"><i class="icon-drumstick me-1"></i>Kitchen</a>
+                            {% if shell_store_features.enable_reservation %}
                             <a href="{% url 'page' 'reservations' %}" class="d-inline-flex align-items-center"><i class="icon-file-clock me-1"></i>Reservation</a>
+                            {% endif %}
+                            {% if shell_store_features.enable_table %}
                             <a href="{% url 'page' 'table' %}" class="d-inline-flex align-items-center"><i class="icon-concierge-bell me-1"></i>Table</a>
+                            {% endif %}
                         </div>
                         
                         <ul class="header-notification">
@@ -654,9 +658,9 @@
                                             <div class="col-lg-5">
                                                 <select class="select">
                                                     <option>Table</option>
-                                                    <option>Table 1 </option>
-                                                    <option>Table 2</option>
-                                                    <option>Table 3</option>
+                                                    {% for table in pos_tables_available %}
+                                                    <option>{{ table.name }}</option>
+                                                    {% endfor %}
                                                 </select>
                                             </div>
                                             <div class="col-lg-6">
@@ -1853,8 +1857,10 @@
                 return Number.isFinite(value) ? value : 0;
             }
 
+            const POS_CURRENCY_SYMBOL = "{{ shell_currency_symbol|default:'$'|escapejs }}";
+
             function formatMoney(value) {
-                return "$" + Number(value || 0).toFixed(2);
+                return POS_CURRENCY_SYMBOL + parseAmount(value).toFixed(2);
             }
 
             function parseOrderDate(order) {
@@ -1871,8 +1877,12 @@
                 const defaultTabHref = tabsRoot ? (tabsRoot.getAttribute("data-default-tab") || "#order-tab1") : "#order-tab1";
                 const href = activeNav ? activeNav.getAttribute("href") : defaultTabHref;
                 let orderType = "Dine In";
+                let serviceMode = "dine_in";
                 if (href === "#order-tab2") orderType = "Takeaway";
                 if (href === "#order-tab3") orderType = "Delivery";
+                if (href === "#order-tab2") serviceMode = "take_away";
+                if (href === "#order-tab3") serviceMode = "delivery";
+                if (href === "#order-tab4") serviceMode = "table";
 
                 const pane = document.querySelector(href);
                 let customerName = "Walk-in Customer";
@@ -1897,7 +1907,7 @@
                     }
                 }
 
-                return { orderType, customerName, tableName };
+                return { orderType, customerName, tableName, serviceMode };
             }
 
             function getActiveCustomerOption() {
@@ -2027,6 +2037,7 @@
                 return {
                     id: card.getAttribute("data-item-id") || "",
                     name: selectedLabel || card.getAttribute("data-item-name") || "",
+                    baseName: card.getAttribute("data-item-name") || "",
                     price: selectedPrice > 0 ? selectedPrice : parseAmount(card.getAttribute("data-item-price") || "0"),
                     category: card.getAttribute("data-item-category") || "",
                     image: card.getAttribute("data-item-image") || "",
@@ -2213,6 +2224,7 @@
                     rowsById.set(data.id, {
                         id: data.id,
                         name: data.name,
+                        baseName: data.baseName || data.name,
                         image: data.image,
                         unitPrice: Number(data.price.toFixed(2)),
                         quantity: quantity,
@@ -2224,7 +2236,7 @@
                 let html = "";
                 selected.forEach(function (row) {
                     html +=
-                        '<div class="menu-item p-2 rounded border shadow mb-3" data-item-id="' + escapeHtml(row.id) + '">' +
+                        '<div class="menu-item p-2 rounded border shadow mb-3" data-item-id="' + escapeHtml(row.id) + '" data-base-name="' + escapeHtml(row.baseName) + '">' +
                             '<div class="d-flex align-items-center justify-content-between flex-wrap flex-xl-nowrap gap-2">' +
                                 '<a href="#" class="d-flex align-items-center overflow-hidden">' +
                                     '<div class="avatar avatar-lg flex-shrink-0 me-2">' +
@@ -2644,7 +2656,9 @@
                         return;
                     }
                     rows.push({
+                        item_id: menuItem.getAttribute("data-item-id") || "",
                         item_name: itemName,
+                        base_name: menuItem.getAttribute("data-base-name") || itemName,
                         quantity: quantity,
                         unit_price: Number(unitPrice.toFixed(2)),
                     });
@@ -2663,6 +2677,9 @@
                 }
 
                 const meta = getActiveOrderMeta();
+                if (meta.serviceMode === "table" && !meta.tableName) {
+                    throw new Error("Please select a table before placing the order.");
+                }
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {
@@ -2674,6 +2691,7 @@
                         customer_name: meta.customerName,
                         order_type: meta.orderType,
                         table_name: meta.tableName,
+                        service_mode: meta.serviceMode,
                         note: currentOrderNote,
                     }),
                 });
@@ -3338,6 +3356,51 @@
             renderTransactionAndDraftTables();
             syncLatestOrder();
             window.setInterval(syncLatestOrder, 30000);
+        })();
+    </script>
+    <script type="text/javascript">
+        (function () {
+            var symbol = "{{ shell_currency_symbol|default:'$'|escapejs }}";
+            if (!symbol || symbol === "$") {
+                return;
+            }
+
+            function swapSymbol(text) {
+                return text.replace(/\$(?=\s?\d)/g, symbol);
+            }
+
+            function normalizeCurrencyText(root) {
+                if (!root) {
+                    return;
+                }
+
+                var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+                var node;
+                while ((node = walker.nextNode())) {
+                    var parent = node.parentElement;
+                    if (!parent) {
+                        continue;
+                    }
+                    var tag = parent.tagName;
+                    if (tag === "SCRIPT" || tag === "STYLE" || tag === "TEXTAREA" || tag === "NOSCRIPT") {
+                        continue;
+                    }
+                    if (node.nodeValue && node.nodeValue.indexOf("$") !== -1) {
+                        node.nodeValue = swapSymbol(node.nodeValue);
+                    }
+                }
+
+                var inputs = root.querySelectorAll("input[type='text'], input[type='search'], input[type='tel'], input[type='number']");
+                inputs.forEach(function (input) {
+                    if (input.value && input.value.indexOf("$") !== -1) {
+                        input.value = swapSymbol(input.value);
+                    }
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                normalizeCurrencyText(document.body);
+            });
         })();
     </script>
 </body>

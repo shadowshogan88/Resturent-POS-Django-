@@ -16,6 +16,7 @@ from django.shortcuts import redirect, render
 from django.template import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 from urllib.parse import urlencode
 
 from .models import (
@@ -70,10 +71,12 @@ ROLE_PERMISSION_ACTIONS = [
     ("approve_void", "can_approve_void", "Approved/Void"),
 ]
 CURRENCY_META = {
+    "BDT": ("Bangladeshi Taka", "৳"),
     "USD": ("US Dollar", "$"),
     "AED": ("UAE Dirham", "AED"),
     "EUR": ("Euro", "EUR"),
     "INR": ("Indian Rupee", "Rs"),
+    
 }
 AUDIT_ACTION_LABELS = {
     "system_enabled": "System Enabled",
@@ -87,6 +90,7 @@ AUDIT_ACTION_LABELS = {
     "order_drafted": "Order Drafted",
     "order_cancelled": "Order Cancelled",
     "print_settings_updated": "Print Settings Updated",
+    "payment_settings_updated": "Payment Settings Updated",
     "store_settings_updated": "Store Settings Updated",
     "table_created": "Table Created",
     "table_updated": "Table Updated",
@@ -118,6 +122,7 @@ AUDIT_ACTION_ICONS = {
     "order_drafted": "icon-file-stack",
     "order_cancelled": "icon-ban",
     "print_settings_updated": "icon-printer",
+    "payment_settings_updated": "icon-circle-dollar-sign",
     "store_settings_updated": "icon-warehouse",
     "table_created": "icon-concierge-bell",
     "table_updated": "icon-pencil-line",
@@ -238,37 +243,12 @@ def _filtered_sorted_categories_from_params(params):
 
 
 def register_view(request):
-    if request.method == "POST":
-        username = request.POST.get("username", "").strip()
-        password = request.POST.get("password", "")
-        confirm_password = request.POST.get("confirm_password", "")
-        agree_terms = request.POST.get("agree_terms")
+    if request.user.is_authenticated:
+        messages.info(request, "Users are created from Manage Staffs.")
+        return redirect("page", page="users")
 
-        if not username or not password or not confirm_password:
-            messages.error(request, "All required fields must be filled.")
-        elif password != confirm_password:
-            messages.error(request, "Password and confirm password do not match.")
-        elif not agree_terms:
-            messages.error(request, "You must agree to Terms and Privacy Policy.")
-        elif User.objects.filter(username=username).exists():
-            messages.error(request, "This username is already taken.")
-        else:
-            # Model requires unique email and full_name; fill them from username.
-            email = f"{username.lower()}@local.pos"
-            if User.objects.filter(email=email).exists():
-                email = f"{username.lower()}_{User.objects.count() + 1}@local.pos"
-
-            User.objects.create_user(
-                username=username,
-                full_name=username,
-                email=email,
-                password=password,
-                role="User",
-            )
-            messages.success(request, "Registration successful. Please sign in.")
-            return redirect("login")
-
-    return render(request, "register.html")
+    messages.info(request, "Self registration is disabled. Please contact an administrator.")
+    return redirect("login")
 
 
 def login_view(request):
@@ -308,7 +288,7 @@ def login_view(request):
                 messages.success(request, "Login successful.")
                 return redirect("dashboard")
 
-    return render(request, "login.html")
+    return render(request, "login.html", _build_shell_context(request))
 
 
 def username_check_view(request):
@@ -343,6 +323,7 @@ def categories_view(request):
         "sort_by": sort_by,
         "sort_label": sort_label_map[sort_by],
     }
+    context.update(_build_shell_context(request))
     if request.headers.get("HX-Request"):
         return render(request, "partials/categories_table.html", context)
     return render(request, "categories.html", context)
@@ -621,6 +602,7 @@ def addons_view(request):
         "sort_by": sort_by,
         "sort_label": sort_label_map[sort_by],
     }
+    context.update(_build_shell_context(request))
     if request.headers.get("HX-Request"):
         return render(request, "partials/addons_table.html", context)
     return render(request, "addons.html", context)
@@ -916,13 +898,162 @@ def _format_relative_time(value):
     return f"{days} Days Ago"
 
 
-def _build_shell_context(request):
-    current_user = request.user
-    profile_name = (
-        getattr(current_user, "full_name", "").strip()
-        or current_user.get_full_name().strip()
-        or current_user.username
+SHELL_SECTION_MAP = {
+    "dashboard": {"index", "index-2", "dashboard", "pos", "orders", "kitchen", "reservations"},
+    "menu-management": {"categories", "items", "addons", "coupons"},
+    "operations": {"table", "customer", "invoices", "payments"},
+    "administration": {
+        "users",
+        "role-permission",
+        "earning-report",
+        "order-report",
+        "sales-report",
+        "customer-report",
+        "audit-report",
+    },
+    "pages": {"login", "forgot-password", "email-verification", "otp", "reset-password"},
+    "settings": {
+        "store-settings",
+        "tax-settings",
+        "print-settings",
+        "payment-settings",
+        "delivery-settings",
+        "notifications-settings",
+        "integrations-settings",
+    },
+}
+
+
+def _resolve_shell_page(request):
+    resolver_match = getattr(request, "resolver_match", None)
+    if resolver_match:
+        if resolver_match.url_name == "page":
+            return resolver_match.kwargs.get("page") or "index-2"
+        if resolver_match.url_name == "dashboard":
+            return "index-2"
+        if resolver_match.url_name:
+            return resolver_match.url_name.replace("_", "-")
+    return request.path.strip("/").split("/", 1)[0] or "index-2"
+
+
+def _resolve_shell_section(page_name):
+    for section, pages in SHELL_SECTION_MAP.items():
+        if page_name in pages:
+            return section
+    return "dashboard"
+
+
+def _normalize_order_item_name(raw_name, item_id=None):
+    if item_id:
+        try:
+            item = Item.objects.only("name").get(id=int(item_id))
+            if item.name:
+                return item.name[:150]
+        except (Item.DoesNotExist, TypeError, ValueError):
+            pass
+
+    name = str(raw_name or "").strip()
+    if not name:
+        return ""
+
+    base_name = name.split(" + ", 1)[0].strip()
+    if " (" in base_name and base_name.endswith(")"):
+        base_name = base_name.rsplit(" (", 1)[0].strip()
+
+    matched_item = Item.objects.filter(name__iexact=base_name).only("name").first()
+    if matched_item and matched_item.name:
+        return matched_item.name[:150]
+
+    return base_name[:150]
+
+
+def _build_top_selling_context(base_orders):
+    item_rows = list(
+        OrderItem.objects.filter(order__in=base_orders)
+        .values("item_name")
+        .annotate(qty=Sum("quantity"), amount=Sum("line_total"))
+        .order_by("-qty", "item_name")
     )
+    item_lookup = {
+        item.name: item
+        for item in Item.objects.select_related("category").all()
+    }
+    color_classes = ["bg-primary", "bg-secondary", "bg-success", "bg-purple"]
+    grouped_rows = defaultdict(list)
+    category_totals = defaultdict(int)
+
+    for row in item_rows:
+        item = item_lookup.get(row["item_name"])
+        category_name = item.category.name if item and item.category else "Uncategorized"
+        category_key = slugify(category_name) or "uncategorized"
+        entry = {
+            "name": row["item_name"],
+            "orders": int(row["qty"] or 0),
+            "amount": str(_quantize_money(row["amount"] or Decimal("0.00"))),
+            "image_url": _safe_file_url(item.image) if item else "",
+            "category_name": category_name,
+        }
+        grouped_rows["all"].append(entry)
+        grouped_rows[category_key].append(entry)
+        category_totals[category_key] += entry["orders"]
+
+    def serialize_group(entries, label):
+        if not entries:
+            return {
+                "label": label,
+                "highlight_text": "No sales data yet",
+                "featured": None,
+                "items": [],
+            }
+
+        max_orders = max(entry["orders"] for entry in entries) or 1
+        ranked_entries = []
+        for index, entry in enumerate(entries[:5], start=1):
+            ranked_entries.append({
+                **entry,
+                "rank": index,
+                "progress": max(round((entry["orders"] / max_orders) * 100), 5),
+                "bar_class": color_classes[(index - 2) % len(color_classes)] if index > 1 else "bg-primary",
+            })
+
+        featured = ranked_entries[0]
+        return {
+            "label": label,
+            "highlight_text": f"Most Ordered : {featured['name']}",
+            "featured": featured,
+            "items": ranked_entries[1:],
+        }
+
+    filters = [{"key": "all", "label": "All"}]
+    for category_key, total in sorted(category_totals.items(), key=lambda item: (-item[1], item[0])):
+        label = grouped_rows[category_key][0]["category_name"] if grouped_rows[category_key] else "Category"
+        filters.append({"key": category_key, "label": label})
+
+    groups = {"all": serialize_group(grouped_rows["all"], "All")}
+    for filter_meta in filters[1:]:
+        groups[filter_meta["key"]] = serialize_group(grouped_rows[filter_meta["key"]], filter_meta["label"])
+
+    return {
+        "default_filter": "all",
+        "filters": filters,
+        "groups": groups,
+    }
+
+
+def _build_shell_context(request):
+    store_setting, _ = StoreSetting.objects.get_or_create(pk=1)
+    current_user = request.user
+    current_page = _resolve_shell_page(request)
+    if getattr(current_user, "is_authenticated", False):
+        profile_name = (
+            getattr(current_user, "full_name", "").strip()
+            or current_user.get_full_name().strip()
+            or current_user.username
+        )
+        profile_role = getattr(current_user, "role", "") or ("Administrator" if getattr(current_user, "is_superuser", False) else "Staff")
+    else:
+        profile_name = "Guest User"
+        profile_role = "Public Access"
     name_parts = [part for part in profile_name.split() if part]
     profile_initials = "".join(part[0].upper() for part in name_parts[:2]) or profile_name[:1].upper() or "U"
 
@@ -981,13 +1112,25 @@ def _build_shell_context(request):
         )
 
     return {
+        "shell_current_page": current_page,
+        "shell_active_section": _resolve_shell_section(current_page),
+        "shell_currency_symbol": (store_setting.currency_symbol or "").strip() or "$",
         "shell_profile_name": profile_name,
-        "shell_profile_role": getattr(current_user, "role", "") or "User",
+        "shell_profile_role": profile_role,
         "shell_profile_initials": profile_initials,
         "shell_customer_results": customer_results,
         "shell_order_results": order_results,
         "shell_kitchen_results": kitchen_results,
         "shell_notifications": notification_rows[:6],
+        "shell_store_features": {
+            "enable_qr_menu": bool(store_setting.enable_qr_menu),
+            "enable_take_away": bool(store_setting.enable_take_away),
+            "enable_dine_in": bool(store_setting.enable_dine_in),
+            "enable_reservation": bool(store_setting.enable_reservation),
+            "enable_order_via_qr_menu": bool(store_setting.enable_order_via_qr_menu),
+            "enable_delivery": bool(store_setting.enable_delivery),
+            "enable_table": bool(store_setting.enable_table),
+        },
     }
 
 
@@ -1189,6 +1332,152 @@ def _build_revenue_chart_context(base_orders, currency_symbol):
     }
 
 
+def _build_category_chart_context(base_orders):
+    today = timezone.localdate()
+
+    def month_start_shift(base_date, months_back):
+        month_index = (base_date.year * 12 + base_date.month - 1) - months_back
+        year = month_index // 12
+        month = month_index % 12 + 1
+        return base_date.replace(year=year, month=month, day=1)
+
+    def reservation_count(start_date, end_date):
+        return DiningTable.objects.filter(
+            status="Booked",
+            updated_at__date__gte=start_date,
+            updated_at__date__lte=end_date,
+        ).count()
+
+    def order_type_count(start_date, end_date, order_type):
+        return base_orders.filter(
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+            order_type=order_type,
+        ).count()
+
+    def build_period_stats(start_date, end_date):
+        return {
+            "delivery": order_type_count(start_date, end_date, "Delivery"),
+            "reservation": reservation_count(start_date, end_date),
+            "takeaway": order_type_count(start_date, end_date, "Takeaway"),
+            "dine_in": order_type_count(start_date, end_date, "Dine In"),
+        }
+
+    weekly_start = today - timedelta(days=6)
+    monthly_start = month_start_shift(today, 5)
+    yearly_start = today.replace(year=today.year - 4, month=1, day=1)
+
+    periods = {
+        "weekly": build_period_stats(weekly_start, today),
+        "monthly": build_period_stats(monthly_start, today),
+        "yearly": build_period_stats(yearly_start, today),
+    }
+
+    return {
+        "default_period": "weekly",
+        "periods": periods,
+    }
+
+
+def _build_user_statistics_context():
+    today = timezone.localdate()
+    login_logs = AuditLog.objects.filter(action="login_success")
+
+    def month_start_shift(base_date, months_back):
+        month_index = (base_date.year * 12 + base_date.month - 1) - months_back
+        year = month_index // 12
+        month = month_index % 12 + 1
+        return base_date.replace(year=year, month=month, day=1)
+
+    def series_total(points):
+        return sum(point["value"] for point in points)
+
+    weekly_points = []
+    for offset in range(6, -1, -1):
+        point_date = today - timedelta(days=offset)
+        weekly_points.append({
+            "label": point_date.strftime("%a"),
+            "value": login_logs.filter(created_at__date=point_date).count(),
+        })
+
+    monthly_points = []
+    for offset in range(5, -1, -1):
+        month_anchor = month_start_shift(today, offset)
+        next_month = (month_anchor + timedelta(days=32)).replace(day=1)
+        monthly_points.append({
+            "label": month_anchor.strftime("%b"),
+            "value": login_logs.filter(
+                created_at__date__gte=month_anchor,
+                created_at__date__lt=next_month,
+            ).count(),
+        })
+
+    yearly_points = []
+    current_year = today.year
+    for year in range(current_year - 4, current_year + 1):
+        yearly_points.append({
+            "label": str(year),
+            "value": login_logs.filter(created_at__year=year).count(),
+        })
+
+    def top_user_for_period(period_key):
+        if period_key == "weekly":
+            start_date = today - timedelta(days=6)
+            queryset = login_logs.filter(created_at__date__gte=start_date, created_at__date__lte=today)
+        elif period_key == "monthly":
+            start_date = month_start_shift(today, 5)
+            queryset = login_logs.filter(created_at__date__gte=start_date, created_at__date__lte=today)
+        else:
+            start_date = today.replace(year=today.year - 4, month=1, day=1)
+            queryset = login_logs.filter(created_at__date__gte=start_date, created_at__date__lte=today)
+
+        top_entry = (
+            queryset.exclude(actor_name="")
+            .values("actor_name")
+            .annotate(total=Count("id"))
+            .order_by("-total", "actor_name")
+            .first()
+        )
+        if top_entry:
+            return {
+                "name": top_entry["actor_name"],
+                "total": top_entry["total"],
+            }
+        return {
+            "name": "No recent user",
+            "total": 0,
+        }
+
+    previous_week_total = login_logs.filter(
+        created_at__date__gte=today - timedelta(days=13),
+        created_at__date__lte=today - timedelta(days=7),
+    ).count()
+    weekly_total = series_total(weekly_points)
+
+    return {
+        "default_period": "weekly",
+        "total_users": User.objects.count(),
+        "change_percentage": _percentage_change(weekly_total, previous_week_total),
+        "periods": {
+            "weekly": {
+                "points": weekly_points,
+                "grand_total": weekly_total,
+                "top_user": top_user_for_period("weekly"),
+            },
+            "monthly": {
+                "points": monthly_points,
+                "grand_total": series_total(monthly_points),
+                "top_user": top_user_for_period("monthly"),
+            },
+            "yearly": {
+                "points": yearly_points,
+                "grand_total": series_total(yearly_points),
+                "top_user": top_user_for_period("yearly"),
+            },
+        },
+    }
+
+
 def _get_kitchen_elapsed_seconds(order):
     start_time = order.kitchen_started_at or order.created_at
     end_time = order.kitchen_completed_at or timezone.now()
@@ -1383,23 +1672,49 @@ def _build_kitchen_context(request):
 
 
 def _build_dashboard_context(request):
+    def _parse_iso_date(raw_value):
+        value = (raw_value or "").strip()
+        if not value:
+            return None
+        try:
+            return datetime.strptime(value, "%Y-%m-%d").date()
+        except ValueError:
+            return None
+
     today = timezone.localdate()
     last_week_start = today - timedelta(days=6)
     prev_week_start = today - timedelta(days=13)
     prev_week_end = today - timedelta(days=7)
 
-    base_orders = Order.objects.exclude(status__in=["Cancelled", "Voided"])
-    recent_orders = base_orders.filter(created_at__date__gte=last_week_start)
-    prev_orders = base_orders.filter(created_at__date__range=(prev_week_start, prev_week_end))
+    start_date = _parse_iso_date(request.GET.get("start_date"))
+    end_date = _parse_iso_date(request.GET.get("end_date"))
+    if start_date and end_date and start_date > end_date:
+        start_date, end_date = end_date, start_date
+
+    all_orders = Order.objects.exclude(status__in=["Cancelled", "Voided"])
+    if start_date:
+        base_orders = all_orders.filter(created_at__date__gte=start_date)
+    else:
+        base_orders = all_orders.filter(created_at__date__gte=last_week_start)
+    if end_date:
+        base_orders = base_orders.filter(created_at__date__lte=end_date)
+
+    if start_date and end_date:
+        period_days = max((end_date - start_date).days + 1, 1)
+        prev_end = start_date - timedelta(days=1)
+        prev_start = prev_end - timedelta(days=period_days - 1)
+        prev_orders = all_orders.filter(created_at__date__range=(prev_start, prev_end))
+    else:
+        prev_orders = all_orders.filter(created_at__date__range=(prev_week_start, prev_week_end))
 
     total_orders = base_orders.count()
-    total_sales = recent_orders.aggregate(total=Sum("total"))["total"] or Decimal("0.00")
+    total_sales = base_orders.aggregate(total=Sum("total"))["total"] or Decimal("0.00")
     total_sales = _quantize_money(total_sales)
     avg_value = (total_sales / total_orders) if total_orders else Decimal("0.00")
     avg_value = _quantize_money(avg_value)
     reservation_count = DiningTable.objects.filter(status="Booked").count()
 
-    change_orders = _percentage_change(recent_orders.count(), prev_orders.count())
+    change_orders = _percentage_change(total_orders, prev_orders.count())
     prev_sales_total = prev_orders.aggregate(total=Sum("total"))["total"] or Decimal("0.00")
     prev_sales_total = _quantize_money(prev_sales_total)
     change_sales = _percentage_change(float(total_sales), float(prev_sales_total))
@@ -1422,14 +1737,76 @@ def _build_dashboard_context(request):
         base_orders.select_related("created_by").order_by("-id")[:8]
     )
 
+    active_orders = []
+    for order in base_orders.order_by("-updated_at", "-id")[:5]:
+        type_label = "Take Away" if order.order_type == "Takeaway" else order.order_type
+        status_label = order.kitchen_status if order.status == "Placed" else order.status
+        status_class_map = {
+            "New": "badge-soft-secondary",
+            "In Kitchen": "badge-soft-purple",
+            "Paused": "badge-soft-warning",
+            "Completed": "badge-soft-success",
+            "Draft": "badge-soft-info",
+            "Placed": "badge-soft-purple",
+            "Cancelled": "badge-soft-danger",
+        }
+        active_orders.append({
+            "customer_name": order.customer_name or "Walk-in Customer",
+            "type_label": type_label,
+            "table_name": order.table_name,
+            "status_label": status_label,
+            "status_class": status_class_map.get(status_label, "badge-soft-secondary"),
+            "initials": "".join(part[:1].upper() for part in (order.customer_name or "Walk-in Customer").split()[:2]) or "WC",
+        })
+
+    item_lookup = {
+        item.name: item
+        for item in Item.objects.select_related("category").filter(name__in=[row["item_name"] for row in top_items])
+    }
+    trending_items = []
+    for row in top_items:
+        item = item_lookup.get(row["item_name"])
+        trending_items.append({
+            "name": row["item_name"],
+            "qty": row["qty"] or 0,
+            "amount": _quantize_money(row["amount"] or Decimal("0.00")),
+            "category_name": item.category.name if item and item.category else "Menu",
+            "image_url": _safe_file_url(item.image) if item else "",
+        })
+
     tables_available = list(DiningTable.objects.filter(status="Available").order_by("floor", "sort_order", "id")[:12])
     reservations = list(DiningTable.objects.filter(status="Booked").order_by("-updated_at", "-id")[:6])
 
+    reservation_rows = []
+    for table in reservations[:5]:
+        updated_local = timezone.localtime(table.updated_at)
+        reservation_rows.append({
+            "table_name": table.name,
+            "floor": table.floor,
+            "guest_capacity": table.guest_capacity,
+            "date_label": updated_local.strftime("%b %d"),
+            "year_label": updated_local.strftime("%Y"),
+            "time_label": updated_local.strftime("%I:%M %p"),
+            "status_label": table.status,
+            "status_class": "badge-soft-success" if table.status == "Booked" else "badge-soft-secondary",
+        })
+
+    completed_orders = base_orders.filter(kitchen_status="Completed").count()
+    sales_performance_rate = round((completed_orders / total_orders) * 100) if total_orders else 0
+
     currency_symbol = StoreSetting.objects.filter(pk=1).values_list("currency_symbol", flat=True).first() or "$"
-    revenue_chart = _build_revenue_chart_context(base_orders, currency_symbol)
+    # Keep total revenue widget independent from the dashboard date-range filter.
+    revenue_chart = _build_revenue_chart_context(all_orders, currency_symbol)
+    category_chart = _build_category_chart_context(base_orders)
+    user_statistics = _build_user_statistics_context()
+    top_selling_items = _build_top_selling_context(all_orders)
 
     shell = _build_shell_context(request)
     shell.update({
+        "dashboard_filters": {
+            "start_date": start_date.strftime("%Y-%m-%d") if start_date else "",
+            "end_date": end_date.strftime("%Y-%m-%d") if end_date else "",
+        },
         "dashboard_totals": {
             "orders": total_orders,
             "sales": total_sales,
@@ -1443,10 +1820,24 @@ def _build_dashboard_context(request):
         },
         "dashboard_top_items": top_items,
         "dashboard_top_item": highlighted_item,
+        "dashboard_trending_items": trending_items,
+        "dashboard_active_orders": active_orders,
         "dashboard_recent_orders": recent_orders_table,
         "dashboard_tables_available": tables_available,
         "dashboard_reservations": reservations,
+        "dashboard_reservation_rows": reservation_rows,
         "dashboard_revenue_chart": revenue_chart,
+        "dashboard_category_chart": category_chart,
+        "dashboard_user_statistics": user_statistics,
+        "dashboard_top_selling_items": top_selling_items,
+        "dashboard_sales_performance": {
+            "rate": sales_performance_rate,
+            "total_orders": total_orders,
+            "total_orders_change": change_orders,
+            "total_sales": total_sales,
+            "total_sales_change": change_sales,
+            "currency_symbol": currency_symbol,
+        },
     })
     return shell
 
@@ -1470,13 +1861,15 @@ def _build_customers_context(request):
         page_start = max(page_end - 2, 1)
     page_numbers = list(range(page_start, page_end + 1))
 
-    return {
+    context = {
         "customers_list": page_obj.object_list,
         "customer_query": query,
         "page_obj": page_obj,
         "paginator": paginator,
         "page_numbers": page_numbers,
     }
+    context.update(_build_shell_context(request))
+    return context
 
 
 def _ensure_default_roles():
@@ -1496,7 +1889,7 @@ def _ensure_role_permissions(role):
         RolePermission.objects.bulk_create(missing)
 
 
-def _build_role_permissions_context():
+def _build_role_permissions_context(request):
     _ensure_default_roles()
     roles = list(Role.objects.all().prefetch_related("permissions"))
     for role in roles:
@@ -1531,10 +1924,12 @@ def _build_role_permissions_context():
             }
         )
 
-    return {
+    context = {
         "roles_data": roles_data,
         "permission_actions": ROLE_PERMISSION_ACTIONS,
     }
+    context.update(_build_shell_context(request))
+    return context
 
 
 def _split_name(full_name):
@@ -1675,7 +2070,7 @@ def _build_users_context(request):
             "rows": effective_rows,
         }
 
-    return {
+    context = {
         "users_rows": users_rows,
         "user_query": query,
         "user_status": status,
@@ -1689,6 +2084,8 @@ def _build_users_context(request):
         "paginator": paginator,
         "page_numbers": page_numbers,
     }
+    context.update(_build_shell_context(request))
+    return context
 
 
 def _build_audit_logs_context(request):
@@ -1748,7 +2145,7 @@ def _build_audit_logs_context(request):
             }
         )
 
-    return {
+    context = {
         "audit_logs": audit_logs,
         "audit_page_obj": page_obj,
         "audit_page_numbers": list(range(page_start, page_end + 1)) if paginator.num_pages else [],
@@ -1763,6 +2160,8 @@ def _build_audit_logs_context(request):
             "date_to": date_to,
         },
     }
+    context.update(_build_shell_context(request))
+    return context
 
 
 def _build_tables_context(request):
@@ -2359,20 +2758,49 @@ def _build_customer_report_context(request):
 
 def _serialize_order(order):
     created_local = timezone.localtime(order.created_at)
+    items = list(order.items.all())
+    type_label = "Take Away" if order.order_type == "Takeaway" else order.order_type
+    
+    # Determine status for orders page
+    if order.status in ["Cancelled", "Voided"]:
+        status_label = "Cancelled"
+        status_class = "badge-soft-danger"
+    elif order.kitchen_status == "Completed":
+        status_label = "Completed"
+        status_class = "badge-soft-success"
+    elif order.status == "Draft" or order.kitchen_status in ["New", "Paused"]:
+        status_label = "Pending"
+        status_class = "badge-soft-secondary"
+    else:
+        status_label = "In Progress"
+        status_class = "badge-soft-warning"
+    
+    # Get currency symbol
+    store_setting = StoreSetting.objects.filter(pk=1).values_list("currency_symbol", flat=True).first() or "TK"
+    
+    def _money(value):
+        return f"{store_setting}{value.quantize(Decimal('0.01'))}"
+    
     return {
         "id": order.id,
+        "order_label": _format_order_label(order),
         "order_no": _format_order_label(order),
         "token_no": order.token_no,
         "status": order.status,
+        "status_label": status_label,
+        "status_class": status_class,
         "order_type": order.order_type,
-        "customer_name": order.customer_name,
+        "order_type_detail": f"{type_label} ({order.table_name})" if order.table_name else type_label,
+        "customer_name": order.customer_name or "Walk-in Customer",
         "table_name": order.table_name,
         "note": order.note,
-        "subtotal": str(order.subtotal),
-        "tax_rate": str(order.tax_rate),
-        "tax_amount": str(order.tax_amount),
-        "service_charge": str(order.service_charge),
-        "total": str(order.total),
+        "created_time": created_local.strftime("%I:%M %p"),
+        "created_label": created_local.strftime("%d/%m/%Y - %I:%M %p"),
+        "item_count": len(items),
+        "subtotal": _money(order.subtotal),
+        "tax_amount": _money(order.tax_amount),
+        "service_charge": _money(order.service_charge),
+        "total": _money(order.total),
         "kitchen_status": order.kitchen_status,
         "kitchen_started_at": timezone.localtime(order.kitchen_started_at).isoformat() if order.kitchen_started_at else "",
         "kitchen_completed_at": timezone.localtime(order.kitchen_completed_at).isoformat() if order.kitchen_completed_at else "",
@@ -2383,11 +2811,167 @@ def _serialize_order(order):
                 "item_name": item.item_name,
                 "unit_price": str(item.unit_price),
                 "quantity": item.quantity,
-                "line_total": str(item.line_total),
+                "line_total": _money(item.line_total),
             }
-            for item in order.items.all()
+            for item in items
         ],
     }
+
+
+def _classify_orders_page_status(order):
+    if order.status in ["Cancelled", "Voided"]:
+        return "cancelled"
+    if order.kitchen_status == "Completed":
+        return "completed"
+    if order.status == "Draft" or order.kitchen_status in ["New", "Paused"]:
+        return "pending"
+    return "in_progress"
+
+
+def _build_orders_page_context(request):
+    query = request.GET.get("q", "").strip()
+    start_date_raw = request.GET.get("start_date", "").strip()
+    end_date_raw = request.GET.get("end_date", "").strip()
+
+    def _parse_iso_date(raw_value):
+        if not raw_value:
+            return None
+        try:
+            return datetime.strptime(raw_value, "%Y-%m-%d").date()
+        except ValueError:
+            return None
+
+    start_date = _parse_iso_date(start_date_raw)
+    end_date = _parse_iso_date(end_date_raw)
+    if start_date and end_date and start_date > end_date:
+        start_date, end_date = end_date, start_date
+
+    store_setting, _ = StoreSetting.objects.get_or_create(pk=1)
+    currency_symbol = (store_setting.currency_symbol or "").strip() or "TK"
+
+    orders_qs = Order.objects.prefetch_related("items").order_by("-created_at", "-id")
+    if start_date:
+        orders_qs = orders_qs.filter(created_at__date__gte=start_date)
+    if end_date:
+        orders_qs = orders_qs.filter(created_at__date__lte=end_date)
+    if query:
+        order_filters = (
+            Q(order_no__icontains=query)
+            | Q(customer_name__icontains=query)
+            | Q(table_name__icontains=query)
+            | Q(order_type__icontains=query)
+            | Q(status__icontains=query)
+            | Q(kitchen_status__icontains=query)
+            | Q(items__item_name__icontains=query)
+        )
+        if query.isdigit():
+            order_filters |= Q(token_no=int(query))
+        orders_qs = orders_qs.filter(order_filters).distinct()
+
+    def _money(value):
+        return f"{currency_symbol}{Decimal(value).quantize(Decimal('0.01'))}"
+
+    orders_all = []
+    orders_pending = []
+    orders_in_progress = []
+    orders_completed = []
+    orders_cancelled = []
+
+    for order in orders_qs:
+        created_local = timezone.localtime(order.created_at)
+        items = list(order.items.all())
+        type_label = "Take Away" if order.order_type == "Takeaway" else order.order_type
+        dot_class = {
+            "Dine In": "",
+            "Take Away": "success",
+            "Delivery": "warning",
+        }.get(type_label, "")
+        bucket = _classify_orders_page_status(order)
+        status_meta = {
+            "pending": ("Pending", "badge-soft-secondary"),
+            "in_progress": ("In Progress", "badge-soft-warning"),
+            "completed": ("Completed", "badge-soft-success"),
+            "cancelled": ("Cancelled", "badge-soft-danger"),
+        }
+        status_label, status_class = status_meta[bucket]
+        visible_items = items[:3]
+        detail_payload = {
+            "order_label": _format_order_label(order),
+            "customer_name": order.customer_name or "Walk-in Customer",
+            "created_label": created_local.strftime("%d/%m/%Y - %I:%M %p"),
+            "created_time": created_local.strftime("%I:%M %p"),
+            "token_no": order.token_no,
+            "item_count": len(items),
+            "order_type_label": type_label,
+            "order_type_detail": f"{type_label} ({order.table_name})" if order.table_name else type_label,
+            "status_label": status_label,
+            "status_class": status_class,
+            "billing_label": "Billed" if order.status == "Placed" else order.status,
+            "subtotal": _money(order.subtotal),
+            "tax_amount": _money(order.tax_amount),
+            "service_charge": _money(order.service_charge),
+            "total": _money(order.total),
+            "note": order.note or "",
+            "items": [
+                {
+                    "item_name": item.item_name,
+                    "quantity": item.quantity,
+                    "line_total": _money(item.line_total),
+                }
+                for item in items
+            ],
+        }
+        row = {
+            "id": order.id,
+            "order_label": detail_payload["order_label"],
+            "type_label": type_label,
+            "table_name": order.table_name,
+            "token_no": order.token_no,
+            "created_time": created_local.strftime("%I:%M %p"),
+            "visible_items": visible_items,
+            "hidden_items_count": max(len(items) - len(visible_items), 0),
+            "note": order.note,
+            "status_label": status_label,
+            "status_class": status_class,
+            "billing_label": detail_payload["billing_label"],
+            "customer_name": detail_payload["customer_name"],
+            "detail_payload": json.dumps(detail_payload),
+            "dot_class": dot_class,
+        }
+        orders_all.append(row)
+        if bucket == "pending":
+            orders_pending.append(row)
+        elif bucket == "in_progress":
+            orders_in_progress.append(row)
+        elif bucket == "completed":
+            orders_completed.append(row)
+        else:
+            orders_cancelled.append(row)
+
+    context = {
+        "orders_page_query": query,
+        "orders_page_filters": {
+            "start_date": start_date.strftime("%Y-%m-%d") if start_date else "",
+            "end_date": end_date.strftime("%Y-%m-%d") if end_date else "",
+        },
+        "orders_page_summary": {
+            "confirmed": sum(1 for row in orders_all if row["billing_label"] == "Billed"),
+            "pending": len(orders_pending),
+            "processing": len(orders_in_progress),
+            "delivery": sum(1 for row in orders_all if row["type_label"] == "Delivery" and row["status_label"] != "Cancelled"),
+            "completed": len(orders_completed),
+            "cancelled": len(orders_cancelled),
+        },
+        "orders_page_groups": {
+            "all": orders_all,
+            "pending": orders_pending,
+            "in_progress": orders_in_progress,
+            "completed": orders_completed,
+            "cancelled": orders_cancelled,
+        },
+    }
+    context.update(_build_shell_context(request))
+    return context
 
 
 def _get_latest_user_order(user):
@@ -2433,7 +3017,9 @@ def _extract_pos_payload(request):
         if not isinstance(raw_item, dict):
             continue
 
-        name = str(raw_item.get("item_name", "")).strip()
+        raw_name = str(raw_item.get("item_name", "")).strip()
+        item_id = raw_item.get("item_id")
+        name = _normalize_order_item_name(raw_item.get("base_name") or raw_name, item_id=item_id)
         if not name:
             continue
 
@@ -2455,6 +3041,7 @@ def _extract_pos_payload(request):
         line_total = _quantize_money(unit_price * quantity)
         cleaned_items.append({
             "item_name": name[:150],
+            "display_name": raw_name[:150],
             "unit_price": _quantize_money(unit_price),
             "quantity": quantity,
             "line_total": line_total,
@@ -2467,9 +3054,17 @@ def _extract_pos_payload(request):
     order_type = str(payload.get("order_type", "Dine In")).strip() or "Dine In"
     table_name = str(payload.get("table_name", "")).strip()
     note = str(payload.get("note", "")).strip()
+    service_mode = str(payload.get("service_mode", "")).strip().lower()
 
     if order_type not in dict(Order.ORDER_TYPE_CHOICES):
         order_type = "Dine In"
+    if service_mode not in {"dine_in", "take_away", "delivery", "table"}:
+        if order_type == "Takeaway":
+            service_mode = "take_away"
+        elif order_type == "Delivery":
+            service_mode = "delivery"
+        else:
+            service_mode = "table" if table_name else "dine_in"
 
     return {
         "items": cleaned_items,
@@ -2477,6 +3072,7 @@ def _extract_pos_payload(request):
         "order_type": order_type,
         "table_name": table_name[:60],
         "note": note,
+        "service_mode": service_mode,
     }
 
 
@@ -2484,6 +3080,28 @@ def _extract_pos_payload(request):
 def _create_pos_order(request, status):
     payload = _extract_pos_payload(request)
     items = payload["items"]
+    store_setting, _ = StoreSetting.objects.get_or_create(pk=1)
+
+    service_mode = payload["service_mode"]
+    mode_enabled_map = {
+        "dine_in": bool(store_setting.enable_dine_in),
+        "take_away": bool(store_setting.enable_take_away),
+        "delivery": bool(store_setting.enable_delivery),
+        "table": bool(store_setting.enable_table),
+    }
+    if not mode_enabled_map.get(service_mode, False):
+        raise ValueError("This order mode is currently disabled in Store Settings.")
+
+    if service_mode == "table":
+        if not payload["table_name"]:
+            raise ValueError("Please select a table before placing the order.")
+        table = DiningTable.objects.filter(name__iexact=payload["table_name"]).first()
+        if table is None:
+            raise ValueError("Selected table was not found.")
+        if table.status != "Available":
+            raise ValueError("Selected table is not available.")
+    elif payload["table_name"]:
+        raise ValueError("Table selection is only allowed when table service is enabled.")
 
     subtotal = _quantize_money(sum((item["line_total"] for item in items), Decimal("0.00")))
     tax_amount = _quantize_money((subtotal * POS_TAX_RATE) / Decimal("100"))
@@ -2566,6 +3184,7 @@ def items_view(request):
             Addon.objects.order_by("name").values("name", "price")
         ),
     }
+    context.update(_build_shell_context(request))
     if request.GET.get("partial") == "1":
         return render(request, "partials/items_grid.html", context)
     return render(request, "items.html", context)
@@ -3447,6 +4066,19 @@ def pos_order_latest_view(request):
 
 
 @login_required(login_url="login")
+def pos_order_detail_view(request, order_id):
+    if request.method != "GET":
+        return JsonResponse({"ok": False, "error": "Method not allowed."}, status=405)
+
+    try:
+        order = Order.objects.prefetch_related("items").get(id=order_id)
+    except Order.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Order not found."}, status=404)
+
+    return JsonResponse({"ok": True, "order": _serialize_order(order)})
+
+
+@login_required(login_url="login")
 def kitchen_order_action_view(request, order_id, action):
     if request.method != "POST":
         return redirect("page", page="kitchen")
@@ -3571,7 +4203,9 @@ def _build_pos_context(request):
             "phone": (store_setting.phone or "").strip(),
         },
         "customers": Customer.objects.filter(status="Active").order_by("name", "id"),
+        "pos_tables_available": DiningTable.objects.filter(status="Available").order_by("floor", "sort_order", "id"),
     }
+    context.update(_build_shell_context(request))
     context.update(_build_recent_orders_context())
     context.update(_build_menu_sections_context(request))
     return context
@@ -3579,6 +4213,36 @@ def _build_pos_context(request):
 
 def _currency_name_symbol(currency_code):
     return CURRENCY_META.get(currency_code)
+
+
+@login_required(login_url="login")
+def payment_settings_view(request):
+    setting, _ = StoreSetting.objects.get_or_create(pk=1)
+
+    if request.method == "POST":
+        setting.enable_payment_cash = "enable_payment_cash" in request.POST
+        setting.enable_payment_card = "enable_payment_card" in request.POST
+        setting.enable_payment_wallet = "enable_payment_wallet" in request.POST
+        setting.enable_payment_paypal = "enable_payment_paypal" in request.POST
+        setting.enable_payment_qr_reader = "enable_payment_qr_reader" in request.POST
+        setting.enable_payment_card_reader = "enable_payment_card_reader" in request.POST
+        setting.enable_payment_bank = "enable_payment_bank" in request.POST
+        setting.save()
+        _log_audit_event(
+            request,
+            action="payment_settings_updated",
+            module="Payment Settings",
+            description="Payment types were updated.",
+            target="Payment Settings",
+        )
+        messages.success(request, "Payment settings updated successfully.")
+        return redirect("payment_settings")
+
+    context = {
+        "store_settings": setting,
+    }
+    context.update(_build_shell_context(request))
+    return render(request, "payment-settings.html", context)
 
 
 @login_required(login_url="login")
@@ -3612,14 +4276,12 @@ def print_settings_view(request):
         messages.success(request, "Print settings updated successfully.")
         return redirect("print_settings")
 
-    return render(
-        request,
-        "print-settings.html",
-        {
-            "print_settings": setting,
-            "print_page_sizes": page_sizes,
-        },
-    )
+    context = {
+        "print_settings": setting,
+        "print_page_sizes": page_sizes,
+    }
+    context.update(_build_shell_context(request))
+    return render(request, "print-settings.html", context)
 
 
 @login_required(login_url="login")
@@ -3703,7 +4365,8 @@ def store_settings_view(request):
         setting.enable_take_away = "enable_take_away" in request.POST
         setting.enable_dine_in = "enable_dine_in" in request.POST
         setting.enable_reservation = "enable_reservation" in request.POST
-        setting.enable_order_via_qr_menu = "enable_order_via_qr_menu" in request.POST
+        # "Order via QR Menu" depends on QR menu being enabled.
+        setting.enable_order_via_qr_menu = setting.enable_qr_menu and ("enable_order_via_qr_menu" in request.POST)
         setting.enable_delivery = "enable_delivery" in request.POST
         setting.enable_table = "enable_table" in request.POST
 
@@ -3734,6 +4397,7 @@ def store_settings_view(request):
             "store_cities": cities,
             "store_currencies": currencies,
             "store_currency_options": currency_options,
+            **_build_shell_context(request),
         },
     )
 
@@ -3742,6 +4406,23 @@ def page_view(request, page):
     public_pages = {"forgot-password", "reset-password", "email-verification", "otp"}
     if page not in public_pages and not request.user.is_authenticated:
         return redirect("login")
+
+    if page not in public_pages:
+        store_setting, _ = StoreSetting.objects.get_or_create(pk=1)
+        if page == "reservations" and not store_setting.enable_reservation:
+            messages.error(request, "Reservation feature is disabled in Store Settings.")
+            return redirect("dashboard")
+        if page == "table" and not store_setting.enable_table:
+            messages.error(request, "Table feature is disabled in Store Settings.")
+            return redirect("dashboard")
+        if page == "pos" and not any([
+            store_setting.enable_dine_in,
+            store_setting.enable_take_away,
+            store_setting.enable_delivery,
+            store_setting.enable_table,
+        ]):
+            messages.error(request, "All POS order modes are currently disabled in Store Settings.")
+            return redirect("dashboard")
 
     template_name = f"{page}.html"
     try:
@@ -3754,6 +4435,10 @@ def page_view(request, page):
             return render(request, template_name, context)
         if page == "kitchen":
             return render(request, template_name, _build_kitchen_context(request))
+        if page == "orders":
+            return render(request, template_name, _build_orders_page_context(request))
+        if page == "kanban-view":
+            return render(request, template_name, _build_orders_page_context(request))
         if page == "customer":
             context = _build_customers_context(request)
             if request.GET.get("partial") == "1":
@@ -3784,10 +4469,10 @@ def page_view(request, page):
         if page == "users":
             return render(request, template_name, _build_users_context(request))
         if page == "role-permission":
-            return render(request, template_name, _build_role_permissions_context())
+            return render(request, template_name, _build_role_permissions_context(request))
         if page == "audit-report":
             return render(request, template_name, _build_audit_logs_context(request))
-        return render(request, template_name)
+        return render(request, template_name, _build_shell_context(request))
     except TemplateDoesNotExist as exc:
         raise Http404("Page not found") from exc
 

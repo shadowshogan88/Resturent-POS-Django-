@@ -8,8 +8,12 @@ $(document).ready(function(){
 
 	// Variables declarations
 	const $wrapper = $('.main-wrapper');
-	const $overlay = $('<div class="sidebar-overlay"></div>');
-	$overlay.insertBefore('.main-wrapper');
+	const SIDEBAR_STATE_KEY = 'sidebarMiniState';
+	let $overlay = $('.sidebar-overlay').first();
+	if ($overlay.length === 0) {
+		$overlay = $('<div class="sidebar-overlay"></div>');
+		$overlay.insertBefore('.main-wrapper');
+	}
 
 
 	// Toggle Mobile Menu
@@ -75,30 +79,56 @@ $(document).ready(function(){
 
 	// Date Range Picker
 	if ($('.daterangepick').length > 0) {
-		const start = moment().subtract(29, "days");
-		const end = moment();
-		const report_range = (start, end) => {
-			$(".daterangepick span").html(`${start.format("D MMM YY")} - ${end.format("D MMM YY")}`);
-		};
-		$(".daterangepick").daterangepicker(
-			{
-				startDate: start,
-				endDate: end,
-				ranges: {
-					'Today': [moment(), moment()],
-					'Yesterday': [moment().subtract(1, "days"), moment().subtract(1, "days")],
-					"Last 7 Days": [moment().subtract(6, "days"), moment()],
-					"Last 30 Days": [moment().subtract(29, "days"), moment()],
-					"This Month": [moment().startOf("month"), moment().endOf("month")],
-					"Last Month": [
-						moment().subtract(1, "month").startOf("month"),
-						moment().subtract(1, "month").endOf("month")
-					]
-				}
-			},
-			report_range
-		);
-		report_range(start, end);
+		const hasDateRangePlugin = typeof $.fn.daterangepicker === "function";
+		const hasMoment = typeof moment !== "undefined";
+		if (hasDateRangePlugin && hasMoment) {
+			$('.daterangepick').each(function () {
+				const $picker = $(this);
+				const startRaw = String($picker.data('startDate') || '').trim();
+				const endRaw = String($picker.data('endDate') || '').trim();
+				const parsedStart = moment(startRaw, "YYYY-MM-DD", true);
+				const parsedEnd = moment(endRaw, "YYYY-MM-DD", true);
+				const start = parsedStart.isValid() ? parsedStart : moment().subtract(29, "days");
+				const end = parsedEnd.isValid() ? parsedEnd : moment();
+				const reportRange = (rangeStart, rangeEnd) => {
+					const $label = $picker.find('.reportrange-picker');
+					if ($label.length > 0) {
+						$label.html(`${rangeStart.format("D MMM YY")} - ${rangeEnd.format("D MMM YY")}`);
+						return;
+					}
+					$picker.find('span').first().html(`${rangeStart.format("D MMM YY")} - ${rangeEnd.format("D MMM YY")}`);
+				};
+
+				$picker.daterangepicker(
+					{
+						startDate: start,
+						endDate: end,
+						ranges: {
+							'Today': [moment(), moment()],
+							'Yesterday': [moment().subtract(1, "days"), moment().subtract(1, "days")],
+							"Last 7 Days": [moment().subtract(6, "days"), moment()],
+							"Last 30 Days": [moment().subtract(29, "days"), moment()],
+							"This Month": [moment().startOf("month"), moment().endOf("month")],
+							"Last Month": [
+								moment().subtract(1, "month").startOf("month"),
+								moment().subtract(1, "month").endOf("month")
+							]
+						}
+					},
+					reportRange
+				);
+				reportRange(start, end);
+
+				$picker.on('apply.daterangepicker', function (_event, picker) {
+					const syncQuery = String($picker.data('syncQuery') || '').toLowerCase() === 'true';
+					if (!syncQuery) return;
+					const url = new URL(window.location.href);
+					url.searchParams.set('start_date', picker.startDate.format('YYYY-MM-DD'));
+					url.searchParams.set('end_date', picker.endDate.format('YYYY-MM-DD'));
+					window.location.href = url.toString();
+				});
+			});
+		}
 	}
 
 		// Select 2 Search
@@ -185,7 +215,6 @@ $(document).ready(function(){
 			// Check if parent has 'submenu' class
 			if ($(this).parent().hasClass('submenu')) {
 				e.preventDefault();
-				console.log("1");
 			}
 
 			// If this is not currently expanded
@@ -197,12 +226,10 @@ $(document).ready(function(){
 				// Open the clicked submenu
 				$(this).next('ul').slideDown(350);
 				$(this).addClass('subdrop');
-				console.log("0");
 
 			} else { // If already expanded, collapse it
 				$(this).removeClass('subdrop');
 				$(this).next('ul').slideUp(350);
-				console.log("3");
 			}
 		});
 
@@ -212,6 +239,20 @@ $(document).ready(function(){
 	}
 
 	colinit();
+
+	function applySidebarState(isMini) {
+		const $body = $('body');
+		const $toggleButton = $('#toggle_btn');
+
+		$body.toggleClass('mini-sidebar', isMini);
+		$toggleButton.toggleClass('active', !isMini);
+
+		setTimeout(function () {
+			$(".header-left").toggleClass("active", !isMini);
+		}, 100);
+	}
+
+	applySidebarState(localStorage.getItem(SIDEBAR_STATE_KEY) === 'mini');
 
 
 	
@@ -246,23 +287,14 @@ $(document).ready(function(){
 	// Toggle Button
 	$(document).on('click', '#toggle_btn', function () {
 		const $body = $('body');
-		const $html = $('html');
 		const isMini = $body.hasClass('mini-sidebar');
 	
 		if (isMini) {
-			$body.removeClass('mini-sidebar');
-			$(this).addClass('active');
-			localStorage.setItem('screenModeNightTokenState', 'night');
-			setTimeout(function () {
-				$(".header-left").addClass("active");
-			}, 100);
+			applySidebarState(false);
+			localStorage.setItem(SIDEBAR_STATE_KEY, 'full');
 		} else {
-			$body.addClass('mini-sidebar');
-			$(this).removeClass('active');
-			localStorage.removeItem('screenModeNightTokenState');
-			setTimeout(function () {
-				$(".header-left").removeClass("active");
-			}, 100);
+			applySidebarState(true);
+			localStorage.setItem(SIDEBAR_STATE_KEY, 'mini');
 		}
 
 	

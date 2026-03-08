@@ -115,6 +115,13 @@ class StoreSetting(models.Model):
     enable_order_via_qr_menu = models.BooleanField(default=True)
     enable_delivery = models.BooleanField(default=True)
     enable_table = models.BooleanField(default=True)
+    enable_payment_cash = models.BooleanField(default=True)
+    enable_payment_card = models.BooleanField(default=True)
+    enable_payment_wallet = models.BooleanField(default=True)
+    enable_payment_paypal = models.BooleanField(default=True)
+    enable_payment_qr_reader = models.BooleanField(default=True)
+    enable_payment_card_reader = models.BooleanField(default=True)
+    enable_payment_bank = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

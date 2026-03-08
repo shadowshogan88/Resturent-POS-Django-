@@ -240,3 +240,80 @@ class PosTableSyncTests(TestCase):
         self.assertEqual(cancel_response.status_code, 200)
         self.table.refresh_from_db()
         self.assertEqual(self.table.status, "Available")
+
+
+class OrdersPageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="orders-user",
+            password="pass1234",
+            full_name="Orders User",
+            email="orders@example.com",
+        )
+        self.client.force_login(self.user)
+
+    def test_orders_page_renders_database_orders(self):
+        order = Order.objects.create(
+            order_no="",
+            token_no=1,
+            status="Placed",
+            order_type="Dine In",
+            customer_name="Dynamic Customer",
+            table_name="5",
+            note="Less spicy",
+            subtotal="100.00",
+            tax_rate="18.00",
+            tax_amount="18.00",
+            service_charge="5.00",
+            total="123.00",
+            kitchen_status="In Kitchen",
+            created_by=self.user,
+        )
+        order.order_no = f"ORD-{order.id:05d}"
+        order.save(update_fields=["order_no"])
+        order.items.create(item_name="Burger", unit_price="50.00", quantity=2, line_total="100.00")
+
+        response = self.client.get(reverse("page", kwargs={"page": "orders"}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Dynamic Customer")
+        self.assertContains(response, "Burger")
+        self.assertContains(response, "Token No :")
+
+    def test_orders_page_search_filters_results(self):
+        first_order = Order.objects.create(
+            order_no="ORD-AAA",
+            token_no=1,
+            status="Placed",
+            order_type="Dine In",
+            customer_name="Alice",
+            subtotal="10.00",
+            tax_rate="18.00",
+            tax_amount="1.80",
+            service_charge="0.00",
+            total="11.80",
+            kitchen_status="New",
+            created_by=self.user,
+        )
+        second_order = Order.objects.create(
+            order_no="ORD-BBB",
+            token_no=2,
+            status="Placed",
+            order_type="Delivery",
+            customer_name="Bob",
+            subtotal="20.00",
+            tax_rate="18.00",
+            tax_amount="3.60",
+            service_charge="0.00",
+            total="23.60",
+            kitchen_status="Completed",
+            created_by=self.user,
+        )
+        first_order.items.create(item_name="Noodles", unit_price="10.00", quantity=1, line_total="10.00")
+        second_order.items.create(item_name="Pizza", unit_price="20.00", quantity=1, line_total="20.00")
+
+        response = self.client.get(reverse("page", kwargs={"page": "orders"}), {"q": "Bob"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Bob")
+        self.assertNotContains(response, "Alice")
