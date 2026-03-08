@@ -23,6 +23,7 @@ from .models import (
     AuditLog,
     Addon,
     Category,
+    Coupon,
     Customer,
     DiningTable,
     Item,
@@ -104,6 +105,9 @@ AUDIT_ACTION_LABELS = {
     "category_created": "Category Created",
     "category_updated": "Category Updated",
     "category_deleted": "Category Deleted",
+    "tax_created": "Tax Created",
+    "tax_updated": "Tax Updated",
+    "tax_deleted": "Tax Deleted",
     "customer_created": "Customer Created",
     "customer_updated": "Customer Updated",
     "kitchen_started": "Kitchen Started",
@@ -136,6 +140,9 @@ AUDIT_ACTION_ICONS = {
     "category_created": "icon-layers-2",
     "category_updated": "icon-square-pen",
     "category_deleted": "icon-trash-2",
+    "tax_created": "icon-diamond-percent",
+    "tax_updated": "icon-square-pen",
+    "tax_deleted": "icon-trash-2",
     "customer_created": "icon-user-round-plus",
     "customer_updated": "icon-user-round-cog",
     "kitchen_started": "icon-chef-hat",
@@ -166,6 +173,29 @@ def _log_audit_event(request, action, module, description, target="", actor=None
         target=target,
         ip_address=_get_client_ip(request) if request is not None else None,
     )
+
+
+def _resolve_order_tax_components(subtotal):
+    taxes = list(Tax.objects.all())
+    subtotal = _quantize_money(subtotal)
+    if not taxes:
+        fallback_rate = POS_TAX_RATE
+        fallback_amount = _quantize_money((subtotal * fallback_rate) / Decimal("100"))
+        return {
+            "display_rate": fallback_rate,
+            "exclusive_rate": fallback_rate,
+            "exclusive_amount": fallback_amount,
+        }
+
+    total_rate = sum((Decimal(str(tax.rate)) for tax in taxes), Decimal("0.00"))
+    exclusive_taxes = [tax for tax in taxes if tax.tax_type == "Exclusive"]
+    exclusive_rate = sum((Decimal(str(tax.rate)) for tax in exclusive_taxes), Decimal("0.00"))
+    exclusive_amount = _quantize_money((subtotal * exclusive_rate) / Decimal("100")) if exclusive_rate > 0 else Decimal("0.00")
+    return {
+        "display_rate": _quantize_money(total_rate),
+        "exclusive_rate": _quantize_money(exclusive_rate),
+        "exclusive_amount": exclusive_amount,
+    }
 
 
 def _escape_pdf_text(value):
@@ -2974,6 +3004,457 @@ def _build_orders_page_context(request):
     return context
 
 
+def _build_invoice_details_context(request):
+    store_setting, _ = StoreSetting.objects.get_or_create(pk=1)
+    order_id_raw = request.GET.get("order_id", "").strip()
+
+    orders_qs = Order.objects.prefetch_related("items").order_by("-created_at", "-id")
+    selected_order = None
+    if order_id_raw.isdigit():
+        selected_order = orders_qs.filter(id=int(order_id_raw)).first()
+    if selected_order is None:
+        selected_order = orders_qs.first()
+
+    currency_symbol = (store_setting.currency_symbol or "").strip() or "TK"
+
+    def _money(value):
+        return f"{currency_symbol}{Decimal(value).quantize(Decimal('0.01'))}"
+
+    address_parts = [
+        (store_setting.address_1 or "").strip(),
+        (store_setting.address_2 or "").strip(),
+        (store_setting.city or "").strip(),
+        (store_setting.state or "").strip(),
+        (store_setting.country or "").strip(),
+        (store_setting.pincode or "").strip(),
+    ]
+    store_address = ", ".join(part for part in address_parts if part)
+    store_name = (store_setting.store_name or "").strip() or "DreamsPOS"
+    store_phone = (store_setting.phone or "").strip() or "-"
+    store_logo_url = _safe_file_url(store_setting.store_image)
+    configured_taxes = list(Tax.objects.all().order_by("id"))
+
+    def _build_tax_lines(subtotal, total_tax_amount, fallback_rate):
+        total_tax_amount = Decimal(total_tax_amount or Decimal("0.00")).quantize(Decimal("0.01"))
+        subtotal = Decimal(subtotal or Decimal("0.00")).quantize(Decimal("0.01"))
+        if configured_taxes:
+            exclusive_taxes = [tax for tax in configured_taxes if tax.tax_type == "Exclusive"]
+            exclusive_total_rate = sum((Decimal(str(tax.rate)) for tax in exclusive_taxes), Decimal("0.00"))
+            lines = []
+            allocated = Decimal("0.00")
+            for idx, tax in enumerate(configured_taxes):
+                rate = Decimal(str(tax.rate))
+                rate_text = format(rate.quantize(Decimal("0.01")).normalize(), "f")
+                tax_type_text = "Exclusive" if tax.tax_type == "Exclusive" else "Inclusive"
+                if tax.tax_type != "Exclusive" or total_tax_amount <= 0 or exclusive_total_rate <= 0:
+                    amount = Decimal("0.00")
+                else:
+                    exclusive_index = exclusive_taxes.index(tax)
+                    if exclusive_index == len(exclusive_taxes) - 1:
+                        amount = (total_tax_amount - allocated).quantize(Decimal("0.01"))
+                    else:
+                        amount = ((total_tax_amount * rate) / exclusive_total_rate).quantize(Decimal("0.01"))
+                        allocated += amount
+                lines.append({
+                    "label": f"{tax.title} ({tax_type_text}-{rate_text}%)",
+                    "amount": _money(amount),
+                })
+            return lines
+
+        if total_tax_amount <= 0:
+            if fallback_rate and Decimal(fallback_rate or 0) > 0:
+                return [{"label": f"Tax ({Decimal(fallback_rate).normalize()}%)", "amount": _money(Decimal("0.00"))}]
+            return [{"label": "Tax (0%)", "amount": _money(Decimal("0.00"))}]
+
+        rate = Decimal(str(fallback_rate or "0")).quantize(Decimal("0.01"))
+        return [{"label": f"Tax ({rate.normalize()}%)", "amount": _money(total_tax_amount)}]
+
+    if selected_order is None:
+        context = {
+            "invoice_detail": {
+                "invoice_no": "-",
+                "invoice_date": "-",
+                "store_name": store_name,
+                "store_address": store_address or "-",
+                "store_phone": store_phone,
+                "store_logo_url": store_logo_url,
+                "customer_name": "-",
+                "customer_address": "-",
+                "customer_phone": "-",
+                "status_label": "Pending",
+                "items": [],
+                "subtotal": _money(Decimal("0.00")),
+                "tax_lines": _build_tax_lines(Decimal("0.00"), Decimal("0.00"), Decimal("0.00")),
+                "discount": _money(Decimal("0.00")),
+                "total": _money(Decimal("0.00")),
+            }
+        }
+        context.update(_build_shell_context(request))
+        return context
+
+    tax_lines = _build_tax_lines(selected_order.subtotal, selected_order.tax_amount, selected_order.tax_rate)
+    items = [
+        {
+            "idx": idx,
+            "name": item.item_name,
+            "quantity": item.quantity,
+            "unit_price": _money(item.unit_price),
+            "line_total": _money(item.line_total),
+        }
+        for idx, item in enumerate(selected_order.items.all(), start=1)
+    ]
+
+    detail = {
+        "invoice_no": f"INV{selected_order.id:04d}",
+        "invoice_date": timezone.localtime(selected_order.created_at).strftime("%d %b %Y, %I:%M %p"),
+        "store_name": store_name,
+        "store_address": store_address or "-",
+        "store_phone": store_phone,
+        "store_logo_url": store_logo_url,
+        "customer_name": (selected_order.customer_name or "").strip() or "Walk-in Customer",
+        "customer_address": store_address or "-",
+        "customer_phone": store_phone,
+        "status_label": "Paid" if selected_order.status == "Placed" else selected_order.status,
+        "items": items,
+        "subtotal": _money(selected_order.subtotal),
+        "tax_lines": tax_lines,
+        "discount": _money(Decimal("0.00")),
+        "total": _money(selected_order.total),
+    }
+    context = {"invoice_detail": detail}
+    context.update(_build_shell_context(request))
+    return context
+
+
+def _build_invoices_context(request):
+    store_setting, _ = StoreSetting.objects.get_or_create(pk=1)
+    currency_symbol = (store_setting.currency_symbol or "").strip() or "TK"
+    orders = (
+        Order.objects.exclude(status__in=["Cancelled", "Voided"])
+        .order_by("-created_at", "-id")
+    )
+
+    rows = []
+    for order in orders:
+        created_local = timezone.localtime(order.created_at)
+        type_label = "Take Away" if order.order_type == "Takeaway" else order.order_type
+        status_label = "Paid" if order.status == "Placed" else order.status
+        status_class = "badge-soft-success" if status_label == "Paid" else "badge-soft-secondary"
+        rows.append(
+            {
+                "order_id": order.id,
+                "invoice_id": f"INV{order.id:04d}",
+                "customer_name": (order.customer_name or "").strip() or "Walk-in Customer",
+                "customer_initials": "".join(part[:1].upper() for part in ((order.customer_name or "Walk-in Customer").split()[:2])) or "WC",
+                "date_label": created_local.strftime("%d %b %Y"),
+                "order_type_label": type_label,
+                "amount_label": f"{currency_symbol}{Decimal(order.total).quantize(Decimal('0.01'))}",
+                "status_label": status_label,
+                "status_class": status_class,
+            }
+        )
+
+    context = {
+        "invoice_rows": rows,
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
+def _parse_coupon_date(raw_value, field_label):
+    value = (raw_value or "").strip()
+    if not value:
+        raise ValueError(f"{field_label} is required.")
+    try:
+        return datetime.strptime(value, "%d/%m/%Y").date()
+    except ValueError:
+        raise ValueError(f"{field_label} must be in dd/mm/yyyy format.")
+
+
+def _build_coupons_context(request):
+    store_setting, _ = StoreSetting.objects.get_or_create(pk=1)
+    currency_symbol = (store_setting.currency_symbol or "").strip() or "TK"
+    today = timezone.localdate()
+    coupons = list(Coupon.objects.select_related("valid_category", "valid_item").order_by("-created_on", "-id"))
+    items = list(Item.objects.select_related("category").order_by("name", "id"))
+    items_by_category = {}
+    for item in items:
+        key = str(item.category_id)
+        items_by_category.setdefault(key, []).append({"id": item.id, "name": item.name})
+
+    rows = []
+    for coupon in coupons:
+        is_running = bool(coupon.is_active) and coupon.start_date <= today <= coupon.expiry_date
+        is_upcoming = bool(coupon.is_active) and today < coupon.start_date
+        if is_running:
+            status_label = "Running"
+            status_class = "badge-soft-success"
+        elif is_upcoming:
+            status_label = "Upcoming"
+            status_class = "badge-soft-warning"
+        else:
+            status_label = "Expired"
+            status_class = "badge-soft-danger"
+        amount_label = (
+            f"{coupon.discount_amount}%"
+            if coupon.discount_type == "Percentage"
+            else f"{currency_symbol}{coupon.discount_amount}"
+        )
+        rows.append(
+            {
+                "id": coupon.id,
+                "coupon_code": coupon.coupon_code,
+                "valid_category": "All Categories" if coupon.applies_to_all_categories else (coupon.valid_category.name if coupon.valid_category else "-"),
+                "valid_category_id": "all" if coupon.applies_to_all_categories else coupon.valid_category_id,
+                "valid_item": "All Items" if coupon.applies_to_all_items else (coupon.valid_item.name if coupon.valid_item else "-"),
+                "valid_item_id": "all" if coupon.applies_to_all_items else coupon.valid_item_id,
+                "discount_type": coupon.discount_type,
+                "discount_amount": coupon.discount_amount,
+                "discount_amount_label": amount_label,
+                "start_date": coupon.start_date,
+                "start_date_label": coupon.start_date.strftime("%d %b %Y"),
+                "start_date_input": coupon.start_date.strftime("%d/%m/%Y"),
+                "expiry_date": coupon.expiry_date,
+                "expiry_date_label": coupon.expiry_date.strftime("%d %b %Y"),
+                "expiry_date_input": coupon.expiry_date.strftime("%d/%m/%Y"),
+                "status_label": status_label,
+                "status_class": status_class,
+            }
+        )
+    context = {
+        "coupon_rows": rows,
+        "coupon_discount_types": [choice[0] for choice in Coupon.DISCOUNT_TYPE_CHOICES],
+        "coupon_categories": Category.objects.order_by("name"),
+        "coupon_items_by_category": items_by_category,
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
+@login_required(login_url="login")
+def coupon_add_view(request):
+    if request.method != "POST":
+        return redirect("page", page="coupons")
+
+    coupon_code = request.POST.get("coupon_code", "").strip().upper()
+    category_id = request.POST.get("valid_category_id", "").strip()
+    item_id = request.POST.get("valid_item_id", "").strip()
+    discount_type = request.POST.get("discount_type", "").strip()
+    discount_amount_raw = request.POST.get("discount_amount", "").strip()
+
+    if not coupon_code:
+        messages.error(request, "Coupon code is required.")
+        return redirect("page", page="coupons")
+    if Coupon.objects.filter(coupon_code__iexact=coupon_code).exists():
+        messages.error(request, "Coupon code already exists.")
+        return redirect("page", page="coupons")
+    applies_to_all = category_id == "all"
+    valid_category = None
+    valid_item = None
+    applies_to_all_items = True
+    if not applies_to_all:
+        try:
+            valid_category = Category.objects.get(id=category_id)
+        except (Category.DoesNotExist, ValueError, TypeError):
+            messages.error(request, "Please select a valid category.")
+            return redirect("page", page="coupons")
+        if item_id and item_id != "all":
+            try:
+                valid_item = Item.objects.get(id=item_id, category_id=valid_category.id)
+            except (Item.DoesNotExist, ValueError, TypeError):
+                messages.error(request, "Please select a valid item for the selected category.")
+                return redirect("page", page="coupons")
+            applies_to_all_items = False
+    if discount_type not in dict(Coupon.DISCOUNT_TYPE_CHOICES):
+        messages.error(request, "Please select a valid discount type.")
+        return redirect("page", page="coupons")
+    try:
+        discount_amount = _parse_positive_decimal(discount_amount_raw, "Discount amount")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("page", page="coupons")
+    if discount_type == "Percentage" and discount_amount > Decimal("100"):
+        messages.error(request, "Percentage discount cannot exceed 100.")
+        return redirect("page", page="coupons")
+    try:
+        start_date = _parse_coupon_date(request.POST.get("start_date"), "Start date")
+        expiry_date = _parse_coupon_date(request.POST.get("expiry_date"), "Expiry date")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("page", page="coupons")
+    if expiry_date < start_date:
+        messages.error(request, "Expiry date must be on or after start date.")
+        return redirect("page", page="coupons")
+
+    coupon = Coupon.objects.create(
+        coupon_code=coupon_code,
+        valid_category=valid_category,
+        applies_to_all_categories=applies_to_all,
+        valid_item=valid_item,
+        applies_to_all_items=applies_to_all_items,
+        discount_type=discount_type,
+        discount_amount=discount_amount,
+        start_date=start_date,
+        expiry_date=expiry_date,
+        is_active=True,
+        created_on=timezone.now().date(),
+    )
+    messages.success(request, "Coupon added successfully.")
+    _log_audit_event(
+        request,
+        action="system_enabled",
+        module="Coupons",
+        description=f"Coupon '{coupon.coupon_code}' created.",
+        target=coupon.coupon_code,
+    )
+    return redirect("page", page="coupons")
+
+
+@login_required(login_url="login")
+def coupon_update_view(request):
+    if request.method != "POST":
+        return redirect("page", page="coupons")
+
+    coupon_id = request.POST.get("coupon_id", "").strip()
+    try:
+        coupon = Coupon.objects.get(id=coupon_id)
+    except (Coupon.DoesNotExist, ValueError, TypeError):
+        messages.error(request, "Coupon not found.")
+        return redirect("page", page="coupons")
+
+    coupon_code = request.POST.get("coupon_code", "").strip().upper()
+    category_id = request.POST.get("valid_category_id", "").strip()
+    item_id = request.POST.get("valid_item_id", "").strip()
+    discount_type = request.POST.get("discount_type", "").strip()
+    discount_amount_raw = request.POST.get("discount_amount", "").strip()
+
+    if not coupon_code:
+        messages.error(request, "Coupon code is required.")
+        return redirect("page", page="coupons")
+    if Coupon.objects.filter(coupon_code__iexact=coupon_code).exclude(id=coupon.id).exists():
+        messages.error(request, "Coupon code already exists.")
+        return redirect("page", page="coupons")
+    applies_to_all = category_id == "all"
+    valid_category = None
+    valid_item = None
+    applies_to_all_items = True
+    if not applies_to_all:
+        try:
+            valid_category = Category.objects.get(id=category_id)
+        except (Category.DoesNotExist, ValueError, TypeError):
+            messages.error(request, "Please select a valid category.")
+            return redirect("page", page="coupons")
+        if item_id and item_id != "all":
+            try:
+                valid_item = Item.objects.get(id=item_id, category_id=valid_category.id)
+            except (Item.DoesNotExist, ValueError, TypeError):
+                messages.error(request, "Please select a valid item for the selected category.")
+                return redirect("page", page="coupons")
+            applies_to_all_items = False
+    if discount_type not in dict(Coupon.DISCOUNT_TYPE_CHOICES):
+        messages.error(request, "Please select a valid discount type.")
+        return redirect("page", page="coupons")
+    try:
+        discount_amount = _parse_positive_decimal(discount_amount_raw, "Discount amount")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("page", page="coupons")
+    if discount_type == "Percentage" and discount_amount > Decimal("100"):
+        messages.error(request, "Percentage discount cannot exceed 100.")
+        return redirect("page", page="coupons")
+    try:
+        start_date = _parse_coupon_date(request.POST.get("start_date"), "Start date")
+        expiry_date = _parse_coupon_date(request.POST.get("expiry_date"), "Expiry date")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("page", page="coupons")
+    if expiry_date < start_date:
+        messages.error(request, "Expiry date must be on or after start date.")
+        return redirect("page", page="coupons")
+
+    coupon.coupon_code = coupon_code
+    coupon.valid_category = valid_category
+    coupon.applies_to_all_categories = applies_to_all
+    coupon.valid_item = valid_item
+    coupon.applies_to_all_items = applies_to_all_items
+    coupon.discount_type = discount_type
+    coupon.discount_amount = discount_amount
+    coupon.start_date = start_date
+    coupon.expiry_date = expiry_date
+    coupon.is_active = True
+    coupon.save()
+    messages.success(request, "Coupon updated successfully.")
+    _log_audit_event(
+        request,
+        action="system_enabled",
+        module="Coupons",
+        description=f"Coupon '{coupon.coupon_code}' updated.",
+        target=coupon.coupon_code,
+    )
+    return redirect("page", page="coupons")
+
+
+@login_required(login_url="login")
+def coupon_delete_view(request):
+    if request.method != "POST":
+        return redirect("page", page="coupons")
+
+    coupon_id = request.POST.get("coupon_id", "").strip()
+    try:
+        coupon = Coupon.objects.get(id=coupon_id)
+    except (Coupon.DoesNotExist, ValueError, TypeError):
+        messages.error(request, "Coupon not found.")
+        return redirect("page", page="coupons")
+
+    code = coupon.coupon_code
+    coupon.delete()
+    messages.success(request, "Coupon deleted successfully.")
+    _log_audit_event(
+        request,
+        action="system_enabled",
+        module="Coupons",
+        description=f"Coupon '{code}' deleted.",
+        target=code,
+    )
+    return redirect("page", page="coupons")
+
+
+@login_required(login_url="login")
+def coupon_expire_view(request):
+    if request.method != "POST":
+        return redirect("page", page="coupons")
+
+    coupon_id = request.POST.get("coupon_id", "").strip()
+    try:
+        coupon = Coupon.objects.get(id=coupon_id)
+    except (Coupon.DoesNotExist, ValueError, TypeError):
+        messages.error(request, "Coupon not found.")
+        return redirect("page", page="coupons")
+
+    today = timezone.localdate()
+    forced_expiry = today - timedelta(days=1)
+
+    if coupon.expiry_date < today:
+        messages.info(request, f"Coupon '{coupon.coupon_code}' is already expired.")
+        return redirect("page", page="coupons")
+
+    if coupon.start_date > forced_expiry:
+        coupon.start_date = forced_expiry
+    coupon.expiry_date = forced_expiry
+    coupon.is_active = False
+    coupon.save(update_fields=["start_date", "expiry_date", "is_active"])
+
+    messages.success(request, f"Coupon '{coupon.coupon_code}' expired successfully.")
+    _log_audit_event(
+        request,
+        action="system_enabled",
+        module="Coupons",
+        description=f"Coupon '{coupon.coupon_code}' expired manually.",
+        target=coupon.coupon_code,
+    )
+    return redirect("page", page="coupons")
+
+
 def _get_latest_user_order(user):
     return (
         Order.objects.filter(created_by=user)
@@ -3104,7 +3585,8 @@ def _create_pos_order(request, status):
         raise ValueError("Table selection is only allowed when table service is enabled.")
 
     subtotal = _quantize_money(sum((item["line_total"] for item in items), Decimal("0.00")))
-    tax_amount = _quantize_money((subtotal * POS_TAX_RATE) / Decimal("100"))
+    tax_meta = _resolve_order_tax_components(subtotal)
+    tax_amount = tax_meta["exclusive_amount"]
     service_charge = POS_SERVICE_CHARGE
     total = _quantize_money(subtotal + tax_amount + service_charge)
     is_placed = status == "Placed"
@@ -3116,7 +3598,7 @@ def _create_pos_order(request, status):
         table_name=payload["table_name"],
         note=payload["note"],
         subtotal=subtotal,
-        tax_rate=POS_TAX_RATE,
+        tax_rate=tax_meta["display_rate"],
         tax_amount=tax_amount,
         service_charge=service_charge,
         total=total,
@@ -3358,6 +3840,129 @@ def item_delete_view(request):
     )
     messages.success(request, "Item deleted successfully.")
     return redirect("items")
+
+
+def _build_tax_settings_context(request):
+    context = {
+        "tax_rows": Tax.objects.all().order_by("id"),
+        "tax_type_options": [choice[0] for choice in Tax.TAX_TYPE_CHOICES],
+    }
+    context.update(_build_shell_context(request))
+    return context
+
+
+@login_required(login_url="login")
+def tax_add_view(request):
+    if request.method != "POST":
+        return redirect("page", page="tax-settings")
+
+    title = request.POST.get("title", "").strip()
+    rate_raw = request.POST.get("rate", "").strip()
+    tax_type = request.POST.get("tax_type", "").strip()
+
+    if not title:
+        messages.error(request, "Tax title is required.")
+        return redirect("page", page="tax-settings")
+    if Tax.objects.filter(title__iexact=title).exists():
+        messages.error(request, "Tax title already exists.")
+        return redirect("page", page="tax-settings")
+    if tax_type not in dict(Tax.TAX_TYPE_CHOICES):
+        messages.error(request, "Please select a valid tax type.")
+        return redirect("page", page="tax-settings")
+
+    try:
+        rate = _parse_positive_decimal(rate_raw, "Tax rate")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("page", page="tax-settings")
+
+    tax = Tax.objects.create(
+        title=title,
+        rate=rate,
+        tax_type=tax_type,
+        created_on=timezone.now().date(),
+    )
+    _log_audit_event(
+        request,
+        action="tax_created",
+        module="Tax",
+        description=f"Tax '{tax.title}' created with rate {tax.rate}%.",
+        target=tax.title,
+    )
+    messages.success(request, "Tax added successfully.")
+    return redirect("page", page="tax-settings")
+
+
+@login_required(login_url="login")
+def tax_update_view(request):
+    if request.method != "POST":
+        return redirect("page", page="tax-settings")
+
+    tax_id = request.POST.get("tax_id", "").strip()
+    try:
+        tax = Tax.objects.get(id=tax_id)
+    except (Tax.DoesNotExist, ValueError, TypeError):
+        messages.error(request, "Tax not found.")
+        return redirect("page", page="tax-settings")
+
+    title = request.POST.get("title", "").strip()
+    rate_raw = request.POST.get("rate", "").strip()
+    tax_type = request.POST.get("tax_type", "").strip()
+
+    if not title:
+        messages.error(request, "Tax title is required.")
+        return redirect("page", page="tax-settings")
+    if Tax.objects.filter(title__iexact=title).exclude(id=tax.id).exists():
+        messages.error(request, "Tax title already exists.")
+        return redirect("page", page="tax-settings")
+    if tax_type not in dict(Tax.TAX_TYPE_CHOICES):
+        messages.error(request, "Please select a valid tax type.")
+        return redirect("page", page="tax-settings")
+
+    try:
+        rate = _parse_positive_decimal(rate_raw, "Tax rate")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("page", page="tax-settings")
+
+    tax.title = title
+    tax.rate = rate
+    tax.tax_type = tax_type
+    tax.save()
+    _log_audit_event(
+        request,
+        action="tax_updated",
+        module="Tax",
+        description=f"Tax '{tax.title}' updated to rate {tax.rate}%.",
+        target=tax.title,
+    )
+    messages.success(request, "Tax updated successfully.")
+    return redirect("page", page="tax-settings")
+
+
+@login_required(login_url="login")
+def tax_delete_view(request):
+    if request.method != "POST":
+        return redirect("page", page="tax-settings")
+
+    tax_id = request.POST.get("tax_id", "").strip()
+    try:
+        tax = Tax.objects.get(id=tax_id)
+    except (Tax.DoesNotExist, ValueError, TypeError):
+        messages.error(request, "Tax not found.")
+        return redirect("page", page="tax-settings")
+
+    tax_title = tax.title
+    tax.delete()
+    _log_audit_event(
+        request,
+        action="tax_deleted",
+        module="Tax",
+        description=f"Tax '{tax_title}' deleted.",
+        target=tax_title,
+    )
+    messages.success(request, "Tax deleted successfully.")
+    return redirect("page", page="tax-settings")
 
 
 @login_required(login_url="login")
@@ -4439,6 +5044,14 @@ def page_view(request, page):
             return render(request, template_name, _build_orders_page_context(request))
         if page == "kanban-view":
             return render(request, template_name, _build_orders_page_context(request))
+        if page == "coupons":
+            return render(request, template_name, _build_coupons_context(request))
+        if page == "invoices":
+            return render(request, template_name, _build_invoices_context(request))
+        if page == "invoice-details":
+            return render(request, template_name, _build_invoice_details_context(request))
+        if page == "tax-settings":
+            return render(request, template_name, _build_tax_settings_context(request))
         if page == "customer":
             context = _build_customers_context(request)
             if request.GET.get("partial") == "1":

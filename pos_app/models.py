@@ -184,7 +184,7 @@ class Addon(models.Model):
 
 class Tax(models.Model):
     TAX_TYPE_CHOICES = [
-        ("Inclusive / Exclusive", "Inclusive / Exclusive"),
+        ("Inclusive", "Inclusive"),
         ("Exclusive", "Exclusive"),
     ]
 
@@ -198,6 +198,54 @@ class Tax(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.rate}%)"
+
+
+class Coupon(models.Model):
+    DISCOUNT_TYPE_CHOICES = [
+        ("Percentage", "Percentage"),
+        ("Fixed Amount", "Fixed Amount"),
+    ]
+
+    coupon_code = models.CharField(max_length=50, unique=True)
+    valid_category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="coupons", blank=True, null=True)
+    applies_to_all_categories = models.BooleanField(default=False)
+    valid_item = models.ForeignKey("Item", on_delete=models.PROTECT, related_name="coupons", blank=True, null=True)
+    applies_to_all_items = models.BooleanField(default=True)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES)
+    discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    start_date = models.DateField()
+    expiry_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    created_on = models.DateField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_on", "coupon_code"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(discount_amount__gt=0),
+                name="coupon_discount_amount_gt_zero",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(expiry_date__gte=models.F("start_date")),
+                name="coupon_expiry_on_or_after_start",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(applies_to_all_categories=True) | models.Q(valid_category__isnull=False),
+                name="coupon_has_scope",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(applies_to_all_items=True) | models.Q(valid_item__isnull=False),
+                name="coupon_has_item_scope",
+            ),
+        ]
+
+    def __str__(self):
+        return self.coupon_code
 
 
 class Item(models.Model):

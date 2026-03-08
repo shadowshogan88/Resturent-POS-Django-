@@ -18,7 +18,7 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Coupons<a href="#" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Coupons<a href="{% url 'page' 'coupons' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="dropdown">
@@ -39,6 +39,16 @@
 				</div>
 				<!-- End Page Header -->
 
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <!-- card start -->
                 <div class="card mb-0">
                     <div class="card-body">
@@ -50,14 +60,9 @@
 
                             <div class="d-flex align-items-center gap-2 flex-wrap">      
                                 
-                                <!-- filter -->
-                                <a href="#" class="btn btn-white d-inline-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#filter-offcanvas" aria-controls="filter-offcanvas">
-                                    <i class="icon-funnel me-2"></i>Filter
-                                </a>
-
                                 <!-- column -->
                                 <div class="dropdown">
-                                    <a href="#" class="btn btn-icon btn-white" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="icon-columns-3"></i></a>
+                                    <a href="javascript:void(0);" class="btn btn-icon btn-white" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="icon-columns-3"></i></a>
                                     <div class="dropdown-menu dropdown-menu-md dropdown-menu-end p-3 pb-0">
                                         <h5 class="mb-3">Column</h5>
                                         <div>
@@ -65,42 +70,56 @@
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox" checked>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="0" checked>
                                                         Coupon Code
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox" checked>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="1" checked>
                                                         Valid Category
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox">
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="2" checked>
+                                                        Valid Item
+                                                    </label>
+                                                </div>
+                                                <div class="mb-3 drag-item" draggable="true">
+                                                    <label class="d-flex align-items-center">
+                                                        <i class="icon-grip-vertical me-2"></i>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="3" checked>
                                                         Discount Type
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox" checked>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="4" checked>
                                                         Discount Amount
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox" checked>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="5" checked>
                                                         Duration
                                                     </label>
                                                 </div>
                                                 <div class="mb-3 drag-item" draggable="true">
                                                     <label class="d-flex align-items-center">
                                                         <i class="icon-grip-vertical me-2"></i>
-                                                        <input class="form-check-input m-0 me-2" type="checkbox" checked>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="6" checked>
+                                                        Status
+                                                    </label>
+                                                </div>
+                                                <div class="mb-3 drag-item" draggable="true">
+                                                    <label class="d-flex align-items-center">
+                                                        <i class="icon-grip-vertical me-2"></i>
+                                                        <input class="form-check-input m-0 me-2 column-toggle-checkbox" type="checkbox" data-column-index="7" checked>
                                                         Actions
                                                     </label>
                                                 </div>
@@ -111,21 +130,21 @@
 
                                 <!-- sort by -->
                                 <div class="dropdown">
-                                    <a href="#" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                    <a href="javascript:void(0);" id="sort-dropdown-label" class="dropdown-toggle btn btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                         Sort by : Newest
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end p-3">
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Newest</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="newest">Newest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Oldest</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="oldest">Oldest</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Ascending</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="ascending">Ascending</a>
                                         </li>
                                         <li>
-                                            <a href="javascript:void(0);" class="dropdown-item">Descending</a>
+                                            <a href="javascript:void(0);" class="dropdown-item sort-option" data-sort="descending">Descending</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -134,11 +153,12 @@
 
                        <!-- table start -->
                         <div class="table-responsive table-nowrap">
-                            <table class="table mb-0 border datatable">
+                            <table id="coupons-table" class="table mb-0 border datatable">
                                 <thead>
                                     <tr>
                                         <th>Coupon Code</th>
                                         <th>Valid Category</th>
+                                        <th>Valid Item</th>
                                         <th>Discount Type</th>
                                         <th>Discount Amount</th>
                                         <th>Duration</th>
@@ -147,158 +167,28 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for coupon in coupon_rows %}
                                     <tr>
-                                        <td>SEAFOOD10</td>
-                                        <td>Sea Foods</td>
-                                        <td>Percentage</td>
-                                        <td>10%</td>
-                                        <td>01 Jan 2025 - 31 Dec 2025</td>
+                                        <td>{{ coupon.coupon_code }}</td>
+                                        <td>{{ coupon.valid_category }}</td>
+                                        <td>{{ coupon.valid_item }}</td>
+                                        <td>{{ coupon.discount_type }}</td>
+                                        <td data-order="{{ coupon.discount_amount }}">{{ coupon.discount_amount_label }}</td>
+                                        <td>{{ coupon.start_date_label }} - {{ coupon.expiry_date_label }}</td>
                                         <td>
-                                            <span class="badge badge-soft-success">Active</span>
+                                            <span class="badge {{ coupon.status_class }}">{{ coupon.status_label }}</span>
                                         </td>
                                          <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
+                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2 js-coupon-show" data-bs-toggle="modal" data-bs-target="#show_coupon" data-coupon-code="{{ coupon.coupon_code }}"><i class="icon-eye"></i></a>
+                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2 js-coupon-edit" data-bs-toggle="modal" data-bs-target="#edit_coupon" data-coupon-id="{{ coupon.id }}" data-coupon-code="{{ coupon.coupon_code }}" data-category-id="{{ coupon.valid_category_id }}" data-item-id="{{ coupon.valid_item_id }}" data-discount-type="{{ coupon.discount_type }}" data-discount-amount="{{ coupon.discount_amount }}" data-start-date="{{ coupon.start_date_input }}" data-expiry-date="{{ coupon.expiry_date_input }}"><i class="icon-pencil-line"></i></a>
+                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle js-coupon-delete" data-bs-toggle="modal" data-bs-target="#delete_modal" data-coupon-id="{{ coupon.id }}" data-coupon-code="{{ coupon.coupon_code }}"><i class="icon-trash-2"></i></a>
                                         </td>
                                     </tr>
+                                    {% empty %}
                                     <tr>
-                                        <td>PIZZA20</td>
-                                        <td>Pizza Orders</td>
-                                        <td>Fixed Amount</td>
-                                        <td>20%</td>
-                                        <td>15 Feb 2025 - 20 Nov 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
+                                        <td colspan="8" class="text-center text-muted">No coupons found.</td>
                                     </tr>
-                                    <tr>
-                                        <td>SALAD15</td>
-                                        <td>Salads</td>
-                                        <td>Percentage</td>
-                                        <td>15%</td>
-                                        <td>22 Mar 2025 - 25 Nov 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>TACO5</td>
-                                        <td>Salads</td>
-                                        <td>Percentage</td>
-                                        <td>$5</td>
-                                        <td>15 Apr 2025 - 10 Oct 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-danger">Expired</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>WEEKEND25</td>
-                                        <td>All Categories</td>
-                                        <td>Percentage</td>
-                                        <td>25%</td>
-                                        <td>03 May 2025 - 13 Nov 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>COMBO50</td>
-                                        <td>Combo Meals</td>
-                                        <td>Percentage</td>
-                                        <td>5%</td>
-                                        <td>05 Jun 2025 - 20 Dec 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>HOLIDAY30</td>
-                                        <td>All Categories</td>
-                                        <td>Fixed Amount</td>
-                                        <td>$30</td>
-                                        <td>10 Jul 2025 - 15 Dec 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>SWEET10</td>
-                                        <td>Desserts</td>
-                                        <td>Percentage</td>
-                                        <td>10%</td>
-                                        <td>18 Aug 2025 - 25 Dec 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>FAMILYFEAST</td>
-                                        <td>All Categories</td>
-                                        <td>Fixed Amount</td>
-                                        <td>$100</td>
-                                        <td>04 Sep 2025 - 10 Oct 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-danger">Expired</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>FIRSTORDER</td>
-                                        <td>All Categories</td>
-                                        <td>Fixed Amount</td>
-                                        <td>$50</td>
-                                        <td>01 Nov 2025 - 31 Dec 2025</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Active</span>
-                                        </td>
-                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#show_coupon"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_coupon"><i class="icon-pencil-line"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                   
-                                    
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -325,10 +215,10 @@
                             <h4 class="modal-title">Coupon Code</h4>
                             <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                         </div>
-                        <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/coupons.html">                             
+                        <form action="javascript:void(0);">                             
                             <div class="modal-body p-4 pt-1">             
                                 <div class="p-4 bg-light border rounded border-dashed d-flex align-items-center justify-content-between mb-3">
-                                    <h6 class="mb-0" id="copytext">SEAFOOD10</h6>
+                                    <h6 class="mb-0" id="copytext">-</h6>
                                     <span class="copytoclipboard" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to Clipboard"><i class="icon-copy fw-semibold "></i></span>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
@@ -349,45 +239,52 @@
                             <h4 class="modal-title">Add Coupon</h4>
                             <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                         </div>
-                        <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/coupons.html">                             
+                        <form action="{% url 'coupon_add' %}" method="post">                             
+                            {% csrf_token %}
                             <div class="modal-body p-4 pt-1">    
                                 <div class="mb-3">
                                     <label class="form-label">Coupon Code<span class="text-danger"> *</span></label>
-                                    <input type="text" class="form-control">
+                                    <input type="text" class="form-control" name="coupon_code" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Valid Category<span class="text-danger"> *</span></label>
-                                    <select class="select">
-                                        <option>Select</option>
-                                        <option>Pizza</option>
-                                        <option>Sea Food</option>
-                                        <option>Salad</option>
-                                        <option>Sauce</option>
-                                        <option>Topping</option>
+                                    <select class="select js-coupon-category" name="valid_category_id" required>
+                                        <option value="">Select</option>
+                                        <option value="all">All Categories</option>
+                                        {% for category in coupon_categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Valid Item<span class="text-danger"> *</span></label>
+                                    <select class="select js-coupon-item" name="valid_item_id" required>
+                                        <option value="all">All Items</option>
                                     </select>
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label class="form-label">Discount Type<span class="text-danger"> *</span></label>
-                                            <select class="select">
-                                                <option>Select</option>
-                                                <option>Percentage</option>
-                                                <option>Fixed Amount</option>
+                                            <select class="select" name="discount_type" required>
+                                                <option value="">Select</option>
+                                                {% for discount_type in coupon_discount_types %}
+                                                <option value="{{ discount_type }}">{{ discount_type }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label class="form-label">Discount Amount<span class="text-danger"> *</span></label>
-                                            <input type="text" class="form-control">
+                                            <input type="text" class="form-control" name="discount_amount" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label class="form-label">Start Date<span class="text-danger ms-1">*</span></label>
                                             <div class="input-group w-auto input-group-flat">
-                                                <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                                <input type="text" class="form-control" name="start_date" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy" required>
                                                 <span class="input-group-text">
                                                     <i class="icon-calendar-fold"></i>
                                                 </span>
@@ -398,7 +295,7 @@
                                         <div class="mb-3">
                                             <label class="form-label">Expiry Date<span class="text-danger ms-1">*</span></label>
                                             <div class="input-group w-auto input-group-flat">
-                                                <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy">
+                                                <input type="text" class="form-control" name="expiry_date" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy" required>
                                                 <span class="input-group-text">
                                                     <i class="icon-calendar-fold"></i>
                                                 </span>
@@ -426,45 +323,53 @@
                             <h4 class="modal-title">Edit Coupon</h4>
                             <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                         </div>
-                        <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/coupons.html">                             
+                        <form action="{% url 'coupon_update' %}" method="post">                             
+                            {% csrf_token %}
                             <div class="modal-body p-4 pt-1">    
+                                <input type="hidden" id="edit-coupon-id" name="coupon_id">
                                 <div class="mb-3">
                                     <label class="form-label">Coupon Code<span class="text-danger"> *</span></label>
-                                    <input type="text" class="form-control" value="SEAFOOD10">
+                                    <input type="text" id="edit-coupon-code" class="form-control" name="coupon_code" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Valid Category<span class="text-danger"> *</span></label>
-                                    <select class="select">
-                                        <option>Select</option>
-                                        <option selected>Pizza</option>
-                                        <option>Sea Food</option>
-                                        <option>Salad</option>
-                                        <option>Sauce</option>
-                                        <option>Topping</option>
+                                    <select class="select js-coupon-category" id="edit-valid-category-id" name="valid_category_id" required>
+                                        <option value="">Select</option>
+                                        <option value="all">All Categories</option>
+                                        {% for category in coupon_categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Valid Item<span class="text-danger"> *</span></label>
+                                    <select class="select js-coupon-item" id="edit-valid-item-id" name="valid_item_id" required>
+                                        <option value="all">All Items</option>
                                     </select>
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label class="form-label">Discount Type<span class="text-danger"> *</span></label>
-                                            <select class="select">
-                                                <option>Select</option>
-                                                <option selected>Percentage</option>
-                                                <option>Fixed Amount</option>
+                                            <select class="select" id="edit-discount-type" name="discount_type" required>
+                                                <option value="">Select</option>
+                                                {% for discount_type in coupon_discount_types %}
+                                                <option value="{{ discount_type }}">{{ discount_type }}</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label class="form-label">Discount Amount<span class="text-danger"> *</span></label>
-                                            <input type="text" class="form-control" value="10%">
+                                            <input type="text" id="edit-discount-amount" class="form-control" name="discount_amount" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label class="form-label">Start Date<span class="text-danger ms-1">*</span></label>
                                             <div class="input-group w-auto input-group-flat">
-                                                <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" value="01 Jan 2025">
+                                                <input type="text" id="edit-start-date" class="form-control" name="start_date" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy" required>
                                                 <span class="input-group-text">
                                                     <i class="icon-calendar-fold"></i>
                                                 </span>
@@ -475,7 +380,7 @@
                                         <div class="mb-3">
                                             <label class="form-label">Expiry Date<span class="text-danger ms-1">*</span></label>
                                             <div class="input-group w-auto input-group-flat">
-                                                <input type="text" class="form-control" data-provider="flatpickr" data-date-format="d/m/Y" value="31 Jan 2025">
+                                                <input type="text" id="edit-expiry-date" class="form-control" name="expiry_date" data-provider="flatpickr" data-date-format="d/m/Y" placeholder="dd/mm/yyyy" required>
                                                 <span class="input-group-text">
                                                     <i class="icon-calendar-fold"></i>
                                                 </span>
@@ -506,11 +411,15 @@
                             </span>
                         </div>
                         <h4 class="mb-1">Delete Confirmation</h4>
-                        <p class="mb-4">Are you sure you want to delete?</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
-                            <a href="{% url 'page' 'coupons' %}" class="btn btn-danger w-100">Delete</a>
-                        </div>
+                        <p class="mb-4">Are you sure you want to delete <span class="fw-semibold text-dark" id="delete-coupon-code">this coupon</span>?</p>
+                        <form action="{% url 'coupon_delete' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" id="delete-coupon-id" name="coupon_id">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -525,125 +434,93 @@
                     <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="offcanvas" aria-label="Close"><i class="icon-x"></i></button>
                 </div>
             </div>
-            <div class="offcanvas-body d-flex flex-column pt-3">
+            <form id="coupon-filter-form" action="javascript:void(0);" class="offcanvas-body d-flex flex-column pt-3">
                 <div>
                     <div class="mb-3">
-                        <label class="form-label">Discount Type<span class="text-danger"> *</span></label>
+                        <label class="form-label">Coupon Code<span class="text-danger"> *</span></label>
                         <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 Select
                             </a>
                             <div class="dropdown-menu dropdown-menu-end p-3 w-100">
-                                <h6 class="fs-14 fw-semibold mb-3">Category</h6>
+                                <h6 class="fs-14 fw-semibold mb-3">Coupon Code</h6>
                                 <div class="input-icon-end input-icon position-relative mb-3">
                                     <span class="input-icon-addon">
                                         <i class="icon-search text-dark"></i>
                                     </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
-                                </div>  
-                                <div class="vstack gap-2">
-                                    <div>
+                                    <input type="text" id="coupon-code-filter-search" class="form-control form-control-md" placeholder="Search">
+                                </div>
+                                <div class="vstack gap-2" id="coupon-code-filter-list">
+                                    {% for coupon in coupon_rows %}
+                                    <div class="coupon-code-filter-item" data-name="{{ coupon.coupon_code|lower }}">
                                         <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Percentage
+                                            <input class="form-check-input m-0 me-2 coupon-filter-code" type="checkbox" value="{{ coupon.coupon_code }}">{{ coupon.coupon_code }}
                                         </label>
                                     </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Fixed Amount
-                                        </label>
-                                    </div>
-                                </div>  
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Valid Category<span class="text-danger"> *</span></label>
-                        <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                Select
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end p-3 w-100">
-                                <h6 class="fs-14 fw-semibold mb-3">Category</h6>
-                                <div class="input-icon-end input-icon position-relative mb-3">
-                                    <span class="input-icon-addon">
-                                        <i class="icon-search text-dark"></i>
-                                    </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
-                                </div>  
-                                <div class="vstack gap-2">
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Sea Foods
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Pizza Orders
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Salads
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">All Categories
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Combo Meals
-                                        </label>
-                                    </div>
-                                </div>  
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Date Range<span class="text-danger"> *</span></label>
-                       
-                        <div class="daterangepick custom-date form-control w-auto d-flex align-items-center justify-content-between">
-                           <span class="reportrange-picker"></span> <i class="icon-calendar-fold text-gray-5 fs-14 text-end"></i>
-                        </div>
-					</div>
                     <div class="mb-0">
                         <label class="form-label">Status<span class="text-danger"> *</span></label>
                         <div class="dropdown">
-                            <a href="#" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 Select
                             </a>
                             <div class="dropdown-menu dropdown-menu-end p-3 w-100">
-                                <h6 class="fs-14 fw-semibold mb-3">Category</h6>
-                                <div class="input-icon-end input-icon position-relative mb-3">
-                                    <span class="input-icon-addon">
-                                        <i class="icon-search text-dark"></i>
-                                    </span>
-                                    <input type="text" class="form-control form-control-md" placeholder="Search">
-                                </div>  
+                                <h6 class="fs-14 fw-semibold mb-3">Status</h6>
                                 <div class="vstack gap-2">
                                     <div>
                                         <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Active
+                                            <input class="form-check-input m-0 me-2 coupon-filter-status" type="checkbox" value="Upcoming">Upcoming
                                         </label>
                                     </div>
                                     <div>
                                         <label class="d-flex align-items-center">
-                                            <input class="form-check-input m-0 me-2" type="checkbox">Expired
+                                            <input class="form-check-input m-0 me-2 coupon-filter-status" type="checkbox" value="Running">Running
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label class="d-flex align-items-center">
+                                            <input class="form-check-input m-0 me-2 coupon-filter-status" type="checkbox" value="Expired">Expired
                                         </label>
                                     </div>
                                 </div>  
                             </div>
                         </div>
+                    </div>
+                    <div class="mb-0 mt-3">
+                        <label class="form-label">Direct Expire<span class="text-danger"> *</span></label>
+                        <div class="dropdown">
+                            <a href="javascript:void(0);" id="expire-coupon-label" class="dropdown-toggle btn btn-white d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                Select
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end p-3 w-100">
+                                <h6 class="fs-14 fw-semibold mb-3">Select Coupon</h6>
+                                <div class="vstack gap-2" id="expire-coupon-list">
+                                    {% for coupon in coupon_rows %}
+                                    <div>
+                                        <a href="javascript:void(0);" class="dropdown-item px-2 js-expire-coupon-option" data-coupon-id="{{ coupon.id }}" data-coupon-code="{{ coupon.coupon_code }}">{{ coupon.coupon_code }}</a>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="coupon-expire-submit" class="btn btn-warning w-100 mt-2" disabled>Expire Now</button>
                     </div>
                 </div>
                 
                     <div class="d-flex align-items-center gap-2 mt-auto border-0">
-                        <a href="#" class="btn btn-light w-100">Reset</a>
-                        <a href="#" class="btn btn-primary w-100">Apply</a>
+                        <button type="button" id="coupon-filter-reset" class="btn btn-light w-100">Reset</button>
+                        <button type="submit" id="coupon-filter-apply" class="btn btn-primary w-100">Apply</button>
                     </div>
                 
-            </div>
+            </form>
+            <form id="coupon-expire-form" action="{% url 'coupon_expire' %}" method="post" class="d-none">
+                {% csrf_token %}
+                <input type="hidden" id="expire-coupon-id" name="coupon_id">
+            </form>
         </div>
         <!-- End Filter -->
 
@@ -673,6 +550,366 @@
 
     <!-- Select2 Js -->	
 
-    <!-- Main JS -->
+    {{ coupon_items_by_category|json_script:"coupon-items-by-category" }}
+    <script type="text/javascript">
+        (function () {
+            var itemsByCategory = {};
+            var couponFilterState = {
+                couponCodes: [],
+                statuses: []
+            };
+            var couponFilterRegistered = false;
+
+            var itemsDataElement = document.getElementById("coupon-items-by-category");
+            if (itemsDataElement) {
+                try {
+                    itemsByCategory = JSON.parse(itemsDataElement.textContent || "{}");
+                } catch (error) {
+                    itemsByCategory = {};
+                }
+            }
+
+            function stripHtml(value) {
+                var temp = document.createElement("div");
+                temp.innerHTML = value || "";
+                return (temp.textContent || temp.innerText || "").trim();
+            }
+
+            function getCouponsDataTable() {
+                if (!window.jQuery || !window.jQuery.fn || !window.jQuery.fn.DataTable) return null;
+                var table = window.jQuery("#coupons-table");
+                if (!table.length) return null;
+                var isDataTable = false;
+                if (window.jQuery.fn.DataTable.isDataTable) {
+                    isDataTable = window.jQuery.fn.DataTable.isDataTable(table[0]);
+                } else if (window.jQuery.fn.dataTable && window.jQuery.fn.dataTable.isDataTable) {
+                    isDataTable = window.jQuery.fn.dataTable.isDataTable(table[0]);
+                }
+                if (!isDataTable) return null;
+                return table.DataTable();
+            }
+
+            function getAnyReadyCouponsDataTable() {
+                var dataTable = getCouponsDataTable();
+                if (dataTable) return dataTable;
+                if (!window.jQuery || !window.jQuery.fn || !window.jQuery.fn.DataTable) return null;
+                var fallbackTable = window.jQuery(".datatable").first();
+                if (!fallbackTable.length) return null;
+                var isDataTable = false;
+                if (window.jQuery.fn.DataTable.isDataTable) {
+                    isDataTable = window.jQuery.fn.DataTable.isDataTable(fallbackTable[0]);
+                } else if (window.jQuery.fn.dataTable && window.jQuery.fn.dataTable.isDataTable) {
+                    isDataTable = window.jQuery.fn.dataTable.isDataTable(fallbackTable[0]);
+                }
+                if (!isDataTable) return null;
+                return fallbackTable.DataTable();
+            }
+
+            function applyColumnToggles(dataTable) {
+                if (!dataTable || !window.jQuery) return;
+                window.jQuery(".column-toggle-checkbox").each(function () {
+                    var idx = parseInt(this.getAttribute("data-column-index"), 10);
+                    if (Number.isNaN(idx)) return;
+                    dataTable.column(idx).visible(this.checked, false);
+                });
+                dataTable.columns.adjust().draw(false);
+            }
+
+            function ensureCouponsDataTableReady() {
+                var retry = 0;
+                var maxRetry = 20;
+                var interval = setInterval(function () {
+                    var dataTable = getCouponsDataTable();
+                    if (dataTable) {
+                        applyColumnToggles(dataTable);
+                        clearInterval(interval);
+                        return;
+                    }
+                    retry += 1;
+                    if (retry >= maxRetry) {
+                        clearInterval(interval);
+                    }
+                }, 100);
+            }
+
+            function setupCouponFilter() {
+                if (!window.jQuery || !window.jQuery.fn || !window.jQuery.fn.DataTable || couponFilterRegistered) return;
+                window.jQuery.fn.dataTable.ext.search.push(function (settings, data) {
+                    if (!settings || !settings.nTable || settings.nTable.id !== "coupons-table") return true;
+
+                    var rowStatus = stripHtml(data[6] || "");
+                    var rowCode = (data[0] || "").trim();
+
+                    if (couponFilterState.couponCodes.length && couponFilterState.couponCodes.indexOf(rowCode) === -1) {
+                        return false;
+                    }
+                    if (couponFilterState.statuses.length && couponFilterState.statuses.indexOf(rowStatus) === -1) {
+                        return false;
+                    }
+
+                    return true;
+                });
+                couponFilterRegistered = true;
+            }
+
+            function setValue(id, value) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.value = value || "";
+                if (window.jQuery) {
+                    window.jQuery(el).trigger("change");
+                }
+            }
+
+            function notifySelectChanged(selectElement) {
+                if (!selectElement || !window.jQuery) return;
+                window.jQuery(selectElement).trigger("change");
+            }
+
+            function renderOptions(selectElement, options, selectedValue, disabled) {
+                if (!selectElement) return;
+                var safeSelectedValue = selectedValue || "all";
+                var hasJQuery = !!window.jQuery;
+                var hasSelect2 = hasJQuery && !!window.jQuery.fn && !!window.jQuery.fn.select2;
+                var select2Active = hasJQuery && !!window.jQuery(selectElement).data("select2");
+
+                if (hasJQuery && hasSelect2 && select2Active) {
+                    var $select = window.jQuery(selectElement);
+                    $select.prop("disabled", !!disabled);
+                    $select.empty();
+                    for (var i = 0; i < options.length; i += 1) {
+                        $select.append(new Option(options[i].label, options[i].value, false, false));
+                    }
+                    $select.val(safeSelectedValue);
+                    if ($select.val() !== safeSelectedValue) {
+                        $select.val("all");
+                    }
+                    $select.trigger("change.select2");
+                    $select.trigger("change");
+                    return;
+                }
+
+                selectElement.innerHTML = "";
+                for (var j = 0; j < options.length; j += 1) {
+                    var option = document.createElement("option");
+                    option.value = options[j].value;
+                    option.textContent = options[j].label;
+                    selectElement.appendChild(option);
+                }
+                selectElement.disabled = !!disabled;
+                selectElement.value = safeSelectedValue;
+                if (selectElement.value !== safeSelectedValue) {
+                    selectElement.value = "all";
+                }
+                notifySelectChanged(selectElement);
+            }
+
+            function populateItemSelect(categorySelect, itemSelect, selectedItemValue) {
+                if (!categorySelect || !itemSelect) return;
+
+                var categoryValue = (categorySelect.value || "").toString();
+                var items = itemsByCategory[categoryValue] || [];
+                var options = [{ value: "all", label: "All Items" }];
+
+                for (var i = 0; i < items.length; i += 1) {
+                    options.push({
+                        value: String(items[i].id),
+                        label: items[i].name
+                    });
+                }
+                renderOptions(
+                    itemSelect,
+                    options,
+                    String(selectedItemValue || "all"),
+                    categoryValue === "" || categoryValue === "all"
+                );
+            }
+
+            function bindCategoryItemPairs() {
+                var categorySelects = document.querySelectorAll("select.js-coupon-category");
+                for (var i = 0; i < categorySelects.length; i += 1) {
+                    (function (categorySelect) {
+                        var modalBody = categorySelect.closest(".modal-body");
+                        if (!modalBody) return;
+                        var itemSelect = modalBody.querySelector("select.js-coupon-item");
+                        if (!itemSelect) return;
+
+                        populateItemSelect(categorySelect, itemSelect, itemSelect.value || "all");
+
+                        if (categorySelect.dataset.couponBound === "1") return;
+                        categorySelect.addEventListener("change", function () {
+                            populateItemSelect(categorySelect, itemSelect, "all");
+                        });
+                        if (window.jQuery) {
+                            window.jQuery(categorySelect).on("change.select2", function () {
+                                populateItemSelect(categorySelect, itemSelect, "all");
+                            });
+                        }
+                        categorySelect.dataset.couponBound = "1";
+                    })(categorySelects[i]);
+                }
+            }
+
+            ensureCouponsDataTableReady();
+            setupCouponFilter();
+            bindCategoryItemPairs();
+
+            if (window.jQuery) {
+                window.jQuery(document).off("change.couponColumnToggles").on("change.couponColumnToggles", ".column-toggle-checkbox", function () {
+                    var dataTable = getCouponsDataTable();
+                    if (!dataTable) return;
+                    var idx = parseInt(this.getAttribute("data-column-index"), 10);
+                    if (Number.isNaN(idx)) return;
+                    dataTable.column(idx).visible(this.checked);
+                    dataTable.columns.adjust().draw(false);
+                });
+            }
+
+            document.querySelectorAll(".sort-option").forEach(function (el) {
+                el.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    var sortValue = this.getAttribute("data-sort") || "newest";
+                    var dataTable = getCouponsDataTable();
+                    if (!dataTable) return;
+
+                    if (sortValue === "newest") {
+                        dataTable.order([0, "desc"]).draw();
+                    } else if (sortValue === "oldest") {
+                        dataTable.order([0, "asc"]).draw();
+                    } else if (sortValue === "ascending") {
+                        dataTable.order([4, "asc"]).draw();
+                    } else if (sortValue === "descending") {
+                        dataTable.order([4, "desc"]).draw();
+                    }
+
+                    var label = document.getElementById("sort-dropdown-label");
+                    if (label) label.textContent = "Sort by : " + this.textContent.trim();
+                });
+            });
+
+            var codeSearchInput = document.getElementById("coupon-code-filter-search");
+            var codeFilterItems = document.querySelectorAll("#coupon-code-filter-list .coupon-code-filter-item");
+            if (codeSearchInput && codeFilterItems.length) {
+                codeSearchInput.addEventListener("input", function () {
+                    var q = this.value.trim().toLowerCase();
+                    codeFilterItems.forEach(function (item) {
+                        var name = item.getAttribute("data-name") || "";
+                        item.style.display = name.indexOf(q) !== -1 ? "" : "none";
+                    });
+                });
+            }
+
+            var couponFilterForm = document.getElementById("coupon-filter-form");
+            function applyCouponFilters(event) {
+                if (event) event.preventDefault();
+                var dataTable = getAnyReadyCouponsDataTable();
+                if (!dataTable) return;
+
+                couponFilterState.couponCodes = Array.prototype.map.call(
+                    document.querySelectorAll(".coupon-filter-code:checked"),
+                    function (node) { return node.value; }
+                );
+                couponFilterState.statuses = Array.prototype.map.call(
+                    document.querySelectorAll(".coupon-filter-status:checked"),
+                    function (node) { return node.value; }
+                );
+
+                dataTable.draw();
+                var offcanvasElement = document.getElementById("filter-offcanvas");
+                if (offcanvasElement && window.bootstrap && window.bootstrap.Offcanvas) {
+                    window.bootstrap.Offcanvas.getOrCreateInstance(offcanvasElement).hide();
+                }
+            }
+
+            if (couponFilterForm) {
+                couponFilterForm.addEventListener("submit", applyCouponFilters);
+            }
+
+            var couponFilterApply = document.getElementById("coupon-filter-apply");
+            if (couponFilterApply) {
+                couponFilterApply.addEventListener("click", applyCouponFilters);
+            }
+
+            var couponExpireSubmit = document.getElementById("coupon-expire-submit");
+            if (couponExpireSubmit) {
+                couponExpireSubmit.addEventListener("click", function () {
+                    var expireCouponIdInput = document.getElementById("expire-coupon-id");
+                    if (!expireCouponIdInput || !expireCouponIdInput.value) return;
+                    var expireForm = document.getElementById("coupon-expire-form");
+                    if (!expireForm) return;
+                    expireForm.submit();
+                });
+            }
+
+            var couponFilterReset = document.getElementById("coupon-filter-reset");
+            if (couponFilterReset) {
+                couponFilterReset.addEventListener("click", function () {
+                    document.querySelectorAll(".coupon-filter-code, .coupon-filter-status").forEach(function (node) {
+                        node.checked = false;
+                    });
+
+                    couponFilterState.couponCodes = [];
+                    couponFilterState.statuses = [];
+
+                    var expireCouponIdInput = document.getElementById("expire-coupon-id");
+                    if (expireCouponIdInput) expireCouponIdInput.value = "";
+                    var expireCouponLabel = document.getElementById("expire-coupon-label");
+                    if (expireCouponLabel) expireCouponLabel.textContent = "Select";
+                    var expireSubmit = document.getElementById("coupon-expire-submit");
+                    if (expireSubmit) expireSubmit.disabled = true;
+
+                    var dataTable = getCouponsDataTable();
+                    if (dataTable) dataTable.draw();
+                });
+            }
+
+            document.addEventListener("click", function (event) {
+                var expireOption = event.target.closest(".js-expire-coupon-option");
+                if (expireOption) {
+                    var expireCouponIdInput = document.getElementById("expire-coupon-id");
+                    var expireCouponLabel = document.getElementById("expire-coupon-label");
+                    var expireSubmit = document.getElementById("coupon-expire-submit");
+                    if (expireCouponIdInput) {
+                        expireCouponIdInput.value = expireOption.getAttribute("data-coupon-id") || "";
+                    }
+                    if (expireCouponLabel) {
+                        expireCouponLabel.textContent = expireOption.getAttribute("data-coupon-code") || "Select";
+                    }
+                    if (expireSubmit) {
+                        expireSubmit.disabled = !expireCouponIdInput || !expireCouponIdInput.value;
+                    }
+                    return;
+                }
+
+                var showBtn = event.target.closest(".js-coupon-show");
+                if (showBtn) {
+                    var copyText = document.getElementById("copytext");
+                    if (copyText) copyText.textContent = showBtn.getAttribute("data-coupon-code") || "-";
+                    return;
+                }
+
+                var editBtn = event.target.closest(".js-coupon-edit");
+                if (editBtn) {
+                    setValue("edit-coupon-id", editBtn.getAttribute("data-coupon-id"));
+                    setValue("edit-coupon-code", editBtn.getAttribute("data-coupon-code"));
+                    setValue("edit-valid-category-id", editBtn.getAttribute("data-category-id"));
+                    var editCategorySelect = document.getElementById("edit-valid-category-id");
+                    var editItemSelect = document.getElementById("edit-valid-item-id");
+                    populateItemSelect(editCategorySelect, editItemSelect, editBtn.getAttribute("data-item-id") || "all");
+                    setValue("edit-discount-type", editBtn.getAttribute("data-discount-type"));
+                    setValue("edit-discount-amount", editBtn.getAttribute("data-discount-amount"));
+                    setValue("edit-start-date", editBtn.getAttribute("data-start-date"));
+                    setValue("edit-expiry-date", editBtn.getAttribute("data-expiry-date"));
+                    return;
+                }
+
+                var deleteBtn = event.target.closest(".js-coupon-delete");
+                if (!deleteBtn) return;
+                setValue("delete-coupon-id", deleteBtn.getAttribute("data-coupon-id"));
+                var deleteCode = document.getElementById("delete-coupon-code");
+                if (deleteCode) deleteCode.textContent = deleteBtn.getAttribute("data-coupon-code") || "this coupon";
+            });
+        })();
+    </script>
 {% endblock %}
 
