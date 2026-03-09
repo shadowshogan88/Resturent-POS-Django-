@@ -17,7 +17,7 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Invoices Details <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Invoices Details <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="dropdown">
@@ -45,13 +45,14 @@
                         <div class="mb-4">
                             <div class="row justify-content-between align-items-center border-bottom pb-4">
 							    <div class="col-md-6">
-									<h6 class="mb-2">#INV5465</h6>
-									<h6>DreamsPOS</h6>
+									<h6 class="mb-2">#{{ invoice_detail.invoice_no }}</h6>
+									<h6>{{ invoice_detail.store_name }}</h6>
+                                    <p class="mb-0 fs-13">{{ invoice_detail.invoice_date }}</p>
 								</div>
 								<div class="col-md-6">
 									    <div class="mb-2 invoice-logo d-flex align-items-center justify-content-md-end justify-content-start">
-										    <img src="{% static 'assets/img/logo.svg' %}" width="130" class="img-fluid logo" alt="logo">
-										    <img src="{% static 'assets/img/logo-white.svg' %}" width="130" class="img-fluid logo-white d-none" alt="logo">
+										    <img src="{% if invoice_detail.store_logo_url %}{{ invoice_detail.store_logo_url }}{% else %}{% static 'assets/img/logo.svg' %}{% endif %}" width="130" class="img-fluid logo" alt="logo">
+										    <img src="{% if invoice_detail.store_logo_url %}{{ invoice_detail.store_logo_url }}{% else %}{% static 'assets/img/logo-white.svg' %}{% endif %}" width="130" class="img-fluid logo-white d-none" alt="logo">
 									    </div>
 								    </div>
 							     </div>
@@ -60,15 +61,15 @@
                                  <div class="row g-3 justify-content-between align-items-center border-bottom pb-4">
 								    <div class="col-md-4">
 									    <h6 class="mb-2">Invoice From</h6>
-									    <p class="text-dark fw-semibold mb-2">DreamsPOS</p>
-									    <p class="mb-2">15 Hodges Mews, High Wycombe HP12 3JL,United Kingdom</p>
-									    <p class="mb-0">Phone : +1 45659 96566</p>
+									    <p class="text-dark fw-semibold mb-2">{{ invoice_detail.store_name }}</p>
+									    <p class="mb-2">{{ invoice_detail.store_address }}</p>
+									    <p class="mb-0">Phone : {{ invoice_detail.store_phone }}</p>
 								    </div>
 								    <div class="col-md-4">
 									    <h6 class="mb-2">Bill To </h6>
-									    <p class="text-dark fw-semibold mb-2">Andrew Fletcher</p>
-									    <p class="mb-2">1147 Rohan Drive Suite,Burlington, VT / 8202115 United Kingdom</p>
-                                        <p class="mb-0">Phone : +1 45659 96566</p>
+									    <p class="text-dark fw-semibold mb-2">{{ invoice_detail.customer_name }}</p>
+									    <p class="mb-2">{{ invoice_detail.customer_address }}</p>
+                                        <p class="mb-0">Phone : {{ invoice_detail.customer_phone }}</p>
 								    </div>
 								    <div class="col-md-4">
 									   <div class="d-flex align-items-center justify-content-md-center">
@@ -91,35 +92,19 @@
 											</tr>
 										</thead>
 										<tbody>
+                                            {% for row in invoice_detail.items %}
 											<tr>
-												<td>1</td>
-												<td>Grilled Salmon Steak</td>
-												<td>2</td>
-												<td>$200.00</td>
-												<td>$396.00</td>
+												<td>{{ row.idx }}</td>
+												<td>{{ row.name }}</td>
+												<td>{{ row.quantity }}</td>
+												<td>{{ row.unit_price }}</td>
+												<td>{{ row.line_total }}</td>
 											</tr>
-											<tr>
-												<td>2</td>
-												<td>Crispy Bacon Bits</td>
-												<td>1</td>
-												<td>$350.00</td>
-												<td>$365.75</td>
-											</tr>
-											<tr>
-												<td>3</td>
-												<td>Side Fries</td>
-												<td>1</td>
-												<td>$399.00</td>
-												<td>$398.90</td>
-											</tr>
-											<tr>
-												<td>4</td>
-												<td>Lemon Wedge</td>
-												<td>4</td>
-												<td>$100.00</td>
-												<td>$396.00</td>
-											</tr>
-											
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">No items found.</td>
+                                            </tr>
+                                            {% endfor %}
 										</tbody>
 									</table>
 								    </div>
@@ -141,21 +126,23 @@
                                                 <div class="row align-items-center pb-3 border-bottom">
                                                     <div class="col-6">
                                                         <p class="text-dark fw-semibold mb-3">Amount</p>
-                                                        <p class="text-dark fw-semibold mb-3">CGST (9%)</p>
-                                                        <p class="text-dark fw-semibold mb-3">SGST (9%)</p>
+                                                        {% for tax in invoice_detail.tax_lines %}
+                                                        <p class="text-dark fw-semibold mb-3">{{ tax.label }}</p>
+                                                        {% endfor %}
                                                         <p class="text-dark fw-semibold mb-0">Discount (25%)</p>
                                                     </div>
                                                     <div class="col-6 text-end">
-                                                        <p class="text-dark fw-semibold mb-3">$1,793.12</p>
-                                                        <p class="text-dark fw-semibold mb-3">$18</p>
-                                                        <p class="text-dark fw-semibold mb-3">$18</p>
-                                                        <p class="text-danger fw-semibold mb-0">- $18</p>
+                                                        <p class="text-dark fw-semibold mb-3">{{ invoice_detail.subtotal }}</p>
+                                                        {% for tax in invoice_detail.tax_lines %}
+                                                        <p class="text-dark fw-semibold mb-3">{{ tax.amount }}</p>
+                                                        {% endfor %}
+                                                        <p class="text-danger fw-semibold mb-0">- {{ invoice_detail.discount }}</p>
                                                     </div>
                                                  </div>
                                             </div>
                                             <div class="d-flex justify-content-between algin-item-center">
-                                                <h6>Total ($)</h6>
-                                                <h6>$1,972.43</h6>
+                                                <h6>Total</h6>
+                                                <h6>{{ invoice_detail.total }}</h6>
                                             </div>
                                         </div>
                                     </div>

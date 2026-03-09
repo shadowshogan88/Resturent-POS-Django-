@@ -15,13 +15,23 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Store Settings <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Tax Settings <a href="{% url 'page' 'tax-settings' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <a href="#" class="btn btn-primary d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#add_tax"><i class="icon-circle-plus me-1"></i>Add New</a>
                     </div>
 				</div>
 				<!-- End Page Header -->
+
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
                 <!-- card start -->
                 <div class="card mb-0">
@@ -40,56 +50,22 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for tax in tax_rows %}
                                     <tr>
-                                        <td>1</td>
-                                        <td>CGST</td>
-                                        <td>9%</td>
-                                        <td>Inclusive / Exclusive</td>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ tax.title }}</td>
+                                        <td>{{ tax.rate }}%</td>
+                                        <td>{{ tax.tax_type }}</td>
                                         <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_tax"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle text-danger" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
+                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2 js-tax-edit" data-bs-toggle="modal" data-bs-target="#edit_tax" data-tax-id="{{ tax.id }}" data-tax-title="{{ tax.title }}" data-tax-rate="{{ tax.rate }}" data-tax-type="{{ tax.tax_type }}"><i class="icon-pencil-line"></i></a>
+                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle text-danger js-tax-delete" data-bs-toggle="modal" data-bs-target="#delete_modal" data-tax-id="{{ tax.id }}" data-tax-title="{{ tax.title }}"><i class="icon-trash-2"></i></a>
                                         </td>
                                     </tr>
+                                    {% empty %}
                                     <tr>
-                                        <td>2</td>
-                                        <td>SGST</td>
-                                        <td>9%</td>
-                                        <td>Inclusive / Exclusive</td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_tax"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle text-danger" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
+                                        <td colspan="5" class="text-center text-muted">No tax records found.</td>
                                     </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td>IGST</td>
-                                        <td>18%</td>
-                                        <td>Inclusive / Exclusive</td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_tax"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle text-danger" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td>VAT</td>
-                                        <td>10%</td>
-                                        <td>Exclusive</td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_tax"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle text-danger" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td>Service Tax</td>
-                                        <td>15%</td>
-                                        <td>Exclusive</td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle me-2" data-bs-toggle="modal" data-bs-target="#edit_tax"><i class="icon-pencil-line"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-white rounded-circle text-danger" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -116,22 +92,24 @@
                         <h4 class="modal-title">Add Tax</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/tax-settings.html">                             
+                    <form action="{% url 'tax_add' %}" method="post">                             
+                        {% csrf_token %}
                         <div class="modal-body p-4 pt-1">
                             <div class="mb-3">
                                 <label class="form-label">Title<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control">
+                                <input type="text" class="form-control" name="title" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Tax Rate (%)<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control">
+                                <input type="text" class="form-control" name="rate" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Tax Type<span class="text-danger"> *</span></label>
-                                <select class="select">
-                                    <option>Select</option>
-                                    <option>Inclusive / Exclusive</option>
-                                    <option>Exclusive</option>
+                                <select class="select" name="tax_type" required>
+                                    <option value="">Select</option>
+                                    {% for tax_type in tax_type_options %}
+                                    <option value="{{ tax_type }}">{{ tax_type }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
@@ -153,22 +131,25 @@
                         <h4 class="modal-title">Edit Tax</h4>
                         <button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"><i class="icon-x"></i></button>
                     </div>
-                    <form action="https://dreamspos.dreamstechnologies.com/food-pos/html/tax-settings.html">                             
+                    <form action="{% url 'tax_update' %}" method="post">                             
+                        {% csrf_token %}
                         <div class="modal-body p-4 pt-1">             
+                            <input type="hidden" id="edit-tax-id" name="tax_id">
                             <div class="mb-3">
                                 <label class="form-label">Title<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control" value="Inclusive / Exclusive">
+                                <input type="text" class="form-control" id="edit-tax-title" name="title" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Tax Rate (%)<span class="text-danger"> *</span></label>
-                                <input type="text" class="form-control" value="9%">
+                                <input type="text" class="form-control" id="edit-tax-rate" name="rate" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Tax Type<span class="text-danger"> *</span></label>
-                                <select class="select">
-                                    <option>Select</option>
-                                    <option selected>Inclusive / Exclusive</option>
-                                    <option>Exclusive</option>
+                                <select class="select" id="edit-tax-type" name="tax_type" required>
+                                    <option value="">Select</option>
+                                    {% for tax_type in tax_type_options %}
+                                    <option value="{{ tax_type }}">{{ tax_type }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
@@ -193,11 +174,15 @@
                             </span>
                         </div>
                         <h4 class="mb-1">Delete Confirmation</h4>
-                        <p class="mb-4">Are you sure you want to delete?</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="javascript:void(0);" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
-                            <a href="{% url 'page' 'tax-settings' %}" class="btn btn-danger w-100">Delete</a>
-                        </div>
+                        <p class="mb-4">Are you sure you want to delete <span class="fw-semibold text-dark" id="delete-tax-title">this tax</span>?</p>
+                        <form action="{% url 'tax_delete' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" id="delete-tax-id" name="tax_id">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="javascript:void(0);" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -219,6 +204,35 @@
 
     <!-- Select2 Js -->	
 
-    <!-- Main JS -->
+    <script type="text/javascript">
+        (function () {
+            document.addEventListener("click", function (event) {
+                var editBtn = event.target.closest(".js-tax-edit");
+                if (editBtn) {
+                    var idEl = document.getElementById("edit-tax-id");
+                    var titleEl = document.getElementById("edit-tax-title");
+                    var rateEl = document.getElementById("edit-tax-rate");
+                    var typeEl = document.getElementById("edit-tax-type");
+                    if (idEl) idEl.value = editBtn.getAttribute("data-tax-id") || "";
+                    if (titleEl) titleEl.value = editBtn.getAttribute("data-tax-title") || "";
+                    if (rateEl) rateEl.value = editBtn.getAttribute("data-tax-rate") || "";
+                    if (typeEl) {
+                        typeEl.value = editBtn.getAttribute("data-tax-type") || "";
+                        if (window.jQuery) {
+                            window.jQuery(typeEl).trigger("change");
+                        }
+                    }
+                    return;
+                }
+
+                var deleteBtn = event.target.closest(".js-tax-delete");
+                if (!deleteBtn) return;
+                var deleteIdEl = document.getElementById("delete-tax-id");
+                var deleteTitleEl = document.getElementById("delete-tax-title");
+                if (deleteIdEl) deleteIdEl.value = deleteBtn.getAttribute("data-tax-id") || "";
+                if (deleteTitleEl) deleteTitleEl.textContent = deleteBtn.getAttribute("data-tax-title") || "this tax";
+            });
+        })();
+    </script>
 {% endblock %}
 

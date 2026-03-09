@@ -17,7 +17,7 @@
                 <!-- Page Header -->
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
-                        <h3 class="mb-0">Invoices <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
+                        <h3 class="mb-0">Invoices <a href="{% url 'page' 'invoices' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>
                     </div>
                     <div class="gap-2 d-flex align-items-center flex-wrap">
                         <div class="dropdown">
@@ -150,247 +150,36 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for row in invoice_rows %}
                                     <tr>
                                         <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0016</a>
+                                            <a href="{% url 'page' 'invoice-details' %}?order_id={{ row.order_id }}">#{{ row.invoice_id }}</a>
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-32.jpg' %}" alt="category" class="img-fluid">
+                                                    <span class="avatar-title bg-light text-dark border">{{ row.customer_initials }}</span>
                                                 </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Adrian James</a></h6>
+                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">{{ row.customer_name }}</a></h6>
                                             </div>
                                         </td>
-                                        <td>01 Nov 2025</td>
-                                        <td>Dine In</td>
-                                        <td>$1000</td>
+                                        <td>{{ row.date_label }}</td>
+                                        <td>{{ row.order_type_label }}</td>
+                                        <td>{{ row.amount_label }}</td>
                                         <td>
-                                            <span class="badge badge-soft-success">Paid</span>
+                                            <span class="badge {{ row.status_class }}">{{ row.status_label }}</span>
                                         </td>
                                         <td>
                                             <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
+                                            <a href="{% url 'page' 'invoice-details' %}?order_id={{ row.order_id }}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
                                             <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
                                         </td>
                                     </tr>
+                                    {% empty %}
                                     <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0015</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-33.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Sue Allen</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>04 Sep 2025</td>
-                                        <td>Take Away</td>
-                                        <td>$1500</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
+                                        <td colspan="7" class="text-center text-muted">No invoices found.</td>
                                     </tr>
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0014</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-34.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Frank Barrett</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>18 Aug 2025 </td>
-                                        <td>Delivery</td>
-                                        <td>$1200</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0013</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-35.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Kelley Davis</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>10 Jul 2025 </td>
-                                        <td>Dine In</td>
-                                        <td>$800</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0012</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-36.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Jim Vickers</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>05 Jun 2025 </td>
-                                        <td>Delivery</td>
-                                        <td>$750</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0011</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-37.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Nancy Chapman</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>03 May 2025 </td>
-                                        <td>Dine In</td>
-                                        <td>$1300</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0010</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-38.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Ron Jude</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>15 Apr 2025</td>
-                                        <td>Take Away</td>
-                                        <td>$1100</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0009</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-39.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Andrea Aponte</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>22 Mar 2025</td>
-                                        <td>Delivery</td>
-                                        <td>$600</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0008</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-40.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">David Belcher</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>15 Feb 2025</td>
-                                        <td>Take Away</td>
-                                        <td>$1300</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'page' 'invoice-details' %}">#INV0007</a>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <a href="#" class="avatar avatar-sm avatar-rounded flex-shrink-0 me-2">
-                                                    <img src="{% static 'assets/img/profiles/avatar-41.jpg' %}" alt="category" class="img-fluid">
-                                                </a>
-                                                <h6 class="fs-14 fw-normal mb-0"><a href="#">Julie Kangas</a></h6>
-                                            </div>
-                                        </td>
-                                        <td>01 Jan 2025</td>
-                                        <td>Dine In</td>
-                                        <td>$800</td>
-                                        <td>
-                                            <span class="badge badge-soft-success">Paid</span>
-                                        </td>
-                                        <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
-                                            <a href="{% url 'page' 'invoice-details' %}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
-                                        </td>
-                                    </tr>
-                                  
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>

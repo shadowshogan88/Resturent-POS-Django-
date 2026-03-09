@@ -2,7 +2,14 @@
 
 import decimal
 from django.core.validators import MinValueValidator
+import django
 from django.db import migrations, models
+
+
+def compat_check_constraint(q_obj, name):
+    if django.VERSION >= (5, 1):
+        return models.CheckConstraint(condition=q_obj, name=name)
+    return models.CheckConstraint(check=q_obj, name=name)
 
 
 class Migration(migrations.Migration):
@@ -19,7 +26,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="addon",
-            constraint=models.CheckConstraint(condition=models.Q(price__gt=0), name="addon_price_gt_zero"),
+            constraint=compat_check_constraint(models.Q(price__gt=0), "addon_price_gt_zero"),
         ),
         migrations.AlterField(
             model_name="item",
@@ -33,11 +40,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="item",
-            constraint=models.CheckConstraint(condition=models.Q(price__gt=0), name="item_price_gt_zero"),
+            constraint=compat_check_constraint(models.Q(price__gt=0), "item_price_gt_zero"),
         ),
         migrations.AddConstraint(
             model_name="item",
-            constraint=models.CheckConstraint(condition=models.Q(net_price__gt=0), name="item_net_price_gt_zero"),
+            constraint=compat_check_constraint(models.Q(net_price__gt=0), "item_net_price_gt_zero"),
         ),
         migrations.AlterField(
             model_name="itemvariation",
@@ -46,7 +53,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="itemvariation",
-            constraint=models.CheckConstraint(condition=models.Q(price__gt=0), name="item_variation_price_gt_zero"),
+            constraint=compat_check_constraint(models.Q(price__gt=0), "item_variation_price_gt_zero"),
         ),
         migrations.AlterField(
             model_name="itemaddon",
@@ -59,6 +66,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="itemaddon",
-            constraint=models.CheckConstraint(condition=models.Q(price__gt=0), name="item_addon_price_gt_zero"),
+            constraint=compat_check_constraint(models.Q(price__gt=0), "item_addon_price_gt_zero"),
         ),
     ]

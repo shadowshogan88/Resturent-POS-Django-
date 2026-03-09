@@ -1555,6 +1555,39 @@ def _format_order_label(order):
     return f"ORD-{monthly_sequence:05d}/{created_local.strftime('%m-%y')}"
 
 
+def _format_invoice_label(order):
+    created_local = timezone.localtime(order.created_at)
+    month_start = created_local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if created_local.month == 12:
+        next_month_start = created_local.replace(
+            year=created_local.year + 1,
+            month=1,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+    else:
+        next_month_start = created_local.replace(
+            month=created_local.month + 1,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+    monthly_sequence = (
+        Order.objects.exclude(status__in=["Cancelled", "Voided"]).filter(
+            created_at__gte=month_start,
+            created_at__lt=next_month_start,
+            id__lte=order.id,
+        ).count()
+        or order.id
+    )
+    return f"INV-{monthly_sequence:05d}/{created_local.strftime('%m-%y')}"
+
+
 def _build_kitchen_order_card(order, currency_symbol):
     elapsed_seconds = _get_kitchen_elapsed_seconds(order)
     elapsed_minutes = elapsed_seconds // 60
@@ -3105,7 +3138,7 @@ def _build_invoice_details_context(request):
     ]
 
     detail = {
-        "invoice_no": f"INV{selected_order.id:04d}",
+        "invoice_no": _format_invoice_label(selected_order),
         "invoice_date": timezone.localtime(selected_order.created_at).strftime("%d %b %Y, %I:%M %p"),
         "store_name": store_name,
         "store_address": store_address or "-",
@@ -3143,7 +3176,7 @@ def _build_invoices_context(request):
         rows.append(
             {
                 "order_id": order.id,
-                "invoice_id": f"INV{order.id:04d}",
+                "invoice_id": _format_invoice_label(order),
                 "customer_name": (order.customer_name or "").strip() or "Walk-in Customer",
                 "customer_initials": "".join(part[:1].upper() for part in ((order.customer_name or "Walk-in Customer").split()[:2])) or "WC",
                 "date_label": created_local.strftime("%d %b %Y"),

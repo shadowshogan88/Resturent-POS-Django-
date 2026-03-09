@@ -1,75 +1,101 @@
-{% extends "base_dashboard_page.html" %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Login | POS Food</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{% block page_title %}Login | POS Food{% endblock %}
-{% block body_attrs %} class="bg-white"{% endblock %}
-
-{% block body_content %}
-<div class="container-fuild">
-    <div class="w-100 overflow-hidden position-relative flex-wrap d-block vh-100">
-        <div class="row g-2">
-            <div class="col-lg-6 col-md-12 col-sm-12 p-3">
-                <div class="row justify-content-center align-items-center overflow-auto flex-wrap auth-vh vh-100">
-                    <div class="col-xl-8 col-lg-10 col-md-8 col-sm-10 mx-auto">
-                        <form method="post" action="{% url 'login' %}">
-                            {% csrf_token %}
-                            <div class="d-flex flex-column justify-content-between">
-                                <div class="mb-5">
-                                    <a href="#"><img src="{% static 'assets/img/synckbd_logo.png' %}" class="img-fluid" alt="Logo"></a>
-                                </div>
-                                <div>
-                                    {% if messages %}
-                                    <div class="mb-3">
-                                        {% for message in messages %}
-                                        <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
-                                            {{ message }}
+    <link rel="shortcut icon" href="{% static 'assets/img/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <script type="text/javascript">
+        (function () {
+            try {
+                var savedConfig = JSON.parse(sessionStorage.getItem("__THEME_CONFIG__")) || {};
+                if (!savedConfig.theme) {
+                    sessionStorage.setItem("__THEME_CONFIG__", JSON.stringify({ theme: "dark" }));
+                    sessionStorage.setItem("__THEME_LABEL__", "Dark");
+                }
+            } catch (error) {
+                sessionStorage.setItem("__THEME_CONFIG__", JSON.stringify({ theme: "dark" }));
+                sessionStorage.setItem("__THEME_LABEL__", "Dark");
+            }
+        })();
+    </script>
+    <script src="{% static 'assets/js/theme-script.js' %}" type="text/javascript"></script>
+    <link rel="stylesheet" href="{% static 'assets/plugins/lucide/lucide.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}" id="app-style">
+</head>
+<body class="bg-white">
+    <div class="main-wrapper">
+        <div class="container-fuild">
+            <div class="w-100 overflow-hidden position-relative flex-wrap d-block min-vh-100">
+                <div class="row g-2">
+                    <div class="col-lg-6 col-md-12 col-sm-12 px-3 pt-0 pb-3">
+                        <div class="row justify-content-center align-items-start flex-wrap auth-vh min-vh-100 pt-0">
+                            <div class="col-xl-8 col-lg-10 col-md-8 col-sm-10 mx-auto">
+                                <form method="post" action="{% url 'login' %}">
+                                    {% csrf_token %}
+                                    <div class="d-flex flex-column justify-content-between">
+                                        <div class="mb-2">
+                                            <a href="#"><img src="{% static 'assets/img/synckbd_logo.png' %}" class="img-fluid" alt="Logo"></a>
                                         </div>
-                                        {% endfor %}
-                                    </div>
-                                    {% endif %}
+                                        <div>
+                                            {% if messages %}
+                                            <div class="mb-3">
+                                                {% for message in messages %}
+                                                <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
+                                                    {{ message }}
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
 
-                                    <div class="mb-3">
-                                        <label class="form-label">User Name<span class="text-danger"> *</span></label>
-                                        <input type="text" name="username" value="{{ request.POST.username }}" class="form-control" required>
-                                    </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">User Name<span class="text-danger"> *</span></label>
+                                                <input type="text" name="username" value="{{ request.POST.username }}" class="form-control" required>
+                                            </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label">Password<span class="text-danger"> *</span></label>
-                                        <div class="input-group input-group-flat pass-group">
-                                            <input type="password" name="password" class="form-control pass-input" required>
-                                            <span class="input-group-text toggle-password">
-                                                <i class="icon-eye-off"></i>
-                                            </span>
+                                            <div class="mb-3">
+                                                <label class="form-label">Password<span class="text-danger"> *</span></label>
+                                                <div class="input-group input-group-flat pass-group">
+                                                    <input type="password" name="password" class="form-control pass-input" required>
+                                                    <span class="input-group-text toggle-password">
+                                                        <i class="icon-eye-off"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-check form-check-md mb-3">
+                                                <input class="form-check-input" id="remember_me" name="remember_me" type="checkbox" {% if request.POST.remember_me %}checked{% endif %}>
+                                                <label for="remember_me" class="form-check-label text-dark mt-0">Remember Me</label>
+                                            </div>
+
+                                            <div class="mb-0">
+                                                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div class="form-check form-check-md mb-4">
-                                        <input class="form-check-input" id="remember_me" name="remember_me" type="checkbox" {% if request.POST.remember_me %}checked{% endif %}>
-                                        <label for="remember_me" class="form-check-label text-dark mt-0">Remember Me</label>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <button type="submit" class="btn btn-primary w-100">Sign In</button>
-                                    </div>
-                                </div>
+                                </form>
                             </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="col-lg-6">
-                <div class="position-relative d-lg-flex align-items-center justify-content-center d-none flex-wrap vh-100 p-4 ps-0">
-                    <div class="w-100 rounded-3 position-relative h-100 bg-primary z-1 overflow-hidden">
-                        <img src="{% static 'assets/img/authentication/authentication-bg-01.png' %}" class="img-fluid position-absolute end-0 z-n1 auth-bg-01" alt="bg">
-                        <img src="{% static 'assets/img/authentication/authentication-bg-02.png' %}" class="img-fluid position-absolute top-0 end-0 z-n1 auth-bg-02" alt="bg">
-                        <div class="px-4 rounded-3 h-100 d-flex flex-column align-items-center auth-wrap">
-                            <div class="text-center z-2">
-                                <h1 class="text-white mb-2">Complete Control of Your Cafe & Restaurant with Ease</h1>
-                                <p class="text-white mb-0">From billing to inventory access everything you need in a single powerful dashboard, Analyze sales, track your best-selling dishes.</p>
-                            </div>
-                            <div class="text-center auth-img position-absolute bottom-0">
-                                <img src="{% static 'assets/img/authentication/login.png' %}" class="img-fluid position-relative z-1" alt="user">
+                    <div class="col-lg-6">
+                        <div class="position-relative d-lg-flex align-items-center justify-content-center d-none flex-wrap vh-100 p-4 ps-0">
+                            <div class="w-100 rounded-3 position-relative h-100 bg-primary z-1 overflow-hidden">
+                                <img src="{% static 'assets/img/authentication/authentication-bg-01.png' %}" class="img-fluid position-absolute end-0 z-n1 auth-bg-01" alt="bg">
+                                <img src="{% static 'assets/img/authentication/authentication-bg-02.png' %}" class="img-fluid position-absolute top-0 end-0 z-n1 auth-bg-02" alt="bg">
+                                <div class="px-4 rounded-3 h-100 d-flex flex-column align-items-center auth-wrap">
+                                    <div class="text-center z-2">
+                                        <h1 class="text-white mb-2">Complete Control of Your Cafe & Restaurant with Ease</h1>
+                                        <p class="text-white mb-0">From billing to inventory access everything you need in a single powerful dashboard, Analyze sales, track your best-selling dishes.</p>
+                                    </div>
+                                    <div class="text-center auth-img position-absolute bottom-0">
+                                        <img src="{% static 'assets/img/authentication/login.png' %}" class="img-fluid position-relative z-1" alt="user">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -77,5 +103,9 @@
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+
+    <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/js/script.js' %}"></script>
+</body>
+</html>

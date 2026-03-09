@@ -1,3 +1,4 @@
+import django
 from django.db import models
 from django.db.models import Max
 from decimal import Decimal
@@ -7,6 +8,12 @@ from django.utils import timezone
 
 
 POSITIVE_PRICE_VALIDATOR = MinValueValidator(Decimal("0.01"))
+
+
+def compat_check_constraint(q_obj, name):
+    if django.VERSION >= (5, 1):
+        return models.CheckConstraint(condition=q_obj, name=name)
+    return models.CheckConstraint(check=q_obj, name=name)
 
 class User(AbstractUser):
     ROLE=[
@@ -172,10 +179,7 @@ class Addon(models.Model):
         ordering = ["-created_on", "name"]
         unique_together = ("item", "name")
         constraints = [
-            models.CheckConstraint(
-                condition=models.Q(price__gt=0),
-                name="addon_price_gt_zero",
-            ),
+            compat_check_constraint(models.Q(price__gt=0), "addon_price_gt_zero"),
         ]
 
     def __str__(self):
@@ -226,21 +230,15 @@ class Coupon(models.Model):
     class Meta:
         ordering = ["-created_on", "coupon_code"]
         constraints = [
-            models.CheckConstraint(
-                condition=models.Q(discount_amount__gt=0),
-                name="coupon_discount_amount_gt_zero",
+            compat_check_constraint(models.Q(discount_amount__gt=0), "coupon_discount_amount_gt_zero"),
+            compat_check_constraint(models.Q(expiry_date__gte=models.F("start_date")), "coupon_expiry_on_or_after_start"),
+            compat_check_constraint(
+                models.Q(applies_to_all_categories=True) | models.Q(valid_category__isnull=False),
+                "coupon_has_scope",
             ),
-            models.CheckConstraint(
-                condition=models.Q(expiry_date__gte=models.F("start_date")),
-                name="coupon_expiry_on_or_after_start",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(applies_to_all_categories=True) | models.Q(valid_category__isnull=False),
-                name="coupon_has_scope",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(applies_to_all_items=True) | models.Q(valid_item__isnull=False),
-                name="coupon_has_item_scope",
+            compat_check_constraint(
+                models.Q(applies_to_all_items=True) | models.Q(valid_item__isnull=False),
+                "coupon_has_item_scope",
             ),
         ]
 
@@ -261,14 +259,8 @@ class Item(models.Model):
     class Meta:
         ordering = ["-created_on", "name"]
         constraints = [
-            models.CheckConstraint(
-                condition=models.Q(price__gt=0),
-                name="item_price_gt_zero",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(net_price__gt=0),
-                name="item_net_price_gt_zero",
-            ),
+            compat_check_constraint(models.Q(price__gt=0), "item_price_gt_zero"),
+            compat_check_constraint(models.Q(net_price__gt=0), "item_net_price_gt_zero"),
         ]
 
     def __str__(self):
@@ -283,10 +275,7 @@ class ItemVariation(models.Model):
     class Meta:
         ordering = ["id"]
         constraints = [
-            models.CheckConstraint(
-                condition=models.Q(price__gt=0),
-                name="item_variation_price_gt_zero",
-            ),
+            compat_check_constraint(models.Q(price__gt=0), "item_variation_price_gt_zero"),
         ]
 
     def __str__(self):
@@ -302,10 +291,7 @@ class ItemAddon(models.Model):
         ordering = ["id"]
         unique_together = ("item", "name")
         constraints = [
-            models.CheckConstraint(
-                condition=models.Q(price__gt=0),
-                name="item_addon_price_gt_zero",
-            ),
+            compat_check_constraint(models.Q(price__gt=0), "item_addon_price_gt_zero"),
         ]
 
     def __str__(self):
