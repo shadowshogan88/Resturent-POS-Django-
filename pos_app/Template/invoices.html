@@ -172,7 +172,13 @@
                                         <td>
                                             <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-download"></i></a>
                                             <a href="{% url 'page' 'invoice-details' %}?order_id={{ row.order_id }}" class="btn btn-icon btn-sm btn-white rounded-circle me-2"><i class="icon-eye"></i></a>
-                                            <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="icon-trash-2"></i></a>
+                                            <a
+                                                href="#"
+                                                class="btn btn-icon btn-sm btn-white rounded-circle"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#delete_modal"
+                                                data-order-id="{{ row.order_id }}"
+                                            ><i class="icon-trash-2"></i></a>
                                         </td>
                                     </tr>
                                     {% empty %}
@@ -210,10 +216,15 @@
                         </div>
                         <h4 class="mb-1">Delete Confirmation</h4>
                         <p class="mb-4">Are you sure you want to delete?</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
-                            <a href="{% url 'page' 'invoices' %}" class="btn btn-danger w-100">Delete</a>
-                        </div>
+                        <form action="{% url 'invoice_delete' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <input type="hidden" id="delete-invoice-order-id" name="order_id">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="#" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -357,5 +368,19 @@
     <!-- Select2 Js -->	
 
     <!-- Main JS -->
+    <script type="text/javascript">
+        (function () {
+            const deleteModal = document.getElementById("delete_modal");
+            const deleteInput = document.getElementById("delete-invoice-order-id");
+            if (!deleteModal || !deleteInput) return;
+
+            deleteModal.addEventListener("show.bs.modal", function (event) {
+                const trigger = event.relatedTarget;
+                if (!trigger) return;
+                deleteInput.value = trigger.getAttribute("data-order-id") || "";
+            });
+        })();
+    </script>
+
 {% endblock %}
 

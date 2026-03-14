@@ -61,7 +61,14 @@
                         >
                             <i class="icon-pencil-line"></i>
                         </a>
-                        <a href="#" class="btn btn-icon btn-sm btn-white rounded-circle" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                        <a
+                            href="#"
+                            class="btn btn-icon btn-sm btn-white rounded-circle"
+                            data-bs-toggle="modal"
+                            data-bs-target="#delete_modal"
+                            data-customer-id="{{ customer.id }}"
+                            data-customer-name="{{ customer.name }}"
+                        >
                             <i class="icon-trash-2 text-danger"></i>
                         </a>
                     </div>

@@ -7,6 +7,7 @@ from collections import defaultdict
 from django.db import models, transaction
 from django.db.models import Count, Q, Sum
 from django.db.utils import IntegrityError
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout, update_session_auth_hash
@@ -17,6 +18,7 @@ from django.template import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.templatetags.static import static
 from urllib.parse import urlencode
 
 from .models import (
@@ -110,6 +112,8 @@ AUDIT_ACTION_LABELS = {
     "tax_deleted": "Tax Deleted",
     "customer_created": "Customer Created",
     "customer_updated": "Customer Updated",
+    "customer_deleted": "Customer Deleted",
+    "invoice_deleted": "Invoice Deleted",
     "kitchen_started": "Kitchen Started",
     "kitchen_paused": "Kitchen Paused",
     "kitchen_completed": "Kitchen Completed",
@@ -145,6 +149,8 @@ AUDIT_ACTION_ICONS = {
     "tax_deleted": "icon-trash-2",
     "customer_created": "icon-user-round-plus",
     "customer_updated": "icon-user-round-cog",
+    "customer_deleted": "icon-trash-2",
+    "invoice_deleted": "icon-trash-2",
     "kitchen_started": "icon-chef-hat",
     "kitchen_paused": "icon-pause",
     "kitchen_completed": "icon-check-check",
@@ -315,6 +321,8 @@ def login_view(request):
                 )
                 if not remember_me:
                     request.session.set_expiry(0)
+                else:
+                    request.session.set_expiry(getattr(settings, "SESSION_COOKIE_AGE", 1209600))
                 messages.success(request, "Login successful.")
                 return redirect("dashboard")
 
@@ -1145,6 +1153,8 @@ def _build_shell_context(request):
         "shell_current_page": current_page,
         "shell_active_section": _resolve_shell_section(current_page),
         "shell_currency_symbol": (store_setting.currency_symbol or "").strip() or "$",
+        "shell_store_name": (store_setting.store_name or "").strip() or "Store",
+        "shell_store_image_url": _safe_file_url(store_setting.store_image),
         "shell_profile_name": profile_name,
         "shell_profile_role": profile_role,
         "shell_profile_initials": profile_initials,
@@ -1412,6 +1422,30 @@ def _build_category_chart_context(base_orders):
 def _build_user_statistics_context():
     today = timezone.localdate()
     login_logs = AuditLog.objects.filter(action="login_success")
+    avatar_pool = [
+        "avatar-03.jpg",
+        "avatar-05.jpg",
+        "avatar-09.jpg",
+        "avatar-27.jpg",
+        "avatar-31.jpg",
+        "avatar-32.jpg",
+        "avatar-33.jpg",
+        "avatar-34.jpg",
+        "avatar-35.jpg",
+        "avatar-36.jpg",
+        "avatar-37.jpg",
+        "avatar-38.jpg",
+        "avatar-39.jpg",
+        "avatar-40.jpg",
+        "avatar-41.jpg",
+    ]
+
+    def avatar_url_for_user(user_id):
+        try:
+            idx = int(user_id) % len(avatar_pool)
+        except (TypeError, ValueError, ZeroDivisionError):
+            idx = 0
+        return static(f"assets/img/profiles/{avatar_pool[idx]}")
 
     def month_start_shift(base_date, months_back):
         month_index = (base_date.year * 12 + base_date.month - 1) - months_back
@@ -1450,7 +1484,7 @@ def _build_user_statistics_context():
             "value": login_logs.filter(created_at__year=year).count(),
         })
 
-    def top_user_for_period(period_key):
+    def top_users_for_period(period_key, limit=5):
         if period_key == "weekly":
             start_date = today - timedelta(days=6)
             queryset = login_logs.filter(created_at__date__gte=start_date, created_at__date__lte=today)
@@ -1461,21 +1495,41 @@ def _build_user_statistics_context():
             start_date = today.replace(year=today.year - 4, month=1, day=1)
             queryset = login_logs.filter(created_at__date__gte=start_date, created_at__date__lte=today)
 
-        top_entry = (
-            queryset.exclude(actor_name="")
-            .values("actor_name")
+        entries = list(
+            queryset.filter(actor__isnull=False)
+            .values("actor_id", "actor__username", "actor__full_name")
             .annotate(total=Count("id"))
-            .order_by("-total", "actor_name")
-            .first()
+            .order_by("-total", "actor__username")[:limit]
         )
-        if top_entry:
-            return {
-                "name": top_entry["actor_name"],
-                "total": top_entry["total"],
-            }
+        users_url = reverse("page", kwargs={"page": "users"})
+        top_users = []
+        for entry in entries:
+            username = entry.get("actor__username") or ""
+            full_name = entry.get("actor__full_name") or ""
+            user_id = entry.get("actor_id")
+            name = full_name.strip() or username or "Unknown"
+            top_users.append({
+                "id": user_id,
+                "name": name,
+                "username": username,
+                "total": entry.get("total", 0),
+                "avatar_url": avatar_url_for_user(user_id),
+                "users_search_url": f"{users_url}?{urlencode({'q': username})}" if username else users_url,
+            })
+        return top_users
+
+    def top_user_for_period(period_key):
+        top_users = top_users_for_period(period_key, limit=1)
+        if top_users:
+            return top_users[0]
+        users_url = reverse("page", kwargs={"page": "users"})
         return {
+            "id": None,
             "name": "No recent user",
+            "username": "",
             "total": 0,
+            "avatar_url": avatar_url_for_user(0),
+            "users_search_url": users_url,
         }
 
     previous_week_total = login_logs.filter(
@@ -1493,16 +1547,19 @@ def _build_user_statistics_context():
                 "points": weekly_points,
                 "grand_total": weekly_total,
                 "top_user": top_user_for_period("weekly"),
+                "top_users": top_users_for_period("weekly"),
             },
             "monthly": {
                 "points": monthly_points,
                 "grand_total": series_total(monthly_points),
                 "top_user": top_user_for_period("monthly"),
+                "top_users": top_users_for_period("monthly"),
             },
             "yearly": {
                 "points": yearly_points,
                 "grand_total": series_total(yearly_points),
                 "top_user": top_user_for_period("yearly"),
+                "top_users": top_users_for_period("yearly"),
             },
         },
     }
@@ -4366,6 +4423,58 @@ def customer_update_view(request):
         target=customer.name,
     )
     messages.success(request, "Customer updated successfully.")
+    return redirect(next_url)
+
+
+@login_required(login_url="login")
+def customer_delete_view(request):
+    if request.method != "POST":
+        return redirect("page", page="customer")
+
+    next_url = request.POST.get("next", "").strip() or reverse("page", kwargs={"page": "customer"})
+    customer_id = request.POST.get("customer_id", "").strip()
+    try:
+        customer = Customer.objects.get(id=int(customer_id))
+    except (Customer.DoesNotExist, TypeError, ValueError):
+        messages.error(request, "Customer not found.")
+        return redirect(next_url)
+
+    deleted_name = customer.name
+    customer.delete()
+    _log_audit_event(
+        request,
+        action="customer_deleted",
+        module="Customers",
+        description=f"Customer '{deleted_name}' was deleted.",
+        target=deleted_name,
+    )
+    messages.success(request, "Customer deleted successfully.")
+    return redirect(next_url)
+
+
+@login_required(login_url="login")
+def invoice_delete_view(request):
+    if request.method != "POST":
+        return redirect("page", page="invoices")
+
+    next_url = request.POST.get("next", "").strip() or reverse("page", kwargs={"page": "invoices"})
+    order_id = request.POST.get("order_id", "").strip()
+    try:
+        order = Order.objects.get(id=int(order_id))
+    except (Order.DoesNotExist, TypeError, ValueError):
+        messages.error(request, "Invoice not found.")
+        return redirect(next_url)
+
+    invoice_no = (order.order_no or "").strip() or f"INV{order.id:04d}"
+    order.delete()
+    _log_audit_event(
+        request,
+        action="invoice_deleted",
+        module="Invoices",
+        description=f"Invoice '{invoice_no}' was deleted.",
+        target=invoice_no,
+    )
+    messages.success(request, f"Invoice {invoice_no} deleted successfully.")
     return redirect(next_url)
 
 

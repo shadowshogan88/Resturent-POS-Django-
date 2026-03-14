@@ -335,8 +335,21 @@ Author URL: https://themeforest.net/user/dreamstechnologies
     display: block;
   }
 }
+.navbar-header .logo .logo-sm img {
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  vertical-align: middle;
+}
 .navbar-header .logo .logo-light .logo-lg img {
   max-width: 100px;
+}
+img.brand-logo {
+  width: 135px;
+  height: 40px;
+  max-width: 100%;
+  object-fit: contain;
+  vertical-align: middle;
 }
 @media (max-width: 991.98px) {
   .navbar-header .logo .logo-light .logo-lg {
@@ -1156,6 +1169,12 @@ html[data-bs-theme=dark] #light-dark-mode .ti-moon::before {
   display: block;
   text-align: center;
 }
+.mini-sidebar .sidebar .sidebar-logo .logo-small img {
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  vertical-align: middle;
+}
 @media (max-width: 991.98px) {
   .mini-sidebar .sidebar .sidebar-logo .logo-small {
     display: none;
@@ -1282,6 +1301,12 @@ html[data-bs-theme=dark] #light-dark-mode .ti-moon::before {
   display: block;
   text-align: center;
   margin-bottom: 24px;
+}
+.sidebar-twocol .twocol-mini .logo-small img {
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  vertical-align: middle;
 }
 .sidebar-twocol .slide-nav .sidebar {
   margin-left: 0;

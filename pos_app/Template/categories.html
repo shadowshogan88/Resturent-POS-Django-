@@ -37,16 +37,6 @@
 				</div>
 				<!-- End Page Header -->
 
-                {% if messages %}
-                <div class="mb-3">
-                    {% for message in messages %}
-                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-
                 <!-- card start -->
                 <div class="card mb-0">
                     <div class="card-body">

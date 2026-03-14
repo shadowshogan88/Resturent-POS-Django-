@@ -30,16 +30,6 @@
 				</div>
 				<!-- End Page Header -->
 
-                {% if messages %}
-                <div class="mb-3">
-                    {% for message in messages %}
-                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-
                 <!-- Row start -->
                 <div class="row" id="items-grid-container">
                     {% include "partials/items_grid.html" %}

@@ -252,6 +252,10 @@ $(document).ready(function(){
 		}, 100);
 	}
 
+	const storedSidebarState = localStorage.getItem(SIDEBAR_STATE_KEY);
+	if (storedSidebarState !== 'mini' && storedSidebarState !== 'full') {
+		localStorage.setItem(SIDEBAR_STATE_KEY, 'mini');
+	}
 	applySidebarState(localStorage.getItem(SIDEBAR_STATE_KEY) === 'mini');
 
 

@@ -67,12 +67,7 @@
 
                 <div class="d-flex align-items-center header-list">
 
-                     <!-- Upgrade Button -->
-                    <!--<div class="header-item d-none d-sm-flex">
-                        <a href="#" class="btn btn-sm btn-primary d-inline-flex align-items-center">
-                            <i class="icon-crown me-1"></i>Upgrade
-                        </a>
-                    </div>-->
+
 
                     <!-- Search Button -->
                     <div class="header-item d-flex">
@@ -679,42 +674,16 @@
 						<div class="dropdown">
 							<a href="javascript:void(0);" class="d-inline-flex align-items-center fw-medium"  data-bs-toggle="dropdown">
 								<div class="avatar avatar-xs avatar-rounded me-1">
-                                    <img src="{% static 'assets/img/store/store-01.jpg' %}" alt="store" class="img-fluid">
+                                    <img src="{% if shell_store_image_url %}{{ shell_store_image_url }}{% else %}{% static 'assets/img/store/store-01.jpg' %}{% endif %}" alt="store" class="img-fluid">
                                 </div>
-                                Streak House <i class="icon-chevrons-up-down ms-2"></i>
+                                {{ shell_store_name }}
 							</a>
-							<ul class="dropdown-menu p-3 mt-3">
-								<li>
-									<a class="dropdown-item d-flex align-items-center" href="javascript:void(0);">
-                                        <div class="avatar avatar-xs avatar-rounded me-2">
-                                            <img src="{% static 'assets/img/store/store-01.jpg' %}" alt="store" class="img-fluid">
-                                        </div>
-                                        Streak House
-                                    </a>
-								</li>
-								<li>
-									<a class="dropdown-item d-flex align-items-center" href="javascript:void(0);">
-                                        <div class="avatar avatar-xs avatar-rounded me-2">
-                                            <img src="{% static 'assets/img/store/store-02.jpg' %}" alt="store" class="img-fluid">
-                                        </div>
-                                        Hotchilli Hub
-                                    </a>
-								</li>
-								<li>
-									<a class="dropdown-item d-flex align-items-center" href="javascript:void(0);">
-                                        <div class="avatar avatar-xs avatar-rounded me-2">
-                                            <img src="{% static 'assets/img/store/store-03.jpg' %}" alt="store" class="img-fluid">
-                                        </div>
-                                        The Flavor Lab
-                                    </a>
-								</li>
-							</ul>
+
+
 						</div>                       
 
-                        <!-- Sidebar Toggle Button -->
-                        <button class="sidenav-toggle-btn btn border-0 p-0" id="toggle_btn"> 
-                            <i class="icon-panel-right-open fs-16"></i>
-                        </button>
+
+
 
                         <!-- Sidebar Close Button -->
                         <button class="sidebar-close">
@@ -795,6 +764,16 @@
         <!-- ========================
 			Start Page Content
 		========================= -->
+
+        {% if messages %}
+        <div class="mb-3" id="global-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
          
         {% block body_content %}{% endblock %}
     </div>
@@ -848,6 +827,17 @@
             document.addEventListener("DOMContentLoaded", function () {
                 normalizeCurrencyText(document.querySelector(".main-wrapper"));
             });
+        })();
+
+        (function () {
+            var messageBlock = document.getElementById("global-messages");
+            if (!messageBlock) {
+                return;
+            }
+            var contentRoot = document.querySelector(".page-wrapper .content");
+            if (contentRoot) {
+                contentRoot.insertBefore(messageBlock, contentRoot.firstChild);
+            }
         })();
     </script>
     {% block page_scripts %}{% endblock %}

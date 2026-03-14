@@ -58,7 +58,7 @@
             <div class="container-fluid">
                 <div class="header-menu">
                     <div class="header-logo">
-                        <a href="{% url 'page' 'index-2' %}" class="logo-dark d-inline-flex align-items-center" style="max-width:100%; height:100%;"> <img src="{% static 'assets/img/synckbd_logo.png' %}" alt="logo" class="img-fluid" style="width:135px; height:40px; object-fit:contain;"></a>
+                        <a href="{% url 'page' 'index-2' %}" class="logo-dark d-inline-flex align-items-center" style="max-width:100%; height:100%;"> <img src="{% static 'assets/img/synckbd_logo.svg' %}" alt="logo" class="img-fluid brand-logo"></a>
                         <!-- <a href="{% url 'page' 'index-2' %}" class="logo-light d-inline-flex align-items-center" style="max-width:100%; height:100%;"> <img src="{% static 'assets/img/logo-white.svg' %}" alt="logo" class="img-fluid" style="width:135px; height:40px; object-fit:contain;"></a> -->
                     </div>
                     <div class="navbar-header">
@@ -524,6 +524,15 @@
         <!-- Page Start-->
         <div class="page-wrapper">
             <div class="content">
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
                 <!-- start row -->
                 <div class="row g-0">
@@ -1659,7 +1668,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-2 invoice-logo d-flex align-items-center justify-content-md-end justify-content-start">
-                                                    <img src="{% static 'assets/img/synckbd_logo.png' %}" class="img-fluid logo" alt="logo" style="height:40px; width:auto;">
+                                                    <img src="{% static 'assets/img/synckbd_logo.svg' %}" class="img-fluid logo brand-logo" alt="logo">
                                                     <img src="{% static 'assets/img/logo-white.svg' %}" width="130" class="img-fluid logo-white d-none" alt="logo">
                                                 </div>
                                             </div>
@@ -2949,7 +2958,7 @@
                         "</tr>"
                     );
                 }).join("");
-                const invoiceLogo = String((posPrintSettings && posPrintSettings.logo_url) || "").trim() || "{% static 'assets/img/synckbd_logo.png' %}";
+                const invoiceLogo = String((posPrintSettings && posPrintSettings.logo_url) || "").trim() || "{% static 'assets/img/synckbd_logo.svg' %}";
                 const storeName = String((posInvoiceMeta && posInvoiceMeta.store_name) || "DreamsPOS");
                 const storeAddress = String((posInvoiceMeta && posInvoiceMeta.address) || "-");
                 const storePhone = String((posInvoiceMeta && posInvoiceMeta.phone) || "-");

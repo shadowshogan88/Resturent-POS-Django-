@@ -2808,8 +2808,11 @@ $(document).ready(function () {
     var userDefaultPeriod = userStatisticsData && userStatisticsData.default_period ? userStatisticsData.default_period : 'weekly';
     var userTotalCount = document.getElementById('user-total-count');
     var userTopName = document.getElementById('user-top-name');
+    var userTopAvatar = document.getElementById('user-top-avatar');
+    var userTopLink = document.getElementById('user-top-link');
     var userGrandTotal = document.getElementById('user-grand-total');
     var userChangePercentage = document.getElementById('user-change-percentage');
+    var userTopUsersContainer = document.getElementById('user-top-users');
     var userPeriodMenu = document.getElementById('user-period-menu');
     var userPeriodButton = userPeriodMenu ? userPeriodMenu.previousElementSibling : null;
     var userPeriodLabelMap = {
@@ -2830,7 +2833,7 @@ $(document).ready(function () {
 
     const options = {
       series: [{
-        labels: ['Orders'],
+        labels: ['Logins'],
         data: getUserSeries(userDefaultPeriod)
       }],
       chart: {
@@ -2925,6 +2928,31 @@ $(document).ready(function () {
     const chart = new ApexCharts(document.querySelector("#statistic-chart"), options);
     chart.render();
 
+    function renderTopUsers(period) {
+      if (!userTopUsersContainer) {
+        return;
+      }
+
+      userTopUsersContainer.innerHTML = '';
+      var topUsers = period && Array.isArray(period.top_users) ? period.top_users : [];
+      topUsers.slice(0, 5).forEach(function (user) {
+        var link = document.createElement('a');
+        link.className = 'avatar avatar-rounded';
+        link.href = (user && user.users_search_url) ? user.users_search_url : 'javascript:void(0);';
+        link.title = (user && user.name) ? (user.name + ' (' + (Number(user.total) || 0) + ')') : '';
+
+        var img = document.createElement('img');
+        img.className = 'border border-white';
+        img.alt = (user && user.name) ? user.name : 'user';
+        if (user && user.avatar_url) {
+          img.src = user.avatar_url;
+        }
+
+        link.appendChild(img);
+        userTopUsersContainer.appendChild(link);
+      });
+    }
+
     function setUserPeriod(periodKey) {
       var activePeriod = userPeriods[periodKey] ? periodKey : userDefaultPeriod;
       var period = getUserPeriod(activePeriod);
@@ -2937,12 +2965,18 @@ $(document).ready(function () {
         }
       });
       chart.updateSeries([{
-        labels: ['Orders'],
+        labels: ['Logins'],
         data: getUserSeries(activePeriod)
       }]);
 
       if (userTopName) {
         userTopName.textContent = period.top_user && period.top_user.name ? period.top_user.name : 'No recent user';
+      }
+      if (userTopAvatar && period.top_user && period.top_user.avatar_url) {
+        userTopAvatar.src = period.top_user.avatar_url;
+      }
+      if (userTopLink && period.top_user && period.top_user.users_search_url) {
+        userTopLink.href = period.top_user.users_search_url;
       }
       if (userGrandTotal) {
         userGrandTotal.textContent = Number(period.grand_total) || 0;
@@ -2961,6 +2995,8 @@ $(document).ready(function () {
           item.classList.toggle('active', item.getAttribute('data-user-period') === activePeriod);
         });
       }
+
+      renderTopUsers(period);
     }
 
     setUserPeriod(userDefaultPeriod);

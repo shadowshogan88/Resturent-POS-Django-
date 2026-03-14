@@ -9,12 +9,6 @@
 {% block body_content %}
         <div class="page-wrapper">
             <div class="content">
-                {% if messages %}
-                    {% for message in messages %}
-                    <div class="alert alert-{{ message.tags|default:'info' }} mb-3" role="alert">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-
                 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-3 mb-4">
                     <div class="flex-grow-1">
                         <h3 class="mb-0">Tables <a href="{% url 'page' 'table' %}" class="btn btn-icon btn-sm btn-white rounded-circle ms-2"><i class="icon-refresh-ccw"></i></a></h3>

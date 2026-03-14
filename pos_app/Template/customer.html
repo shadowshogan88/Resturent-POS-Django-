@@ -218,11 +218,16 @@
                             </span>
                         </div>
                         <h4 class="mb-1">Delete Confirmation</h4>
-                        <p class="mb-4">Are you sure you want to delete?</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="javascript:void(0);" class="btn btn-light w-100" data-bs-dismiss="modal">Close</a>
-                            <a href="{% url 'page' 'customer' %}" class="btn btn-danger w-100">Delete</a>
-                        </div>
+                        <p class="mb-4">Are you sure you want to delete <strong id="delete-customer-name">this customer</strong>?</p>
+                        <form method="post" action="{% url 'customer_delete' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <input type="hidden" name="customer_id" id="delete-customer-id">
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -525,6 +530,23 @@
                     if (editCustomerRemoveImageInput) editCustomerRemoveImageInput.value = "0";
 
                     showEditCustomerPreview(customerImage);
+                });
+            }
+
+            const deleteCustomerModal = document.getElementById("delete_modal");
+            const deleteCustomerIdInput = document.getElementById("delete-customer-id");
+            const deleteCustomerNameEl = document.getElementById("delete-customer-name");
+
+            if (deleteCustomerModal) {
+                deleteCustomerModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+
+                    const customerId = trigger.getAttribute("data-customer-id") || "";
+                    const customerName = trigger.getAttribute("data-customer-name") || "this customer";
+
+                    if (deleteCustomerIdInput) deleteCustomerIdInput.value = customerId;
+                    if (deleteCustomerNameEl) deleteCustomerNameEl.textContent = customerName;
                 });
             }
 
